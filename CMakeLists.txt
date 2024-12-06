@@ -36,6 +36,7 @@ option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
 option(TESSESFRAMEWORK_ENABLE_EXAMPLES "Enable Tesses Framework examples" ON)
 option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
+option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
 option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
 
@@ -105,7 +106,7 @@ endif()
 
 
 
-
+if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
 install(TARGETS ${TessesFrameworkLibs} 
     EXPORT TessesFrameworkTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -122,13 +123,14 @@ install(EXPORT TessesFrameworkTargets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework
 )
 
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
-
+endif()
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)
