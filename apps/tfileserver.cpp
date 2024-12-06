@@ -9,7 +9,7 @@ using namespace Tesses::Framework::Threading;
 int main(int argc, char** argv)
 {
     TF_Init();
-    if(argc < 1)
+    if(argc < 2)
     {
         printf("USAGE: %s <dir>\n",argv[0]);
         return 0;
