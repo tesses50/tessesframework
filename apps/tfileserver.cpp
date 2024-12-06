@@ -6,16 +6,57 @@ using namespace Tesses::Framework::Streams;
 using namespace Tesses::Framework::TextStreams;
 using namespace Tesses::Framework::Threading;
 
+void print_help(const char* name)
+{
+    printf("Tesses FileServer\nUSAGE: %s [OPTIONS] <dir>\n",name);
+    printf("OPTIONS:\n-p PORT, --port PORT: Change port from 10000\n-l, --listing: Enable listing\n-s, --spa: Enable SPA mode (send \"/\" body instead of not found)\n-h, --help: This Screen\n");
+    exit(1);
+}
 int main(int argc, char** argv)
 {
     TF_Init();
-    if(argc < 2)
+
+    const char* directory = "wwwroot";
+    bool spa=false;
+    bool allowListing = false;
+    uint16_t port = 10000L;
+    
+    for(int i = 1; i < argc; i++)
     {
-        printf("USAGE: %s <dir>\n",argv[0]);
-        return 0;
+        if(strcmp(argv[i],"--help") == 0 || strcmp(argv[i],"-h") == 0)
+        {
+            print_help(argv[0]);
+        }
+        else if(strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--listing") == 0)
+        {
+            allowListing = true;
+        }
+        else if(strcmp(argv[i],"-s") == 0 || strcmp(argv[i],"--spa") == 0)
+        {
+            spa=true;
+        }
+        else if(strcmp(argv[i],"-p") == 0 || strcmp(argv[i],"--port") == 0)
+        {
+            if(i+1>=argc) 
+            {
+                printf("ERROR: Not enough arguments for PORT\n");
+                print_help(argv[0]);
+            }
+            else
+            {
+
+                port = (uint16_t)std::stoul(argv[++i]);
+            }
+        }
+        else
+        {
+            directory = argv[i];
+        }
     }
-    FileServer fs(argv[1],true,false);
-    HttpServer server(10000U,fs);
+
+
+    FileServer fs(directory,allowListing, spa);
+    HttpServer server(port,fs);
     server.StartAccepting();
     TF_RunEventLoop();
     std::cout << "Closing server" << std::endl;
