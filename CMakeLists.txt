@@ -35,6 +35,7 @@ set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt")
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
 option(TESSESFRAMEWORK_ENABLE_EXAMPLES "Enable Tesses Framework examples" ON)
+option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
 
@@ -132,9 +133,6 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)
 
-       
-        add_executable(fileserver examples/fileserver.cpp)
-        target_link_libraries(fileserver PUBLIC tessesframework)
         add_executable(webserverex examples/webserverex.cpp)
         target_link_libraries(webserverex PUBLIC tessesframework)
 
@@ -144,7 +142,15 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(mountabletest examples/mountabletest.cpp)
         target_link_libraries(mountabletest PUBLIC tessesframework)
 
-        add_executable(tfetch examples/tfetch.cpp)
-        target_link_libraries(tfetch PUBLIC tessesframework)
-        install(TARGETS tfetch DESTINATION bin)
+        
+endif()
+
+if(TESSESFRAMEWORK_ENABLE_APPS)
+add_executable(tfetch apps/tfetch.cpp)
+target_link_libraries(tfetch PUBLIC tessesframework)
+install(TARGETS tfetch DESTINATION bin)
+add_executable(tfileserver apps/tfileserver.cpp)
+target_link_libraries(tfileserver PUBLIC tessesframework)
+install(TARGETS tfileserver DESTINATION bin)
+
 endif()
