@@ -10,6 +10,7 @@
 #include "TextStreams/StreamReader.hpp"
 #include "TextStreams/StreamWriter.hpp"
 #include "Threading/Thread.hpp"
+#include "Threading/Mutex.hpp"
 #include "Filesystem/LocalFS.hpp"
 #include "Filesystem/SubdirFilesystem.hpp"
 #include "Filesystem/NullFilesystem.hpp"

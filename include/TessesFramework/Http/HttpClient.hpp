@@ -9,6 +9,7 @@ namespace Tesses::Framework::Http
         public:
             virtual void HandleHeaders(HttpDictionary& dict);
             virtual void Write(Tesses::Framework::Streams::Stream* strm)=0;
+            virtual ~HttpRequestBody();
     };
 
     class StreamHttpRequestBody : public HttpRequestBody {

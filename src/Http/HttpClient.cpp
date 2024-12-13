@@ -15,6 +15,40 @@ using BufferedStream = Tesses::Framework::Streams::BufferedStream;
 using HttpStream = Tesses::Framework::Http::HttpStream;
 namespace Tesses::Framework::Http
 {
+    
+
+    void HttpRequestBody::HandleHeaders(HttpDictionary& dict)
+    {
+
+    }
+
+    HttpRequestBody::~HttpRequestBody()
+    {
+
+    }
+
+    StreamHttpRequestBody::StreamHttpRequestBody(Stream* strm, bool owns, std::string mimeType)
+    {
+        this->strm = strm;
+        this->owns = owns;
+        this->mimeType = mimeType;
+    }
+    void StreamHttpRequestBody::HandleHeaders(HttpDictionary& dict)
+    {
+        dict.AddValue("Content-Type",this->mimeType);
+        auto len = this->strm->GetLength();
+        if(len > -1) dict.AddValue("Content-Length",std::to_string(len));
+
+    }
+    void StreamHttpRequestBody::Write(Tesses::Framework::Streams::Stream* strm)
+    {
+        strm->CopyTo(this->strm);
+    }
+    StreamHttpRequestBody::~StreamHttpRequestBody()
+    {
+        if(this->owns)
+            delete this->strm;
+    }
     HttpRequest::HttpRequest()
     {
         this->body=nullptr;
