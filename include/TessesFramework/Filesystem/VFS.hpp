@@ -14,11 +14,22 @@ namespace Tesses::Framework::Filesystem
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
             VFSPath(VFSPath p, VFSPath p2);
+
+            
+
             VFSPath GetParent();
             VFSPath CollapseRelativeParents();
             std::string GetFileName();
             std::string ToString();
     };
+    VFSPath operator/(VFSPath p, VFSPath p2);
+    VFSPath operator/(VFSPath p, std::string p2);
+    VFSPath operator/(std::string p, VFSPath p2);
+    VFSPath operator+(VFSPath p, VFSPath p2);
+    VFSPath operator+(VFSPath p, std::string p2);
+    VFSPath operator+(std::string p, VFSPath p2);
+
+
     class VFS {
         public:
             

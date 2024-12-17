@@ -2,6 +2,53 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 namespace Tesses::Framework::Filesystem
 {
+    VFSPath operator/(VFSPath p, VFSPath p2)
+    {
+        return VFSPath(p,p2);
+    }
+    VFSPath operator/(VFSPath p, std::string p2)
+    {
+        return VFSPath(p,p2);
+    }
+    VFSPath operator/(std::string p, VFSPath p2)
+    {
+        return VFSPath(p,p2);
+    }
+    VFSPath operator+(VFSPath p, VFSPath p2)
+    {
+        VFSPath pout;
+        pout.relative = p.relative;
+        if(p.path.size()>1)
+        {
+            pout.path.insert(pout.path.end(),p.path.begin(),p.path.end()-1);
+        }
+        std::string mid={};
+        if(!p.path.empty())
+        {
+            mid.append(p.path.back());
+        }
+        
+        if(!p2.path.empty())
+        {
+            mid.append(p2.path.front());
+        }
+        pout.path.push_back(mid);
+
+        if(p2.path.size()>1)
+        {
+            pout.path.insert(pout.path.end(),p2.path.begin()+1,p2.path.end());
+        }
+
+        return pout;
+    }
+    VFSPath operator+(VFSPath p, std::string p2)
+    {
+        return p + VFSPath(p2);
+    }
+    VFSPath operator+(std::string p, VFSPath p2)
+    {
+        return VFSPath(p) + p2;
+    }
     VFSPath VFS::ReadLink(VFSPath path)
     {
         return VFSPath("/");
