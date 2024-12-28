@@ -26,9 +26,9 @@ namespace Tesses::Framework::Filesystem
     {
 
     }
-    void NullFilesystem::GetPaths(VFSPath path, std::vector<VFSPath>& paths)
+    VFSPathEnumerator NullFilesystem::EnumeratePaths(VFSPath path)
     {
-
+        return VFSPathEnumerator();
     }
     void NullFilesystem::MoveFile(VFSPath src, VFSPath dest)
     {

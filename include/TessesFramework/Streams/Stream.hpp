@@ -11,7 +11,6 @@ namespace Tesses::Framework::Streams
         public:
             int32_t ReadByte();
             void WriteByte(uint8_t b);
-
             virtual bool EndOfStream();
             virtual size_t Read(uint8_t* buff, size_t sz);
             virtual size_t Write(const uint8_t* buff, size_t sz);

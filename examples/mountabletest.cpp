@@ -38,9 +38,8 @@ int main(int argc, char** argv)
     {
         std::string dir = "/";
         if(argc > 2) dir = argv[2];
-        std::vector<VFSPath> paths;
-        fs.GetPaths(dir, paths);
-        for(auto item : paths)
+        
+        for(auto item : fs.EnumeratePaths(dir))
         {
             std::cout << item.GetFileName() << std::endl;
         }

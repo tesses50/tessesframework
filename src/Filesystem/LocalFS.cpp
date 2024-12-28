@@ -1,8 +1,28 @@
 #include "TessesFramework/Filesystem/LocalFS.hpp"
 #include "TessesFramework/Streams/FileStream.hpp"
 #include <iostream>
+#include <sys/stat.h>
+#include <utime.h>
 namespace Tesses::Framework::Filesystem
 {
+    void LocalFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    {
+        std::string s = VFSPathToSystem(path);
+        struct stat st;
+        if(stat(s.c_str(),&st) == 0)
+        {
+            lastAccess = st.st_atime;
+            lastWrite = st.st_mtime;
+        }
+    }
+    void LocalFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    {
+        std::string s = VFSPathToSystem(path);
+        struct utimbuf utim;
+        utim.actime = lastAccess;
+        utim.modtime = lastWrite;
+        utime(s.c_str(),&utim);
+    }
     VFSPath LocalFilesystem::ReadLink(VFSPath path)
     {
         return this->SystemToVFSPath(std::filesystem::read_symlink(this->VFSPathToSystem(path)));
@@ -110,12 +130,22 @@ namespace Tesses::Framework::Filesystem
         }
         return p;
     }
-    void LocalFilesystem::GetPaths(VFSPath path, std::vector<VFSPath>& paths)
+    
+    VFSPathEnumerator LocalFilesystem::EnumeratePaths(VFSPath path)
     {
-        for(auto item : std::filesystem::directory_iterator(VFSPathToSystem(path)))
-        {
-            paths.push_back(VFSPath(path, item.path().filename().string()));
-        }
+        auto dir = new std::filesystem::directory_iterator(VFSPathToSystem(path));
+        return VFSPathEnumerator([dir,path](VFSPath& path0)->bool {
+            std::filesystem::directory_iterator& ittr = *dir;
+            if(ittr != std::filesystem::directory_iterator())
+            {
+                path0 = VFSPath(path, ittr->path().filename().string());
+                ittr++;
+                return true;
+            }
+            return false;
+        },[dir]()->void{
+            delete dir;
+        });
     }
 }
 

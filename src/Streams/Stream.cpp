@@ -94,8 +94,8 @@ namespace Tesses::Framework::Streams {
     }
     void Stream::CopyTo(Stream* strm, size_t buffSize)
     {
-        if(strm == nullptr)
-        strm->CopyTo(strm, buffSize);
+        if(strm != nullptr)
+        strm->CopyTo(*strm, buffSize);
     }
     void Stream::CopyTo(Stream& strm, size_t buffSize)
     {

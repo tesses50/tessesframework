@@ -288,6 +288,34 @@ namespace Tesses::Framework::Filesystem
             vfs->DeleteFile(destPath);
        
     }
+      void MountableFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    {
+
+        path = path.CollapseRelativeParents();
+       
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        VFS* vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+
+        if(vfs != nullptr)
+            vfs->GetDate(destPath,lastWrite,lastAccess);
+    }
+    void MountableFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    {
+
+        path = path.CollapseRelativeParents();
+       
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        VFS* vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+
+        if(vfs != nullptr)
+            vfs->SetDate(destPath,lastWrite,lastAccess);
+    }
     void MountableFilesystem::CreateSymlink(VFSPath existingFile, VFSPath symlinkFile)
     {
         existingFile = existingFile.CollapseRelativeParents();
@@ -361,11 +389,19 @@ namespace Tesses::Framework::Filesystem
         if(existingVFS != nullptr && existingVFS == newNameVFS)
             existingVFS->CreateHardlink(existingDestPath, newNamePath);
     }
-    void MountableFilesystem::GetPaths(VFSPath path, std::vector<VFSPath>& paths)
+    class MountableEnumerationState {
+        public:
+            VFSPathEnumerator* enumerator;
+            std::vector<MountableDirectory*> dirs;
+            size_t index;
+    };
+    VFSPathEnumerator MountableFilesystem::EnumeratePaths(VFSPath path)
     {
+        
         path = path.CollapseRelativeParents();
         bool mydirs = path.path.empty();
         std::vector<MountableDirectory*>* dirs = &this->directories;
+        
         if(!path.path.empty())
         for(auto p : path.path)
         {
@@ -396,32 +432,50 @@ namespace Tesses::Framework::Filesystem
         GetFS(path, destRoot, destPath, vfs);
         
 
-        if(vfs != nullptr)
-        {
-            std::vector<VFSPath> paths2;
-            if(vfs->DirectoryExists(destPath) || !mydirs)
-            vfs->GetPaths(destPath,paths2);
-            for(auto item : paths2)
+        MountableEnumerationState* state = new MountableEnumerationState();
+        state->dirs = *dirs;
+        state->index = 0;
+        if(vfs->DirectoryExists(destPath) || !mydirs)
+        state->enumerator = vfs->EnumeratePaths(destPath).MakePointer();
+        else
+        state->enumerator = nullptr;
+
+        return VFSPathEnumerator([state,path](VFSPath& path0)->bool{
+            
+            while(state->enumerator != nullptr && state->enumerator->MoveNext())
             {
-                paths.push_back(VFSPath(destPath, item.GetFileName()));
-            }
-            if(mydirs)
-            for(auto item : *dirs)
-            {
-                bool cantAdd=false;
-                for(auto d : paths) {
-                    if(d.GetFileName() == item->name)
+                auto fname = state->enumerator->Current.GetFileName();
+               
+                bool mustContinue=false;
+                for(auto item : state->dirs)
+                {
+                    if(item->name == fname)
                     {
-                        cantAdd=true;
+                        mustContinue=true;
                         break;
                     }
                 }
-                if(!cantAdd) paths.push_back(VFSPath(destPath, item->name));
+                if(mustContinue) continue;
+                path0 = path / fname;
+                return true;
             }
-        }
+            if(state->enumerator != nullptr)
+            {
+                delete state->enumerator;
+                state->enumerator = nullptr;
+            }
+            if(state->index < state->dirs.size())
+            {
+                path0 =  path / state->dirs[state->index++]->name;
+                return true;
+            }
+            return false;
+        },[state]()->void{
+            if(state->enumerator) delete state->enumerator;
+            delete state;
+        });
     }
-
-
+    
     void MountableFilesystem::Mount(VFSPath path, VFS* fs, bool owns)
     {
          path = path.CollapseRelativeParents();

@@ -41,7 +41,7 @@ namespace Tesses::Framework::Filesystem
             bool DirectoryExists(VFSPath path);
             void DeleteFile(VFSPath path);
             void CreateSymlink(VFSPath existingFile, VFSPath symlinkFile);
-            void GetPaths(VFSPath path, std::vector<VFSPath>& paths);
+            VFSPathEnumerator EnumeratePaths(VFSPath path);
             void CreateHardlink(VFSPath existingFile, VFSPath newName);
             void MoveFile(VFSPath src, VFSPath dest);
             void MoveDirectory(VFSPath src, VFSPath dest);
@@ -49,5 +49,7 @@ namespace Tesses::Framework::Filesystem
             std::string VFSPathToSystem(VFSPath path);
             VFSPath SystemToVFSPath(std::string path);
             ~MountableFilesystem();
+            void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
+            void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
     };
 }

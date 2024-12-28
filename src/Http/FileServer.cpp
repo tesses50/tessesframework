@@ -74,10 +74,9 @@ namespace Tesses::Framework::Http
                 html.append("</title></head><body><h1>Index of ");
                 html.append(p);
                 html.append("</h1><hr><pre><a href=\"../\">../</a>\r\n");
-                std::vector<VFSPath> ents;
-                vfs->GetPaths(path, ents);
+                
 
-                for(auto item : ents)
+                for(auto item : vfs->EnumeratePaths(path))
                 {
                     if(vfs->DirectoryExists(item))
                     {

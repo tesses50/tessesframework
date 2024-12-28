@@ -11,7 +11,7 @@ namespace Tesses::Framework::Filesystem
             bool RegularFileExists(VFSPath path);
             bool DirectoryExists(VFSPath path);
             void DeleteFile(VFSPath path);
-            void GetPaths(VFSPath path, std::vector<VFSPath>& paths);
+            VFSPathEnumerator EnumeratePaths(VFSPath path);
             void MoveFile(VFSPath src, VFSPath dest);
             std::string VFSPathToSystem(VFSPath path);
             VFSPath SystemToVFSPath(std::string path);

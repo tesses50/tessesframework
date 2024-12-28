@@ -82,15 +82,31 @@ namespace Tesses::Framework::Filesystem
     {
         this->parent->CreateSymlink(ToParent(existingFile),ToParent(symlinkFile));
     }
-    void SubdirFilesystem::GetPaths(VFSPath path, std::vector<VFSPath>& paths)
+
+    VFSPathEnumerator SubdirFilesystem::EnumeratePaths(VFSPath path)
     {
-        std::vector<VFSPath> paths2;
-        this->parent->GetPaths(ToParent(path),paths2);
-        for(auto item : paths2)
-        {
-            paths.push_back(FromParent(item));
-        }
+        VFSPathEnumerator* enumerator = this->parent->EnumeratePaths(ToParent(path)).MakePointer();
+
+        return VFSPathEnumerator([enumerator,path,this](VFSPath& path0)->bool{
+            if(enumerator->MoveNext())
+            {
+                path0 = FromParent( path /  enumerator->Current);
+                return true;
+            }
+            return false;
+        },[enumerator]()->void{
+            delete enumerator;
+        });
     }
+    void SubdirFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    {
+        this->parent->GetDate(ToParent(path),lastWrite,lastAccess);
+    }
+    void SubdirFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    {
+        this->parent->SetDate(ToParent(path),lastWrite,lastAccess);
+    }
+   
     void SubdirFilesystem::CreateHardlink(VFSPath existingFile, VFSPath newName)
     {
         this->parent->CreateHardlink(ToParent(existingFile),ToParent(newName));

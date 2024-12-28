@@ -1,6 +1,8 @@
 #pragma once
 #include "../Common.hpp"
 #include "../Streams/Stream.hpp"
+#include <functional>
+#include <memory>
 namespace Tesses::Framework::Filesystem
 {
     class VFSPath {
@@ -28,6 +30,58 @@ namespace Tesses::Framework::Filesystem
     VFSPath operator+(VFSPath p, VFSPath p2);
     VFSPath operator+(VFSPath p, std::string p2);
     VFSPath operator+(std::string p, VFSPath p2);
+    
+    class VFSPathEnumeratorData {
+        public:
+            VFSPathEnumeratorData(std::function<bool(VFSPath&)> moveNext, std::function<void()> destroy)
+            {
+                this->eof=false;
+                this->moveNext=moveNext;
+                this->destroy=destroy;
+            }
+            bool eof;
+            std::function<bool(VFSPath&)> moveNext;
+            std::function<void()> destroy;
+            ~VFSPathEnumeratorData()
+            {
+                this->destroy();
+            }
+    };
+
+    class VFSPathEnumerator;
+
+    class VFSPathEnumeratorItterator
+    {
+        VFSPath e;
+        VFSPathEnumerator* enumerator;
+        public:
+            VFSPathEnumeratorItterator();
+            VFSPathEnumeratorItterator(VFSPathEnumerator* enumerator);
+
+            VFSPathEnumeratorItterator& operator++();
+            VFSPathEnumeratorItterator& operator++(int);
+            
+            VFSPath& operator*();
+            VFSPath* operator->();
+            
+            bool operator!=(VFSPathEnumeratorItterator right);
+            bool operator==(VFSPathEnumeratorItterator right);
+    };
+
+    class VFSPathEnumerator {
+        std::shared_ptr<VFSPathEnumeratorData> data;
+        public:
+            VFSPathEnumerator();
+            VFSPathEnumerator* MakePointer();
+            VFSPathEnumerator(std::function<bool(VFSPath&)> moveNext,  std::function<void()> destroy);
+            VFSPath Current;
+            bool MoveNext();
+            bool IsDone();
+
+            VFSPathEnumeratorItterator begin();
+
+            VFSPathEnumeratorItterator end();
+    };
 
 
     class VFS {
@@ -49,12 +103,16 @@ namespace Tesses::Framework::Filesystem
             virtual bool DirectoryExists(VFSPath path)=0;
             virtual void DeleteFile(VFSPath path)=0;
             virtual void DeleteDirectoryRecurse(VFSPath path);
-            virtual void GetPaths(VFSPath path, std::vector<VFSPath>& paths)=0;
+            virtual VFSPathEnumerator EnumeratePaths(VFSPath path) = 0;
             virtual void MoveFile(VFSPath src, VFSPath dest)=0;
             virtual void MoveDirectory(VFSPath src, VFSPath dest);
             virtual VFSPath ReadLink(VFSPath path);
             virtual std::string VFSPathToSystem(VFSPath path)=0;
             virtual VFSPath SystemToVFSPath(std::string path)=0;
+
+
+            virtual void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
+            virtual void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
 
             virtual ~VFS();
     };

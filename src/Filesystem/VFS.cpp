@@ -2,6 +2,110 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 namespace Tesses::Framework::Filesystem
 {
+    VFSPathEnumeratorItterator::VFSPathEnumeratorItterator()
+    {
+        this->enumerator=nullptr;
+    }
+    VFSPathEnumeratorItterator::VFSPathEnumeratorItterator(VFSPathEnumerator* enumerator)
+    {
+        this->enumerator = enumerator;
+    }
+    VFSPathEnumeratorItterator& VFSPathEnumeratorItterator::operator++(int)
+    {
+        enumerator->MoveNext();
+        return *this;
+    }
+    VFSPathEnumeratorItterator& VFSPathEnumeratorItterator::operator++()
+    {
+        enumerator->MoveNext();
+        return *this;
+    }
+    
+    
+    VFSPath& VFSPathEnumeratorItterator::operator*()
+    {
+        std::filesystem::directory_iterator i;
+        
+        if(enumerator != nullptr)
+            return enumerator->Current;
+        return this->e;
+    }
+    VFSPath* VFSPathEnumeratorItterator::operator->()
+    {
+        if(enumerator != nullptr)
+            return &enumerator->Current;
+        return nullptr;
+    }
+    bool VFSPathEnumeratorItterator::operator!=(VFSPathEnumeratorItterator right)
+    {
+        if(enumerator == right.enumerator)
+        {
+            return false;
+        }
+        if(right.enumerator == nullptr)
+        {
+            auto r = !enumerator->IsDone();
+           
+            return r;
+        }
+        return true;
+    }
+    bool VFSPathEnumeratorItterator::operator==(VFSPathEnumeratorItterator right)
+    {
+        if(enumerator  == right.enumerator)
+        {
+            return true;
+        }
+        if(right.enumerator == nullptr)
+            return enumerator->IsDone();
+        return false;
+    }
+    VFSPathEnumerator::VFSPathEnumerator()
+    {
+        data = nullptr;
+    }
+    VFSPathEnumerator* VFSPathEnumerator::MakePointer()
+    {
+        VFSPathEnumerator* enumerator = new VFSPathEnumerator();
+        enumerator->Current = Current;
+        enumerator->data = data;
+        return enumerator;
+    }
+    VFSPathEnumerator::VFSPathEnumerator(std::function<bool(VFSPath&)> moveNext,  std::function<void()> destroy)
+    {
+        data = std::make_shared<VFSPathEnumeratorData>(moveNext,destroy);
+    }
+    bool VFSPathEnumerator::MoveNext()
+    {
+        if(this->data)
+        {
+            auto r = data->moveNext(Current);
+            if(!r) data->eof=true;
+            return r;
+        }
+        return false;
+    }
+    bool VFSPathEnumerator::IsDone()
+    {
+        
+        if(this->data)
+        {
+            return data->eof;
+        }
+        return true;
+    }
+
+    VFSPathEnumeratorItterator VFSPathEnumerator::begin()
+    {
+        MoveNext();
+        VFSPathEnumeratorItterator ittr(this);
+        return ittr;
+    }
+
+    VFSPathEnumeratorItterator VFSPathEnumerator::end()
+    {
+        return VFSPathEnumeratorItterator();
+    }
     VFSPath operator/(VFSPath p, VFSPath p2)
     {
         return VFSPath(p,p2);
@@ -198,10 +302,8 @@ namespace Tesses::Framework::Filesystem
     bool VFS::SymlinkExists(VFSPath path) {return false;}
     void VFS::MoveDirectory(VFSPath src, VFSPath dest)
     {
-        std::vector<VFSPath> paths;
-        GetPaths(src, paths);
-
-        for(auto item : paths)
+        
+        for(auto item : EnumeratePaths(src))
         {
             if(DirectoryExists(item))
             {
@@ -236,10 +338,8 @@ namespace Tesses::Framework::Filesystem
     void VFS::DeleteDirectoryRecurse(VFSPath path)
     {
         if(!DirectoryExists(path)) return;
-        std::vector<VFSPath> paths;
-        GetPaths(path, paths);
-
-        for(auto item : paths)
+       
+        for(auto item : EnumeratePaths(path))
         {
             if(DirectoryExists(item))
             {
@@ -252,4 +352,13 @@ namespace Tesses::Framework::Filesystem
         }
         DeleteDirectory(path);
     }
+    void VFS::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    {
+
+    }
+    void VFS::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    {
+
+    }
+   
 }
