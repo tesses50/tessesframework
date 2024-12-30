@@ -32,7 +32,7 @@ namespace Tesses::Framework::Filesystem
     SubdirFilesystem::SubdirFilesystem(VFS* parent, VFSPath path, bool owns)
     {
         this->parent = parent;
-        if(dynamic_cast<LocalFilesystem*>(parent) != nullptr)
+        if(path.relative && dynamic_cast<LocalFilesystem*>(parent) != nullptr)
         {
             Tesses::Framework::Filesystem::LocalFilesystem lfs;
             auto curDir = std::filesystem::current_path();
