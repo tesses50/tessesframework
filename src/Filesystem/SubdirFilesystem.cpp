@@ -1,4 +1,5 @@
 #include "TessesFramework/Filesystem/SubdirFilesystem.hpp"
+#include "TessesFramework/Filesystem/LocalFS.hpp"
 #include <iostream>
 namespace Tesses::Framework::Filesystem
 {
@@ -26,11 +27,19 @@ namespace Tesses::Framework::Filesystem
 
     VFSPath SubdirFilesystem::ToParent(VFSPath path)
     {
-        return VFSPath(this->path, path.CollapseRelativeParents());
+        return this->path / path.CollapseRelativeParents();
     }
     SubdirFilesystem::SubdirFilesystem(VFS* parent, VFSPath path, bool owns)
     {
         this->parent = parent;
+        if(dynamic_cast<LocalFilesystem*>(parent) != nullptr)
+        {
+            Tesses::Framework::Filesystem::LocalFilesystem lfs;
+            auto curDir = std::filesystem::current_path();
+            auto myPath = lfs.SystemToVFSPath(curDir.string()) / path;
+            this->path = myPath.CollapseRelativeParents();
+        }
+        else
         this->path = path;
         this->owns=owns;
     }
