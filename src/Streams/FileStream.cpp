@@ -1,5 +1,7 @@
 #include "TessesFramework/Streams/FileStream.hpp"
-
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 namespace Tesses::Framework::Streams
 {
     void FileStream::SetMode(std::string mode)
@@ -32,7 +34,8 @@ namespace Tesses::Framework::Streams
     }
     FileStream::FileStream(std::filesystem::path p, std::string mode)
     {
-        this->f = fopen(p.c_str(),mode.c_str());
+        std::string str = p.string();
+        this->f = fopen(str.c_str(),mode.c_str());
         this->canSeek = true;
         this->owns=true;
         this->SetMode(mode);
@@ -66,7 +69,11 @@ namespace Tesses::Framework::Streams
     }
     int64_t FileStream::GetPosition()
     {
+        #if defined(_WIN32)
+        return (int64_t)_ftelli64(this->f);
+        #else
         return (int64_t)ftello(this->f);
+        #endif
     }
     void FileStream::Flush()
     {
@@ -74,7 +81,11 @@ namespace Tesses::Framework::Streams
     }
     void FileStream::Seek(int64_t pos, SeekOrigin whence)
     {
+        #if defined(_WIN32)
+        _fseeki64(this->f,pos,whence == SeekOrigin::Begin ? SEEK_SET : whence == SeekOrigin::Current ? SEEK_CUR : SEEK_END);
+        #else
         fseeko(this->f,(off_t)pos,whence == SeekOrigin::Begin ? SEEK_SET : whence == SeekOrigin::Current ? SEEK_CUR : SEEK_END);
+        #endif
     }
     FileStream::~FileStream()
     {   

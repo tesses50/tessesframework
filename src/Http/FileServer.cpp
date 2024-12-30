@@ -15,8 +15,8 @@ namespace Tesses::Framework::Http
     }
     FileServer::FileServer(std::filesystem::path path,bool allowListing, bool spa, std::vector<std::string> defaultNames)
     {
-        LocalFilesystem* lfs=new LocalFilesystem;
-        SubdirFilesystem* sdfs=new SubdirFilesystem(lfs,lfs->SystemToVFSPath(path),true);
+        LocalFilesystem* lfs=new LocalFilesystem();
+        SubdirFilesystem* sdfs=new SubdirFilesystem(lfs,lfs->SystemToVFSPath(path.string()),true);
         this->vfs = sdfs;
         this->spa = spa;
 

@@ -1,11 +1,15 @@
 #pragma once
 #include "VFS.hpp"
+#include "VFSFix.hpp"
+            
 namespace Tesses::Framework::Filesystem
 {
     class LocalFilesystem : public VFS
     {
         public:
+            
             Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
             bool RegularFileExists(VFSPath path);
@@ -15,11 +19,14 @@ namespace Tesses::Framework::Filesystem
             bool SocketFileExists(VFSPath path);
             bool FIFOFileExists(VFSPath path);
             bool DirectoryExists(VFSPath path);
+           
             void DeleteFile(VFSPath path);
             void CreateSymlink(VFSPath existingFile, VFSPath symlinkFile);
             VFSPathEnumerator EnumeratePaths(VFSPath path);
             void CreateHardlink(VFSPath existingFile, VFSPath newName);
+            
             void MoveFile(VFSPath src, VFSPath dest);
+            
             void MoveDirectory(VFSPath src, VFSPath dest);
             VFSPath ReadLink(VFSPath path);
             std::string VFSPathToSystem(VFSPath path);

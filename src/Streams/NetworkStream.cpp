@@ -14,7 +14,12 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #else
 
 
-
+#if defined(_WIN32)
+#include <ws2tcpip.h>
+#include <winsock2.h>
+#include <windows.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
 extern "C" {
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -23,10 +28,11 @@ extern "C" {
 #include <fcntl.h>
 #include <unistd.h>
 }
+#endif
 #if defined(GEKKO)
 
 extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool use_dhcp, int max_retries);
-#else
+#elif !defined(_WIN32)
 #include <ifaddrs.h>
 #endif
 
@@ -42,7 +48,11 @@ extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool
 #define NETWORK_ACCEPT accept
 #define NETWORK_GETADDRINFO getaddrinfo
 #define NETWORK_FREEADDRINFO freeaddrinfo
+#if defined(_WIN32)
+#define NETWORK_CLOSE closesocket
+#else
 #define NETWORK_CLOSE close
+#endif
 #endif
 
 #undef AF_INET6
@@ -61,6 +71,8 @@ namespace Tesses::Framework::Streams {
         char gateway[16];
         if_config(localIp,netmask, gateway, true, 1);
         ipConfig.push_back(std::pair<std::string,std::string>("net",localIp));
+        #elif defined(_WIN32)
+
         #else
         struct ifaddrs *ifAddrStruct = NULL;
         getifaddrs(&ifAddrStruct);
@@ -367,7 +379,7 @@ namespace Tesses::Framework::Streams {
             if(broadcast)
             {
                 int broadcast = 1;
-                if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) != 0) {
+                if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, (const char*)&broadcast, sizeof(broadcast)) != 0) {
                     this->success=false;
                     NETWORK_CLOSE(this->sock);
                     continue;
@@ -434,7 +446,7 @@ namespace Tesses::Framework::Streams {
     {
         if(!this->success) return;
         int broadcast = 1;
-        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) != 0) 
+        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, (const char*)&broadcast, sizeof(broadcast)) != 0) 
         {
             this->success=false;
             if(this->owns)
@@ -462,7 +474,7 @@ namespace Tesses::Framework::Streams {
     {
         
         if(!this->success) return 0;
-        ssize_t r = NETWORK_RECV(this->sock,buff,sz,0);
+        ssize_t r = NETWORK_RECV(this->sock,(char*)buff,sz,0);
 
         if(r <= 0)
         {
@@ -477,7 +489,7 @@ namespace Tesses::Framework::Streams {
 
         if(!this->success) return 0;
        
-        ssize_t sz2 = NETWORK_SEND(this->sock,buff,sz, 0);
+        ssize_t sz2 = NETWORK_SEND(this->sock,(const char*)buff,sz, 0);
         if(sz2 < 0) return 0;
         
         return (size_t)sz;
@@ -487,7 +499,7 @@ namespace Tesses::Framework::Streams {
         if(!this->success) return 0;
         struct sockaddr_storage storage;
         socklen_t addrlen=(socklen_t)sizeof(storage);
-        ssize_t r = NETWORK_RECVFROM(this->sock,buff,sz,0, (struct sockaddr*)&storage, (socklen_t*)&addrlen);
+        ssize_t r = NETWORK_RECVFROM(this->sock,(char*)buff,sz,0, (struct sockaddr*)&storage, (socklen_t*)&addrlen);
         ip = StringifyIP((struct sockaddr*)&storage);
         port = GetPort((struct sockaddr*)&storage);
         if(r < 0) return 0;
@@ -516,7 +528,7 @@ namespace Tesses::Framework::Streams {
         }
        
         SetPort((struct sockaddr*)&addr, port);
-        ssize_t sz2 = NETWORK_SENDTO(this->sock,buff,sz, 0, (const sockaddr*)&addr, (socklen_t)sizeof(addr));
+        ssize_t sz2 = NETWORK_SENDTO(this->sock,(const char*)buff,sz, 0, (const sockaddr*)&addr, (socklen_t)sizeof(addr));
         if(sz2 < 0) return 0;
         return (size_t)sz2;
     }

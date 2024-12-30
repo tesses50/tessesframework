@@ -3,6 +3,8 @@
 #include "../Streams/Stream.hpp"
 #include <functional>
 #include <memory>
+#include "VFSFix.hpp"
+            
 namespace Tesses::Framework::Filesystem
 {
     class VFSPath {

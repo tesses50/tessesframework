@@ -1,5 +1,7 @@
 #pragma once
 #include "VFS.hpp"
+#include "VFSFix.hpp"
+            
 namespace Tesses::Framework::Filesystem
 {
     class MountableDirectory {

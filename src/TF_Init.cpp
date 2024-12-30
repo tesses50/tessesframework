@@ -2,7 +2,10 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include <atomic>
 #include <csignal>
-#if defined(GEKKO)
+#if defined(_WIN32)
+#include <windows.h>
+#include <cstdio>
+#elif defined(GEKKO)
 #include <stdio.h>
 #include <stdlib.h>
 #include <gccore.h>
@@ -63,10 +66,22 @@ namespace Tesses::Framework
     
     void TF_Init()
     {
-    
+        #if defined(_WIN32)
+        system(" ");
+        #endif
         
         isRunning=true;
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+            WSADATA wsaData;
+            int iResult;
+
+// Initialize Winsock
+iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+if (iResult != 0) {
+    printf("WSAStartup failed: %d\n", iResult);
+    return;
+}
+        #elif defined(GEKKO)
         fatInitDefault();
         VIDEO_Init();
         PAD_Init();

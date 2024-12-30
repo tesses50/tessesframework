@@ -31,7 +31,7 @@ src/Crypto/ClientTLSStream.cpp
 src/TF_Init.cpp
 )
 
-set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt")
+set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
 option(TESSESFRAMEWORK_ENABLE_EXAMPLES "Enable Tesses Framework examples" ON)
@@ -54,7 +54,7 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/include/CertificateChain.h "\n")
 
 endif()
 endif()
-set(MBEDTLS_DIR "")
+set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
 
 function(link_deps TessesFramework_TARGET)
 if(TESSESFRAMEWORK_ENABLE_MBED)
@@ -83,6 +83,11 @@ endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii")
 target_link_libraries(${TessesFramework_TARGET} PUBLIC wiisocket)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_USE_WII_SOCKET)
+endif()
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+
+target_link_libraries(${TessesFramework_TARGET} PUBLIC ws2_32)
+
 endif()
 endfunction()
 

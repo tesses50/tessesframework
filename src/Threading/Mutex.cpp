@@ -4,7 +4,9 @@ namespace Tesses::Framework::Threading
 {
     Mutex::Mutex()
     {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        this->mtx = CreateMutex(NULL,false,NULL);
+        #elif defined(GEKKO)
         mtx = LWP_MUTEX_NULL;
         LWP_MutexInit(&mtx, true);
         #else
@@ -15,7 +17,9 @@ namespace Tesses::Framework::Threading
     }
     void Mutex::Lock()
     {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        WaitForSingleObject(mtx, INFINITE);
+        #elif defined(GEKKO)
         LWP_MutexLock(mtx);
         #else
         mtx_lock(&mtx);
@@ -23,7 +27,9 @@ namespace Tesses::Framework::Threading
     }
     void Mutex::Unlock()
     {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        ReleaseMutex(mtx);
+        #elif defined(GEKKO)
         LWP_MutexUnlock(mtx);
         #else
         mtx_unlock(&mtx);
@@ -31,7 +37,9 @@ namespace Tesses::Framework::Threading
     }
     bool Mutex::TryLock()
     {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        return WaitForSingleObject(mtx, 100) == WAIT_OBJECT_0;
+        #elif defined(GEKKO)
         return LWP_MutexTryLock(mtx) == 0;
         #else
         return mtx_trylock(&mtx) == thrd_success;
@@ -39,7 +47,9 @@ namespace Tesses::Framework::Threading
     }
     Mutex::~Mutex()
     {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        CloseHandle(mtx);
+        #elif defined(GEKKO)
         LWP_MutexDestroy(mtx);
         #else
         mtx_destroy(&mtx);

@@ -25,7 +25,8 @@ namespace Tesses::Framework::Filesystem
     }
     VFSPath LocalFilesystem::ReadLink(VFSPath path)
     {
-        return this->SystemToVFSPath(std::filesystem::read_symlink(this->VFSPathToSystem(path)));
+        auto res = std::filesystem::read_symlink(this->VFSPathToSystem(path)).string();
+        return this->SystemToVFSPath(res.c_str());
     }
     Tesses::Framework::Streams::Stream* LocalFilesystem::OpenFile(VFSPath path, std::string mode)
     {
@@ -97,12 +98,12 @@ namespace Tesses::Framework::Filesystem
     }
     std::string LocalFilesystem::VFSPathToSystem(VFSPath path)
     {
-        #if defined(WIN32)
+        #if defined(_WIN32)
         bool first=true;
         std::string p = {};
         for(auto item : path.path)
         {
-            if(!(first && !item.empty() && item.back()==':') && !(first && this->relative))
+            if(!(first && !item.empty() && item.back()==':') && !(first && path.relative))
                 p.push_back('\\');
             p.append(item);
             first=false;

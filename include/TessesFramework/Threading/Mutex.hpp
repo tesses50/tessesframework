@@ -1,5 +1,7 @@
 #pragma once
-#if defined(GEKKO)
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(GEKKO)
 #include <ogc/mutex.h>
 #else
 #include <threads.h>
@@ -7,7 +9,9 @@
 namespace Tesses::Framework::Threading
 {
     class Mutex {
-        #if defined(GEKKO)
+        #if defined(_WIN32)
+        HANDLE mtx;
+        #elif defined(GEKKO)
         mutex_t mtx;
         #else
         mtx_t mtx;
