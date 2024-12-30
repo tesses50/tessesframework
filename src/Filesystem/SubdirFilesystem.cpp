@@ -10,7 +10,7 @@ namespace Tesses::Framework::Filesystem
     {
         // /a/b/c
         // /a/b/c
-        VFSPath newPath
+        VFSPath newPath;
         newPath.relative=false;
       
         if(path.path.size() >= this->path.path.size())
