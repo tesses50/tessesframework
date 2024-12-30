@@ -10,7 +10,7 @@ namespace Tesses::Framework::Filesystem
     {
         // /a/b/c
         // /a/b/c
-        VFSPath newPath;
+        VFSPath newPath
         newPath.relative=false;
       
         if(path.path.size() >= this->path.path.size())
@@ -90,7 +90,7 @@ namespace Tesses::Framework::Filesystem
         return VFSPathEnumerator([enumerator,path,this](VFSPath& path0)->bool{
             if(enumerator->MoveNext())
             {
-                path0 = FromParent( path /  enumerator->Current);
+                path0 = FromParent(enumerator->Current);
                 return true;
             }
             return false;
