@@ -24,11 +24,13 @@ src/Threading/Thread.cpp
 src/Threading/Mutex.cpp
 src/Filesystem/VFS.cpp
 src/Filesystem/LocalFS.cpp
+src/Filesystem/MemoryFilesystem.cpp
 src/Filesystem/SubdirFilesystem.cpp
 src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
 src/Crypto/ClientTLSStream.cpp
 src/TF_Init.cpp
+src/wrapper.cpp
 )
 
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")

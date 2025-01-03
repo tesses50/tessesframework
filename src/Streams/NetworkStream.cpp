@@ -232,6 +232,13 @@ namespace Tesses::Framework::Streams {
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
+        int on=1;
+        #if defined(SO_REUSEPORT)
+        NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEPORT,(const char*)&on, (socklen_t)sizeof(on));
+        #endif
+        #if defined(SO_REUSEADDR)
+        NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEADDR,(const char*)&on, (socklen_t)sizeof(on));
+        #endif
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
             this->valid = false;
@@ -432,7 +439,13 @@ namespace Tesses::Framework::Streams {
         }
        
         SetPort((struct sockaddr*)&addr, port);
-
+        int on=1;
+        #if defined(SO_REUSEPORT)
+        NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEPORT,(const char*)&on, (socklen_t)sizeof(on));
+        #endif
+        #if defined(SO_REUSEADDR)
+        NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEADDR,(const char*)&on, (socklen_t)sizeof(on));
+        #endif
         int r = NETWORK_BIND(this->sock, (struct sockaddr*)&addr, sizeof(addr));
         if(r != 0)
         {

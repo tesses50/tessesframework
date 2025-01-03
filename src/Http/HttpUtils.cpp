@@ -381,7 +381,7 @@ namespace Tesses::Framework::Http {
                 s.push_back(item);
             else if(item >= '0' && item <= '9')
                 s.push_back(item);
-            else if(item == '-' || item == '_' || item == '.' || item == '~')
+            else if(item == '-' || item == '_' || item == '.' || item == '~' || item == '/')
                 s.push_back(item);
             else
             {

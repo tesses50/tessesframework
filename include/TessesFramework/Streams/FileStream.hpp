@@ -15,6 +15,7 @@ namespace Tesses::Framework::Streams
             FileStream(FILE* f, bool owns, std::string mode , bool canSeek=true);
             size_t Read(uint8_t* buff, size_t sz);
             size_t Write(const uint8_t* buff, size_t sz);
+            bool EndOfStream();
             bool CanRead();
             bool CanWrite();
             bool CanSeek();

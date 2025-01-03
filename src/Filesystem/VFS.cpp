@@ -266,7 +266,9 @@ namespace Tesses::Framework::Filesystem
         std::vector<std::string> paths;
         if(this->path.empty()) return VFSPath();
         paths.insert(paths.begin(), this->path.begin(), this->path.end()-1);
-        return VFSPath(paths);
+        auto res= VFSPath(paths);
+        res.relative = this->relative;
+        return res;
     }
 
     std::string VFSPath::GetFileName()

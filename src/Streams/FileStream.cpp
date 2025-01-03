@@ -57,16 +57,21 @@ namespace Tesses::Framework::Streams
     }
     bool FileStream::CanRead()
     {
-        return this->canRead;
+        return this->canRead && this->f;
     }
     bool FileStream::CanWrite()
     {
-        return this->canWrite;
+        return this->canWrite && this->f;
     }
     bool FileStream::CanSeek()
     {
-        return this->canSeek;
+        return this->canSeek && this->f;
     }
+    bool FileStream::EndOfStream()
+    {
+        return feof(this->f);
+    }
+
     int64_t FileStream::GetPosition()
     {
         #if defined(_WIN32)

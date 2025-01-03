@@ -15,7 +15,7 @@ namespace Tesses::Framework::Streams
     {
         if(this->offset >= this->buffer.size()) return 0;
         size_t toRead = std::min(sz, this->buffer.size()-this->offset);
-        memcpy(buff, this->buffer.data() + this->offset, sz);
+        memcpy(buff, this->buffer.data() + this->offset, toRead);
         this->offset += toRead;
         return toRead;
     }

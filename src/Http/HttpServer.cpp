@@ -85,6 +85,16 @@ namespace Tesses::Framework::Http
         data->currentHeaders.Clear();
         return 0;
     }*/
+    std::string ServerContext::GetUrlWithQuery()
+   {
+        if(this->queryParams.kvp.empty()) return this->path;
+        return this->path + "?" + HttpUtils::QueryParamsEncode(this->queryParams);
+   }
+   std::string ServerContext::GetOriginalPathWithQuery()
+   {
+        if(this->queryParams.kvp.empty()) return this->originalPath;
+        return this->originalPath + "?" + HttpUtils::QueryParamsEncode(this->queryParams);
+   }
     bool ServerContext::NeedToParseFormData()
     {
         std::string ct;
