@@ -1,0 +1,24 @@
+version: 38
+jobs:
+- name: Build for x86_64
+  steps:
+  - !CheckoutStep
+    name: Checkout
+    cloneCredential: !DefaultCredential {}
+    withLfs: true
+    withSubmodules: false
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !BuildImageStep
+    name: Build Docker Image
+    output: !RegistryOutput
+      tags: tesses-framework:latest
+    platforms: linux/amd64
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  paramSpecs:
+  - !CommitParam
+    name: On Commit
+    allowEmpty: false
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 14400
