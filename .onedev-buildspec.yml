@@ -11,7 +11,7 @@ jobs:
   - !BuildImageStep
     name: Build Docker Image
     output: !RegistryOutput
-      tags: tesses-framework/tesses-framework:latest
+      tags: tesses-framework:latest
     registryLogins:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
