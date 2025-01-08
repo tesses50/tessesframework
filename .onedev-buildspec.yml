@@ -14,7 +14,7 @@ jobs:
       tags: onedev.site.tesses.net:443/tesses-framework/tesses-framework:latest
     registryLogins:
     - registryUrl: '@server_url@'
-      userName: '@job_token@'
+      userName: 'tesses50'
       passwordSecret: dockersecret
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
