@@ -1,5 +1,6 @@
 #include "TessesFramework/Threading/Mutex.hpp"
 #include <cstring>
+#include <iostream>
 namespace Tesses::Framework::Threading
 {
     Mutex::Mutex()
@@ -10,9 +11,10 @@ namespace Tesses::Framework::Threading
         mtx = LWP_MUTEX_NULL;
         LWP_MutexInit(&mtx, true);
         #else
-        memset(&mtx, 0, sizeof(mtx_t));
-        mtx_init(&mtx, mtx_recursive);
-
+        pthread_mutexattr_init(&attr);
+        pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE);
+        pthread_mutex_init(&mtx,&attr);
+    
         #endif
     }
     void Mutex::Lock()
@@ -22,7 +24,7 @@ namespace Tesses::Framework::Threading
         #elif defined(GEKKO)
         LWP_MutexLock(mtx);
         #else
-        mtx_lock(&mtx);
+        pthread_mutex_lock(&mtx);
         #endif
     }
     void Mutex::Unlock()
@@ -32,7 +34,7 @@ namespace Tesses::Framework::Threading
         #elif defined(GEKKO)
         LWP_MutexUnlock(mtx);
         #else
-        mtx_unlock(&mtx);
+        pthread_mutex_unlock(&mtx);
         #endif
     }
     bool Mutex::TryLock()
@@ -42,7 +44,7 @@ namespace Tesses::Framework::Threading
         #elif defined(GEKKO)
         return LWP_MutexTryLock(mtx) == 0;
         #else
-        return mtx_trylock(&mtx) == thrd_success;
+        return pthread_mutex_trylock(&mtx) == 0;
         #endif
     }
     Mutex::~Mutex()
@@ -52,7 +54,8 @@ namespace Tesses::Framework::Threading
         #elif defined(GEKKO)
         LWP_MutexDestroy(mtx);
         #else
-        mtx_destroy(&mtx);
+        pthread_mutex_destroy(&mtx);
+        pthread_mutexattr_destroy(&attr);
         #endif
 
     }

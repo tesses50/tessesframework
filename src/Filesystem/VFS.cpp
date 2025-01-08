@@ -153,6 +153,39 @@ namespace Tesses::Framework::Filesystem
     {
         return VFSPath(p) + p2;
     }
+    bool operator==(VFSPath p,VFSPath p2)
+    {
+        if(p.relative != p2.relative) return false;
+        if(p.path.size() != p2.path.size()) return false;
+        for(size_t i = 0; i < p.path.size(); i++)
+            if(p.path[i] != p2.path[i]) return false;
+        return true;
+    }
+    bool operator!=(VFSPath p,VFSPath p2)
+    {
+        if(p.relative != p2.relative) return true;
+        if(p.path.size() != p2.path.size()) return true;
+        for(size_t i = 0; i < p.path.size(); i++)
+            if(p.path[i] != p2.path[i]) return true;
+        return false;
+    
+    }
+    bool operator==(std::string p,VFSPath p2)
+    {
+        return VFSPath(p) == p2;
+    }
+    bool operator!=(std::string p,VFSPath p2)
+    {
+        return VFSPath(p) != p2;
+    }
+    bool operator==(VFSPath p,std::string p2)
+    {
+        return p == VFSPath(p2);
+    }
+    bool operator!=(VFSPath p,std::string p2)
+    {
+        return p != VFSPath(p2);
+    }
     VFSPath VFS::ReadLink(VFSPath path)
     {
         return VFSPath("/");
@@ -191,7 +224,7 @@ namespace Tesses::Framework::Filesystem
         return path;
     }
     
-    std::vector<std::string> VFSPath::SplitPath(std::string path,bool nativePath)
+    std::vector<std::string> VFSPath::SplitPath(std::string path)
     {
         std::vector<std::string> parts;
         std::string curPath = {};
@@ -206,7 +239,7 @@ namespace Tesses::Framework::Filesystem
                 }
             }
             #if defined(WIN32)
-            else if(c == '\\' && nativePath)
+            else if(c == '\\')
             {
                 if(!curPath.empty())
                 {
@@ -236,6 +269,47 @@ namespace Tesses::Framework::Filesystem
     {
         this->path = p;
     }
+
+    bool VFSPath::HasExtension()
+    {
+        if(this->path.empty()) return false;
+        auto& str = this->path.back();
+        auto index = str.find_last_of('.');
+        if(index == std::string::npos) return false;
+        return true;
+    }
+    std::string VFSPath::GetExtension()
+    {
+        if(this->path.empty()) return {};
+        auto& str = this->path.back();
+        auto index = str.find_last_of('.');
+        if(index == std::string::npos) return {};
+        return str.substr(index);
+    }
+    void VFSPath::ChangeExtension(std::string ext)
+    {
+        if(this->path.empty()) return;
+        auto& str = this->path.back();
+        auto index = str.find_last_of('.');
+        if(index != std::string::npos)
+        {
+            str = str.substr(0,index);
+        }
+        if(ext.empty()) return;
+        if(ext[0] != '.') 
+        {
+            str += '.' + ext;
+        }
+        else
+        {
+            str += ext;
+        }
+    }
+    void VFSPath::RemoveExtension()
+    {
+        ChangeExtension({});
+    }
+    
     VFSPath::VFSPath(std::string str)
     {
         this->path = SplitPath(str);
@@ -247,7 +321,7 @@ namespace Tesses::Framework::Filesystem
             {
                 auto firstPartPath = this->path.front();
 
-                if(!firstPartPath.empty() && firstPartPath.back() == '/') this->relative=false;
+                if(!firstPartPath.empty() && firstPartPath.back() == ':') this->relative=false;
             }
         }
     }
@@ -265,6 +339,8 @@ namespace Tesses::Framework::Filesystem
     {
         std::vector<std::string> paths;
         if(this->path.empty()) return VFSPath();
+        if(!this->relative && this->path.size() == 1 && !this->path[0].empty() && this->path[0].back() == ':') return *this;
+
         paths.insert(paths.begin(), this->path.begin(), this->path.end()-1);
         auto res= VFSPath(paths);
         res.relative = this->relative;
@@ -280,6 +356,7 @@ namespace Tesses::Framework::Filesystem
     std::string VFSPath::ToString()
     {
         if(this->path.empty() && !this->relative) return "/";
+        if(!this->relative && this->path.size() == 1 && !this->path[0].empty() && this->path[0].back() == ':') return this->path[0] + "/";
         bool first=true;
         std::string p = {};
         for(auto item : this->path)

@@ -11,19 +11,23 @@ namespace Tesses::Framework::Filesystem
         public:
             static VFSPath RelativeCurrentDirectory();
             bool relative;
-            static std::vector<std::string> SplitPath(std::string path,bool native=false);
+            static std::vector<std::string> SplitPath(std::string path);
             std::vector<std::string> path;  
             VFSPath();
             VFSPath(std::vector<std::string> path);
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
             VFSPath(VFSPath p, VFSPath p2);
-
+            
             
 
             VFSPath GetParent();
             VFSPath CollapseRelativeParents();
             std::string GetFileName();
+            bool HasExtension();
+            std::string GetExtension();
+            void ChangeExtension(std::string ext);
+            void RemoveExtension();
             std::string ToString();
     };
     VFSPath operator/(VFSPath p, VFSPath p2);
@@ -32,7 +36,12 @@ namespace Tesses::Framework::Filesystem
     VFSPath operator+(VFSPath p, VFSPath p2);
     VFSPath operator+(VFSPath p, std::string p2);
     VFSPath operator+(std::string p, VFSPath p2);
-    
+    bool operator==(VFSPath p,VFSPath p2);
+    bool operator!=(VFSPath p,VFSPath p2);
+    bool operator==(std::string p,VFSPath p2);
+    bool operator!=(std::string p,VFSPath p2);
+    bool operator==(VFSPath p,std::string p2);
+    bool operator!=(VFSPath p,std::string p2);
     class VFSPathEnumeratorData {
         public:
             VFSPathEnumeratorData(std::function<bool(VFSPath&)> moveNext, std::function<void()> destroy)

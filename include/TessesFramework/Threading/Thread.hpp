@@ -5,7 +5,7 @@
 #elif defined(GEKKO)
 #include <ogc/lwp.h>
 #else
-#include <threads.h>
+#include <pthread.h>
 #endif
 #include <atomic>
 namespace Tesses::Framework::Threading
@@ -22,8 +22,8 @@ namespace Tesses::Framework::Threading
         lwp_t thrd;
         static void* cb(void* ptr);
         #else
-        thrd_t thrd;
-        static int cb(void* ptr);
+        pthread_t thrd;
+        static void* cb(void* ptr);
         #endif
         std::function<void()> fn;
 

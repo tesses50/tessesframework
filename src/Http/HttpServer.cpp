@@ -95,6 +95,31 @@ namespace Tesses::Framework::Http
         if(this->queryParams.kvp.empty()) return this->originalPath;
         return this->originalPath + "?" + HttpUtils::QueryParamsEncode(this->queryParams);
    }
+   void ServerContext::ReadStream(Stream* strm)
+   {
+        if(strm == nullptr) return;
+        auto strm2 = this->OpenRequestStream();
+        if(strm2 != nullptr)
+        {
+            strm2->CopyTo(strm);
+            delete strm2;
+        }
+   }
+   void ServerContext::ReadStream(Stream& strm)
+   {
+        ReadStream(&strm);
+   }
+   std::string ServerContext::ReadString()
+   {
+        if(strm == nullptr) return {};
+        auto strm2 = this->OpenRequestStream();
+        if(strm2 != nullptr)
+        {
+            TextStreams::StreamReader reader(strm2,true);
+            return reader.ReadToEnd();
+        }
+        return {};
+   }
     bool ServerContext::NeedToParseFormData()
     {
         std::string ct;
@@ -628,7 +653,7 @@ namespace Tesses::Framework::Http
                 uint8_t* buffer = new uint8_t[len];
                 len = bStrm.ReadBlock(buffer,len);
                 std::string query((const char*)buffer,len);
-                delete buffer;
+                delete[] buffer;
                 HttpUtils::QueryParamsDecode(ctx.queryParams, query);
             }
             

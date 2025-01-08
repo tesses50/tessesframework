@@ -4,7 +4,7 @@
 #elif defined(GEKKO)
 #include <ogc/mutex.h>
 #else
-#include <threads.h>
+#include <pthread.h>
 #endif
 namespace Tesses::Framework::Threading
 {
@@ -14,7 +14,8 @@ namespace Tesses::Framework::Threading
         #elif defined(GEKKO)
         mutex_t mtx;
         #else
-        mtx_t mtx;
+        pthread_mutex_t mtx;
+        pthread_mutexattr_t attr;
         #endif
         public:
             Mutex();

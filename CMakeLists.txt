@@ -134,9 +134,14 @@ install(EXPORT TessesFrameworkTargets
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/TessesFrameworkFeatures.h.in "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkFeatures.h"
+INSTALL_DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TessesFramework/TessesFrameworkFeatures.h)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkFeatures.h"
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TessesFramework)
 endif()
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(copyfile examples/copyfile.cpp)

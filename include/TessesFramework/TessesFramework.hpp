@@ -18,3 +18,4 @@
 #include "Filesystem/MountableFilesystem.hpp"
 #include "Filesystem/MemoryFilesystem.hpp"
 #include "Crypto/ClientTLSStream.hpp"
+#include "Lazy.hpp"

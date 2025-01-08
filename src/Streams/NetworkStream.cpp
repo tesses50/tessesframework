@@ -32,7 +32,7 @@ extern "C" {
 #if defined(GEKKO)
 
 extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool use_dhcp, int max_retries);
-#elif !defined(_WIN32)
+#elif !defined(_WIN32) && !defined(__ANDROID__)
 #include <ifaddrs.h>
 #endif
 
@@ -71,7 +71,7 @@ namespace Tesses::Framework::Streams {
         char gateway[16];
         if_config(localIp,netmask, gateway, true, 1);
         ipConfig.push_back(std::pair<std::string,std::string>("net",localIp));
-        #elif defined(_WIN32)
+        #elif defined(_WIN32) || defined(__ANDROID__)
 
         #else
         struct ifaddrs *ifAddrStruct = NULL;
@@ -503,7 +503,10 @@ namespace Tesses::Framework::Streams {
         if(!this->success) return 0;
        
         ssize_t sz2 = NETWORK_SEND(this->sock,(const char*)buff,sz, 0);
-        if(sz2 < 0) return 0;
+        if(sz2 <= 0) {
+            this->endOfStream=true;
+            return 0;
+        }
         
         return (size_t)sz;
     }

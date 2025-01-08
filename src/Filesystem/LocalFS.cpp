@@ -117,7 +117,7 @@ namespace Tesses::Framework::Filesystem
     VFSPath LocalFilesystem::SystemToVFSPath(std::string path)
     {
         VFSPath p;
-        p.path = VFSPath::SplitPath(path,true);
+        p.path = VFSPath::SplitPath(path);
         p.relative=true;
         if(!path.empty())
         {

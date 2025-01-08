@@ -18,22 +18,17 @@ namespace Tesses::Framework::Threading
     }
     #else
 
-    #if defined(GEKKO)
+   
     void* Thread::cb(void* data)
-    #else
-    int Thread::cb(void* data)
-    #endif
-    {
+   {
+
         auto thrd = static_cast<Thread*>(data);
         
         auto fn = thrd->fn;
         thrd->hasInvoked=true;
         fn();
-        #if defined(GEKKO)
             return NULL;
-        #else
-            return 0;
-        #endif
+        
     }
     #endif
     Thread::Thread(std::function<void()> fn)
@@ -43,10 +38,10 @@ namespace Tesses::Framework::Threading
         #if defined(_WIN32) 
             this->thrd = CreateThread(NULL,0,cb,static_cast<LPVOID>(this), 0, &this->thrdId);
         #elif defined(GEKKO)
-            thrd = LWP_THREAD_NULL;
-            LWP_CreateThread(&thrd, cb, static_cast<void*>(this), NULL, 12000, LWP_PRIO_HIGHEST);
+            auto res = LWP_CreateThread(&this->thrd, cb, static_cast<void*>(this), nullptr,12000, 98);
         #else
-            thrd_create(&thrd, cb, static_cast<void*>(this));
+            pthread_create(&thrd,NULL,cb,static_cast<void*>(this));
+            //thrd_create(&thrd, cb, static_cast<void*>(this));
         #endif
         while(!this->hasInvoked);
     }
@@ -56,7 +51,7 @@ namespace Tesses::Framework::Threading
             #if defined(_WIN32)
             CloseHandle(thrd);
             #else
-            thrd_detach(thrd);
+            pthread_detach(thrd);
             #endif
         #endif
     }
@@ -69,8 +64,7 @@ namespace Tesses::Framework::Threading
         void* res;
         LWP_JoinThread(thrd,&res);
         #else
-        int res;
-        thrd_join(thrd,&res);
+        pthread_join(thrd,NULL);
         #endif
         
     }
