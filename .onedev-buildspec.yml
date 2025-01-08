@@ -14,7 +14,7 @@ jobs:
       tags: tesses-framework/tesses-framework:latest
     registryLogins:
     - registryUrl: '@server_url@'
-      userName: 'tesses50'
+      userName: '@job_token@'
       passwordSecret: 'dockersecret'
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
