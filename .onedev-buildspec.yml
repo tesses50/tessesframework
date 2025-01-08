@@ -15,7 +15,7 @@ jobs:
     registryLogins:
     - registryUrl: '@server_url@'
       userName: 'tesses50'
-      passwordSecret: '@dockersecret@'
+      passwordSecret: 'dockersecret'
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
