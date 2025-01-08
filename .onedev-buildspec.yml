@@ -14,10 +14,6 @@ jobs:
       tags: tesses-framework:latest
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  paramSpecs:
-  - !CommitParam
-    name: On Commit
-    allowEmpty: false
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
