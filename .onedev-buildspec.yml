@@ -8,14 +8,28 @@ jobs:
     withLfs: true
     withSubmodules: false
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !CommandStep
+    name: Execute build
+    runInContainer: true
+    image: onedev.site.tesses.net/dependencies/x86_64:latest
+    interpreter: !DefaultInterpreter
+      commands: |
+        mkdir build
+        cd build
+        cmake -S .. -B .
+        make -j12
+        make install DESTDIR=out
+    useTTY: true
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !BuildImageStep
     name: Build Docker Image
+    dockerfile: Dockerfile.run
     output: !RegistryOutput
       tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest
     registryLogins:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
-      passwordSecret: 'dockersecret'
+      passwordSecret: dockersecret
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:

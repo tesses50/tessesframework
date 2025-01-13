@@ -1,0 +1,2 @@
+FROM onedev.site.tesses.net/dependencies/x86_64:latest
+COPY build/out /
