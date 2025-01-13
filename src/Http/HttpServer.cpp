@@ -380,9 +380,22 @@ namespace Tesses::Framework::Http
         if(strm == nullptr) return;
         SendStream(*strm);
     }
+    ServerContext::~ServerContext()
+    {
+        for(auto item : this->data)
+        {
+            delete item.second;
+        }
+    }
+    ServerContextData::~ServerContextData()
+    {
+        
+    }
     void ServerContext::SendStream(Stream& strm)
     {
         if(sent) return;
+        if(!strm.CanRead()) throw TextException("Cannot read from stream");
+        if(strm.EndOfStream()) throw TextException("End of stream");
         if(strm.CanSeek())
         {
             int64_t len=strm.GetLength();
@@ -665,6 +678,11 @@ namespace Tesses::Framework::Http
             catch(std::exception& ex)
             {
                 ctx.SendException(ex);
+            }
+            catch(...)
+            {
+                TextException ex("An unknown error occurred");
+                ctx.SendException(ex);   
             }
 
             if(ctx.version != "HTTP/1.1" ) return;

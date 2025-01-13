@@ -2,6 +2,8 @@
 #include "Http/HttpServer.hpp"
 #include "Http/HttpClient.hpp"
 #include "Http/FileServer.hpp"
+#include "Http/CallbackServer.hpp"
+#include "Http/MountableServer.hpp"
 #include "Http/ContentDisposition.hpp"
 #include "Streams/FileStream.hpp"
 #include "Streams/MemoryStream.hpp"

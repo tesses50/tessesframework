@@ -5,11 +5,24 @@ using namespace Tesses::Framework::Http;
 using namespace Tesses::Framework::Streams;
 using namespace Tesses::Framework::TextStreams;
 using namespace Tesses::Framework::Threading;
-
+class Johnny : public ServerContextData
+{
+    public:
+        Johnny()
+        {
+            text = "Steve Ballmer";
+        }
+        std::string text;
+        ~Johnny()
+        {
+            std::cout << "Destroying" << std::endl;
+        }
+};
 class MyWebServer : public IHttpServer {
     public:
         bool Handle(ServerContext& ctx)
         {
+            std::cout << ctx.path << std::endl;
             if(ctx.path == "/")
             {
                 FileStream fs("index.html","rb");
@@ -58,10 +71,23 @@ class MyWebServer : public IHttpServer {
                     return new FileStream(filename,"wb");
                 });
             }
+            else if(ctx.path == "/steve")
+            {
+                Johnny* data = ctx.GetServerContentData<Johnny>("mytag");
+                data->text = "Demi Lovato";
+            }
+            
             return false;
         }
-        bool Handle1(ServerContext& ctx)
+        
+};
+class MyOtherWebServer : public IHttpServer
+{
+    public:
+        bool Handle(ServerContext& ctx)
         {
+            if(ctx.path == "/")
+            {
             std::string name;
             if(ctx.queryParams.TryGetFirst("name",name))
             {
@@ -74,6 +100,14 @@ class MyWebServer : public IHttpServer {
                 
                 return true;
             }
+            }
+            else if(ctx.path == "/mymount/steve")
+            {
+                Johnny* data = ctx.GetServerContentData<Johnny>("mytag");
+                ctx.SendText(data->text);
+                return true;
+            }
+            
             return false;
         }
 };
@@ -81,20 +115,13 @@ class MyWebServer : public IHttpServer {
 int main(int argc, char** argv)
 {
     TF_Init();
-    TcpServer server(9985U,10);
-    MyWebServer svr;
-    while(true)
-    {
-        std::string ip;
-        uint16_t port;
-        auto res = server.GetStream(ip, port);
-        if(res == nullptr) return 0;
-        std::cout << "Got from " << ip << ":" << port << std::endl;
-        Thread thrd([ip,port,res,&svr]()->void {
-            HttpServer::Process(*res, svr, ip,port, false);
-            delete res;
-        });
-        thrd.Detach();
-    }
-    
+    MyOtherWebServer myo;
+    MyWebServer mws;
+
+    MountableServer mountable(myo);
+    mountable.Mount("/mymount/",mws);
+    HttpServer server(10001,mountable);
+    server.StartAccepting();
+    TF_RunEventLoop();
+    std::cout << "Closing server" << std::endl;
 }

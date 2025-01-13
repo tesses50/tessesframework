@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND TESSESFRAMEWORK_SOURCE 
 src/Http/FileServer.cpp
+src/Http/MountableServer.cpp
+src/Http/CallbackServer.cpp
 src/Http/HttpServer.cpp
 src/Http/HttpUtils.cpp
 src/Http/HttpClient.cpp

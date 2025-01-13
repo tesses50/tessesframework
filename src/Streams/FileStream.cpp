@@ -49,10 +49,12 @@ namespace Tesses::Framework::Streams
     }
     size_t FileStream::Read(uint8_t* buff, size_t sz)
     {
+        if(!CanRead()) throw TextException("Cannot read from stream");
         return fread(buff,1, sz, this->f);
     }
     size_t FileStream::Write(const uint8_t* buff, size_t sz)
     {
+        if(!CanWrite()) throw TextException("Cannot write to stream");
         return fwrite(buff,1, sz, f);
     }
     bool FileStream::CanRead()
@@ -69,11 +71,14 @@ namespace Tesses::Framework::Streams
     }
     bool FileStream::EndOfStream()
     {
+        if(!f) return true;
         return feof(this->f);
     }
 
     int64_t FileStream::GetPosition()
     {
+
+        if(!f) return 0;
         #if defined(_WIN32)
         return (int64_t)_ftelli64(this->f);
         #else
@@ -82,10 +87,14 @@ namespace Tesses::Framework::Streams
     }
     void FileStream::Flush()
     {
+
+        if(!f) return;
         fflush(this->f);
     }
     void FileStream::Seek(int64_t pos, SeekOrigin whence)
     {
+
+        if(!f) return;
         #if defined(_WIN32)
         _fseeki64(this->f,pos,whence == SeekOrigin::Begin ? SEEK_SET : whence == SeekOrigin::Current ? SEEK_CUR : SEEK_END);
         #else
@@ -94,6 +103,8 @@ namespace Tesses::Framework::Streams
     }
     FileStream::~FileStream()
     {   
+
+        if(!f) return;
         if(this->owns)
              fclose(this->f);
     }

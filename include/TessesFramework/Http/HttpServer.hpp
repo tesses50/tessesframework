@@ -3,12 +3,18 @@
 
 #include "HttpUtils.hpp"
 #include "../Threading/Thread.hpp"
+#include <unordered_map>
 namespace Tesses::Framework::Http
 {
-    
+    class ServerContextData {
+        public:
+            virtual ~ServerContextData();
+    };
+
     class ServerContext {
         bool sent;
         Tesses::Framework::Streams::Stream* strm;
+        std::map<std::string,ServerContextData*> data;
         public:
             HttpDictionary requestHeaders;
             HttpDictionary responseHeaders;
@@ -22,6 +28,7 @@ namespace Tesses::Framework::Http
             std::string version;
             bool encrypted;
             ServerContext(Tesses::Framework::Streams::Stream* strm);
+            ~ServerContext();
             Tesses::Framework::Streams::Stream& GetStream();
             std::string GetOriginalPathWithQuery();
             std::string GetUrlWithQuery();
@@ -46,6 +53,18 @@ namespace Tesses::Framework::Http
             ServerContext& WithMimeType(std::string mime);
             ServerContext& WithContentDisposition(std::string filename, bool isInline);
             ServerContext& WriteHeaders();
+            
+            template<class T>
+            T* GetServerContentData(std::string tag)
+            {
+                std::string name = typeid(T).name();
+                name.push_back(' ');
+                name.append(tag);
+                if(data.count(name) > 0) return dynamic_cast<T*>(data[name]);
+                T* item = new T();
+                data[name] = item;
+                return item;
+            }
     };
 
     class IHttpServer {
