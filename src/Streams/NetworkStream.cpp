@@ -22,6 +22,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #else
 extern "C" {
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -552,5 +553,11 @@ namespace Tesses::Framework::Streams {
     {
         if(this->owns && this->success)
             NETWORK_CLOSE(this->sock);
+    }
+    void NetworkStream::SetNoDelay(bool noDelay)
+    {
+         
+        int noDelay2 = noDelay;
+        NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, TCP_NODELAY, (const char*)&noDelay2,(socklen_t)sizeof(noDelay2));
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "../Common.hpp"
+#include <algorithm>
 
 namespace Tesses::Framework::Http
 {
@@ -67,9 +68,18 @@ namespace Tesses::Framework::Http
     NotExtended=510,
     NetworkAuthenticationRequired=511
 } StatusCode;
+struct CaseInsensitiveLess {
+     bool operator() (const std::string& s1, const std::string& s2) const {
+        std::string str1(s1.length(),' ');
+        std::string str2(s2.length(),' ');
+        std::transform(s1.begin(), s1.end(), str1.begin(), tolower);
+        std::transform(s2.begin(), s2.end(), str2.begin(), tolower);
+        return  str1 < str2;
+    }
+};
     class HttpDictionary {
         public:
-            std::map<std::string,std::vector<std::string>> kvp;
+            std::map<std::string,std::vector<std::string>,CaseInsensitiveLess> kvp;
             void Clear();
             void Clear(std::string key, bool kvpExistsAfter);
             void SetValue(std::string key, std::string value);
@@ -97,6 +107,8 @@ namespace Tesses::Framework::Http
             bool TryGetFirstDouble(std::string key, double& value);
 
             bool GetFirstBoolean(std::string key);
+
+            bool AnyEquals(std::string key, std::string value);
     };
 
     class Uri {

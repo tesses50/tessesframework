@@ -31,6 +31,7 @@ src/Filesystem/SubdirFilesystem.cpp
 src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
 src/Crypto/ClientTLSStream.cpp
+src/Crypto/MbedHelpers.cpp
 src/TF_Init.cpp
 src/wrapper.cpp
 )

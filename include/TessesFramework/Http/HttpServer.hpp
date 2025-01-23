@@ -11,6 +11,37 @@ namespace Tesses::Framework::Http
             virtual ~ServerContextData();
     };
 
+    class WebSocketMessage {
+        public:
+            std::vector<uint8_t> data;
+            bool isBinary;
+            WebSocketMessage();
+            WebSocketMessage(std::vector<uint8_t> data);
+            WebSocketMessage(const void* data, size_t len);
+            WebSocketMessage(std::string message);
+            std::string ToString();
+    };
+
+    class WebSocketConnection {
+        public:
+            virtual void OnOpen(std::function<void(WebSocketMessage&)> sendMessage, std::function<void()> ping)=0;
+            virtual void OnReceive(WebSocketMessage& message)=0;
+            virtual void OnClose(bool clean)=0;
+            virtual ~WebSocketConnection();
+    };
+    class CallbackWebSocketConnection : public WebSocketConnection {
+        public:
+            std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen;
+            std::function<void(WebSocketMessage&)> onReceive;
+            std::function<void(bool)> onClose;
+            CallbackWebSocketConnection();
+            CallbackWebSocketConnection(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose);
+
+            void OnOpen(std::function<void(WebSocketMessage&)> sendMessage, std::function<void()> ping);
+            void OnReceive(WebSocketMessage& message);
+            void OnClose(bool clean);
+    };
+
     class ServerContext {
         bool sent;
         Tesses::Framework::Streams::Stream* strm;
@@ -53,6 +84,8 @@ namespace Tesses::Framework::Http
             ServerContext& WithMimeType(std::string mime);
             ServerContext& WithContentDisposition(std::string filename, bool isInline);
             ServerContext& WriteHeaders();
+            void StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose);
+            void StartWebSocketSession(WebSocketConnection& connection);
             
             template<class T>
             T* GetServerContentData(std::string tag)

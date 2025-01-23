@@ -642,7 +642,13 @@ namespace Tesses::Framework::Http {
         }
     }
     
-    
+    bool HttpDictionary::AnyEquals(std::string key, std::string value)
+    {
+        if(this->kvp.count(key) > 0)
+            for(auto v : this->kvp[key]) if(v == value) return true;
+        // for(auto v : item.second) if(v == value) return true;
+        return false;
+    }
 
     void HttpDictionary::Clear()
     {

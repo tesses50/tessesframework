@@ -39,5 +39,6 @@ namespace Tesses::Framework::Streams
         size_t WriteTo(const uint8_t* buff, size_t sz, std::string ip, uint16_t port);
         static std::vector<std::pair<std::string,std::string>> GetIPs(bool ipV6=false);
         ~NetworkStream();
+        void SetNoDelay(bool noDelay);
     };
 }

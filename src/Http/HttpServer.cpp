@@ -6,6 +6,8 @@
 #include "TessesFramework/Http/ContentDisposition.hpp"
 #include "TessesFramework/Streams/BufferedStream.hpp"
 #include "TessesFramework/Http/HttpStream.hpp"
+#include "TessesFramework/Crypto/MbedHelpers.hpp"
+#include "TessesFramework/Threading/Mutex.hpp"
 
 #include <iostream>
 using FileStream = Tesses::Framework::Streams::FileStream;
@@ -22,7 +24,237 @@ using BufferedStream = Tesses::Framework::Streams::BufferedStream;
 
 namespace Tesses::Framework::Http
 {
-    
+    class WSServer 
+    {
+        public:
+        Threading::Mutex mtx;
+        ServerContext* ctx;
+        WebSocketConnection* conn;
+        Stream* strm;
+        std::atomic_bool hasInit;
+        void write_len_bytes(uint64_t len)
+        {
+            if(len < 126)
+            {
+                strm->WriteByte((uint8_t)len);
+            }
+            else if(len < 65535)
+            {
+                uint8_t b[3];
+                b[0] = 126;
+                b[1] = (uint8_t)(len >> 8);
+                b[2] = (uint8_t)len;
+
+                strm->WriteBlock(b,sizeof(b));
+            }
+            else {
+
+                uint8_t b[9];
+                b[0] = 127;
+
+                b[1] = (uint8_t)(len >> 56);
+                b[2] = (uint8_t)(len >> 48);
+                b[3] = (uint8_t)(len >> 40);
+                b[4] = (uint8_t)(len >> 32);
+                b[5] = (uint8_t)(len >> 24);
+                b[6] = (uint8_t)(len >> 16);
+                b[7] = (uint8_t)(len >> 8);
+                b[8] = (uint8_t)len;
+
+                strm->WriteBlock(b,sizeof(b));
+            }
+        }
+        uint64_t get_long()
+        {
+            uint8_t buff[8];
+            if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
+            
+            uint64_t v = 0;
+            v |= (uint64_t)buff[0] << 56;
+            v |= (uint64_t)buff[1] << 48;
+            v |= (uint64_t)buff[2] << 40;
+            v |= (uint64_t)buff[3] << 32;
+            v |= (uint64_t)buff[4] << 24;
+            v |= (uint64_t)buff[5] << 16;
+            v |= (uint64_t)buff[6] << 8;
+            v |= (uint64_t)buff[7];
+            return v;
+        }
+        uint16_t get_short()
+        {
+            uint8_t buff[2];
+            if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
+            
+            uint16_t v = 0;
+            v |= (uint16_t)buff[0] << 8;
+            v |= (uint16_t)buff[1];
+            return v;
+        }
+        void send_msg(WebSocketMessage* msg)
+        {
+            while(!hasInit);
+            mtx.Lock();
+            uint8_t opcode = msg->isBinary ? 0x2 : 0x1;
+
+            size_t lengthLastByte = msg->data.size() % 4096;
+            size_t fullPackets = (msg->data.size() - lengthLastByte) / 4096;
+            size_t noPackets = lengthLastByte > 0 ? fullPackets+1 : fullPackets;
+            size_t offset = 0;
+            for(size_t i = 0; i < noPackets; i++)
+            {
+                bool fin = i == noPackets - 1;
+                uint8_t finField =  fin ?  0b10000000 : 0;
+                uint8_t opcode2 = i == 0 ? opcode : 0;
+                uint8_t firstByte = finField | (opcode2 & 0xF);
+                size_t len = std::min((size_t)4096,msg->data.size()- offset);
+                strm->WriteByte(firstByte);
+                write_len_bytes((uint64_t)len);
+                strm->WriteBlock(msg->data.data() + offset,len);
+                offset += len;
+            }   
+            mtx.Unlock();
+        }
+        void ping_send(std::vector<uint8_t>& pData)
+        {
+            mtx.Lock();
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0x9;
+            strm->WriteByte(firstByte);
+            write_len_bytes((uint64_t)pData.size());
+            strm->WriteBlock(pData.data(),pData.size());
+            mtx.Unlock();
+        }
+        void pong_send(std::vector<uint8_t>& pData)
+        {
+            mtx.Lock();
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0xA;
+            strm->WriteByte(firstByte);
+            write_len_bytes((uint64_t)pData.size());
+            strm->WriteBlock(pData.data(),pData.size());
+            mtx.Unlock();
+        }
+        bool read_packet(uint8_t len,std::vector<uint8_t>& data)
+        {
+            uint8_t realLen=len & 127;
+            bool masked=(len & 0b10000000) > 0;
+            uint64_t reallen2 = realLen >= 126 ? realLen > 126 ? get_long() : get_short() : realLen;
+            uint8_t mask[4];
+            if(masked)
+            {
+                if(strm->ReadBlock(mask,sizeof(mask)) != sizeof(mask)) return false;
+            }
+            size_t offset = data.size();
+            data.resize(offset+(size_t)reallen2);
+            if(data.size() < ((uint64_t)offset+reallen2)) return false;
+            if(strm->ReadBlock(data.data()+offset,(size_t)reallen2) != (size_t)reallen2) return false;
+            if(masked)
+            {
+                for(size_t i = 0; i < (size_t)reallen2; i++)
+                {
+                    data[i+offset] ^= mask[i%4];
+                }
+            }
+            return true;
+        }
+        
+            WSServer(ServerContext* ctx,WebSocketConnection* conn)
+            {
+                this->ctx = ctx;
+                this->conn = conn;
+                this->strm = &this->ctx->GetStream();
+                this->hasInit=false;
+
+                
+            }
+            void Start()
+            {
+                std::string key;
+                if(ctx->requestHeaders.TryGetFirst("Sec-WebSocket-Key", key) && !key.empty())
+                {
+                    key.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+                    auto res = Crypto::Sha1::ComputeHash((const uint8_t*)key.c_str(),key.size());
+                    
+                    if(res.empty()) return;
+                    key = Crypto::Base64_Encode(res);
+
+                }else {
+
+                    return;
+                }
+                
+                if(!ctx->requestHeaders.AnyEquals("Upgrade","websocket"))
+                {
+
+                    return;
+                }
+                if(!ctx->requestHeaders.AnyEquals("Sec-WebSocket-Version","13"))
+                {
+
+                    return;
+                }
+                ctx->statusCode = StatusCode::SwitchingProtocols;
+                ctx->responseHeaders.SetValue("Connection","Upgrade");
+                ctx->responseHeaders.SetValue("Upgrade","websocket");
+                ctx->responseHeaders.SetValue("Sec-WebSocket-Accept",key);
+        
+                ctx->WriteHeaders();
+                bool hasMessage =false;
+
+                WebSocketMessage message;
+                message.isBinary=false;
+                message.data={};
+                hasInit=true;
+
+                while(!strm->EndOfStream())
+                {
+                
+                    uint8_t frame_start[2];
+                    if(strm->ReadBlock(frame_start,2) != 2) return;
+                    
+                    
+                    uint8_t opcode = frame_start[0] & 0xF;
+                    bool fin = (frame_start[0] & 0b10000000) > 0;
+                    switch(opcode)
+                    {
+                        case 0x0:
+                            if(!hasMessage) break;
+                            read_packet(frame_start[1], message.data);
+                        break;
+                        case 0x1:
+                        case 0x2:
+                            hasMessage=true;
+                            message.data = {};
+                            message.isBinary = opcode == 0x2;
+                            
+                            read_packet(frame_start[1], message.data);
+                            break;
+                        case 0x8:
+                        this->conn->OnClose(true);
+                        return;
+                        case 0x9:
+                        {
+                            std::vector<uint8_t> b;
+                            read_packet(frame_start[1],b);
+                            pong_send(b);
+                        }
+                        break;
+                        case 0xA:
+                        {
+                            std::vector<uint8_t> b;
+                            read_packet(frame_start[1],b);
+                        }
+                    }
+                    if(fin && hasMessage)
+                    {
+                        hasMessage=false;
+                        this->conn->OnReceive(message);
+                        message.data={};
+                    }
+                }
+                this->conn->OnClose(false);
+            }
+    }; 
     /*
     static int _header_field(multipart_parser* p, const char *at, size_t length)
     {
@@ -700,5 +932,92 @@ namespace Tesses::Framework::Http
             
             if(bStrm.EndOfStream()) return;
         }
+    }
+
+    WebSocketConnection::~WebSocketConnection()
+    {
+
+    }
+    void ServerContext::StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose)
+    {
+        CallbackWebSocketConnection wsc(onOpen,onReceive,onClose);
+        StartWebSocketSession(wsc);
+    }
+            
+    void ServerContext::StartWebSocketSession(WebSocketConnection& connection)
+    {
+        WSServer svr(this,&connection);
+        Threading::Thread thrd([&svr,&connection]()->void{
+            try {
+            connection.OnOpen([&svr](WebSocketMessage& msg)->void {
+                svr.send_msg(&msg);
+            },[&svr]()->void {
+                std::vector<uint8_t> p = {(uint8_t)'p',(uint8_t)'i',(uint8_t)'n',(uint8_t)'g'};
+                svr.ping_send(p);
+            });
+            }catch(...) {
+
+            }
+        });
+        
+        svr.Start();
+        thrd.Join();
+    }
+
+    CallbackWebSocketConnection::CallbackWebSocketConnection()
+    {
+
+    }
+    CallbackWebSocketConnection::CallbackWebSocketConnection(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose)
+    {
+        this->onOpen = onOpen;
+        this->onReceive = onReceive;
+        this->onClose = onClose;
+    }
+
+    void CallbackWebSocketConnection::OnOpen(std::function<void(WebSocketMessage&)> sendMessage, std::function<void()> ping)
+    {
+        if(this->onOpen)
+            this->onOpen(sendMessage,ping);
+    }
+    void CallbackWebSocketConnection::OnReceive(WebSocketMessage& message)
+    {
+        if(this->onReceive)
+            this->onReceive(message);
+    }
+    void CallbackWebSocketConnection::OnClose(bool clean)
+    {
+        if(this->onClose)
+            this->onClose(clean);
+    }
+
+
+    WebSocketMessage::WebSocketMessage()
+    {
+        this->isBinary=false;
+        this->data={};
+    }
+    WebSocketMessage::WebSocketMessage(std::vector<uint8_t> data)
+    {
+        this->isBinary = true;
+        this->data = data;
+    }
+    WebSocketMessage::WebSocketMessage(const void* data, size_t len)
+    {
+        this->isBinary=true;
+        this->data={};
+        this->data.insert(this->data.end(),(uint8_t*)data,((uint8_t*)data)+len);
+    }
+    WebSocketMessage::WebSocketMessage(std::string message)
+    {
+        this->isBinary=false;
+        this->data={};
+        this->data.insert(this->data.end(),message.begin(), message.end());
+    }
+    std::string WebSocketMessage::ToString()
+    {
+        std::string str = {};
+        str.insert(str.end(),this->data.begin(),this->data.end());
+        return str;
     }
 }
