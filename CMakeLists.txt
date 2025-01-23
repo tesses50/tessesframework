@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 project(TessesFramework VERSION 1.0)
 
@@ -93,6 +93,12 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 
 target_link_libraries(${TessesFramework_TARGET} PUBLIC ws2_32)
 
+endif()
+
+if(NOT ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube"))
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(${TessesFramework_TARGET} PRIVATE Threads::Threads)
 endif()
 endfunction()
 
