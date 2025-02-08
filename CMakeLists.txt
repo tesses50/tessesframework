@@ -177,3 +177,12 @@ target_link_libraries(tfileserver PUBLIC tessesframework)
 install(TARGETS tfileserver DESTINATION bin)
 
 endif()
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_CONTACT "Mike Nolan <tesses@tesses.net>")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+set(CPACK_PACKAGE_VERSION_MAJOR "${TessesFramework_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${TessesFramework_VERSION_MINOR}")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libmbedtls-dev (>= 2.28.8)")
+
+include(CPack)
