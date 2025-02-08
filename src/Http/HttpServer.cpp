@@ -545,6 +545,7 @@ namespace Tesses::Framework::Http
                 if(sock == nullptr) return;
                 Threading::Thread thrd2([sock,http,ip,port]()->void {
                     HttpServer::Process(*sock,*http,ip,port,false);
+                    delete sock;
                 });
                 thrd2.Detach();
             }
@@ -834,6 +835,8 @@ namespace Tesses::Framework::Http
     void HttpServer::Process(Stream& strm, IHttpServer& server, std::string ip, uint16_t port, bool encrypted)
     {
         
+        while(true)
+        {
             BufferedStream bStrm(strm);
             StreamReader reader(bStrm);
             ServerContext ctx(&bStrm);
@@ -917,7 +920,19 @@ namespace Tesses::Framework::Http
 
             if(ctx.version != "HTTP/1.1" ) return;
 
+            std::string connection;
+            if(ctx.requestHeaders.TryGetFirst("Connection", connection))
+            {
+                if(connection != "keep-alive") return;
+            }
 
+            if(ctx.responseHeaders.TryGetFirst("Connection", connection))
+            {
+                if(connection != "keep-alive") return;
+            }
+
+            if(bStrm.EndOfStream()) return;
+        }
     }
 
     WebSocketConnection::~WebSocketConnection()
