@@ -11,7 +11,7 @@
 namespace Tesses::Framework::Threading
 {
     
-
+    #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     class MutexHiddenFieldData : public HiddenFieldData
     {
         public:
@@ -35,10 +35,11 @@ namespace Tesses::Framework::Threading
             #endif
         }
     };
-
+    #endif
     Mutex::Mutex()
     {
-        auto md=this->data.AllocField<MutexHiddenFieldData*>();
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        auto md=this->data.AllocField<MutexHiddenFieldData>();
         #if defined(_WIN32)
         md->mtx = CreateMutex(NULL,false,NULL);
         #elif defined(GEKKO)
@@ -50,9 +51,11 @@ namespace Tesses::Framework::Threading
         pthread_mutex_init(&md->mtx,&md->attr);
     
         #endif
+        #endif
     }
     void Mutex::Lock()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         auto md = this->data.GetField<MutexHiddenFieldData*>();
         #if defined(_WIN32)
         WaitForSingleObject(md->mtx, INFINITE);
@@ -61,9 +64,11 @@ namespace Tesses::Framework::Threading
         #else
         pthread_mutex_lock(&md->mtx);
         #endif
+        #endif
     }
     void Mutex::Unlock()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         auto md = this->data.GetField<MutexHiddenFieldData*>();
         #if defined(_WIN32)
         ReleaseMutex(md->mtx);
@@ -72,9 +77,11 @@ namespace Tesses::Framework::Threading
         #else
         pthread_mutex_unlock(&md->mtx);
         #endif
+        #endif
     }
     bool Mutex::TryLock()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         auto md = this->data.GetField<MutexHiddenFieldData*>();
         #if defined(_WIN32)
         return WaitForSingleObject(md->mtx, 100) == WAIT_OBJECT_0;
@@ -82,6 +89,7 @@ namespace Tesses::Framework::Threading
         return LWP_MutexTryLock(md->mtx) == 0;
         #else
         return pthread_mutex_trylock(&md->mtx) == 0;
+        #endif
         #endif
     }
     Mutex::~Mutex()

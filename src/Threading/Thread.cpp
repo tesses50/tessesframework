@@ -81,7 +81,7 @@ namespace Tesses::Framework::Threading
     void Thread::Join()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto data = this->data.AllocField<ThreadHiddenFieldData*>();
+        auto data = this->data.AllocField<ThreadHiddenFieldData>();
         #if defined(_WIN32)
             WaitForSingleObject(data->thrd, INFINITE);
         #elif defined(GEKKO)
