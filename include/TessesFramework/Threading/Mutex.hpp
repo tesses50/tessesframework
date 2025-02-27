@@ -1,22 +1,10 @@
 #pragma once
-#if defined(_WIN32)
-#include <windows.h>
-#elif defined(GEKKO)
-#include <ogc/mutex.h>
-#else
-#include <pthread.h>
-#endif
+
+#include "../HiddenField.hpp"
 namespace Tesses::Framework::Threading
 {
     class Mutex {
-        #if defined(_WIN32)
-        HANDLE mtx;
-        #elif defined(GEKKO)
-        mutex_t mtx;
-        #else
-        pthread_mutex_t mtx;
-        pthread_mutexattr_t attr;
-        #endif
+        HiddenField data;
         public:
             Mutex();
             void Lock();

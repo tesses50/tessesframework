@@ -8,26 +8,13 @@
 #include <pthread.h>
 #endif
 #include <atomic>
+#include "../HiddenField.hpp"
 namespace Tesses::Framework::Threading
 {
     class Thread 
     {
-        #if defined(_WIN32)
-
-        HANDLE thrd;
-        DWORD thrdId;
-      
-        public:
-        #elif defined(GEKKO)
-        lwp_t thrd;
-        static void* cb(void* ptr);
-        #else
-        pthread_t thrd;
-        static void* cb(void* ptr);
-        #endif
-        std::function<void()> fn;
-
-        std::atomic<bool> hasInvoked;
+        HiddenField data;
+        
         public:
         Thread(std::function<void()> fn);
         void Join();

@@ -923,15 +923,17 @@ namespace Tesses::Framework::Http
             std::string connection;
             if(ctx.requestHeaders.TryGetFirst("Connection", connection))
             {
-                if(connection != "keep-alive") return;
+                if(HttpUtils::ToLower(connection) != "keep-alive") return;
             }
 
             if(ctx.responseHeaders.TryGetFirst("Connection", connection))
             {
-                if(connection != "keep-alive") return;
+                if(HttpUtils::ToLower(connection) != "keep-alive") return;
             }
 
-            if(bStrm.EndOfStream()) return;
+            if(bStrm.EndOfStream()) {
+                return;
+            }
         }
     }
 

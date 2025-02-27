@@ -68,14 +68,9 @@ namespace Tesses::Framework::Http
     NotExtended=510,
     NetworkAuthenticationRequired=511
 } StatusCode;
+
 struct CaseInsensitiveLess {
-     bool operator() (const std::string& s1, const std::string& s2) const {
-        std::string str1(s1.length(),' ');
-        std::string str2(s2.length(),' ');
-        std::transform(s1.begin(), s1.end(), str1.begin(), tolower);
-        std::transform(s2.begin(), s2.end(), str2.begin(), tolower);
-        return  str1 < str2;
-    }
+     bool operator() (const std::string& s1, const std::string& s2) const;
 };
     class HttpDictionary {
         public:
@@ -146,6 +141,8 @@ struct CaseInsensitiveLess {
         static std::string HtmlEncode(std::string v);
         static std::vector<std::string> SplitString(std::string text, std::string delimiter,std::size_t maxCnt = std::string::npos);
         static std::string StatusCodeString(StatusCode code);
+        static std::string ToLower(std::string str);
+        static std::string ToUpper(std::string str);
     
     };
 

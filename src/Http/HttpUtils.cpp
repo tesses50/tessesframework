@@ -2,6 +2,7 @@
 #include "TessesFramework/Filesystem/VFS.hpp"
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
 namespace Tesses::Framework::Http {
+    
     bool Uri::Relative(std::string url, Uri& uri)
     {
         auto index = url.find_first_of("//");
@@ -726,6 +727,24 @@ namespace Tesses::Framework::Http {
             return false;
         }
         return true;
+    }
+     bool CaseInsensitiveLess::operator() (const std::string& s1, const std::string& s2) const {
+        return  HttpUtils::ToLower(s1) < HttpUtils::ToLower(s2);
+        
+    }
+
+    std::string HttpUtils::ToLower(std::string str)
+    {
+        std::string str1(str.length(),' ');
+        std::transform(str.begin(), str.end(), str1.begin(), tolower);
+        return str1;
+    }
+
+    std::string HttpUtils::ToUpper(std::string str)
+    {
+        std::string str1(str.length(),' ');
+        std::transform(str.begin(), str.end(), str1.begin(), toupper);
+        return str1;
     }
 
     bool HttpDictionary::GetFirstBoolean(std::string key)

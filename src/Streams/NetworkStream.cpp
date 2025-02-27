@@ -2,6 +2,9 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
+#if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
+
+
 #if defined(GEKKO)
 
 #define ss_family sin_family
@@ -561,3 +564,110 @@ namespace Tesses::Framework::Streams {
         NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, TCP_NODELAY, (const char*)&noDelay2,(socklen_t)sizeof(noDelay2));
     }
 }
+#else
+namespace Tesses::Framework::Streams {
+class TcpServer {
+    int32_t sock;
+    bool owns;
+    bool valid;
+    public:
+        TcpServer(int32_t sock,bool owns);
+        TcpServer(uint16_t port, int32_t backlog);
+        TcpServer(std::string ip, uint16_t port, int32_t backlog);
+        NetworkStream* GetStream(std::string& ip, uint16_t& port);
+        ~TcpServer();
+        void Close();
+};  
+TcpServer::TcpServer(int32_t sock,bool owns)
+{
+
+}
+TcpServer::TcpServer(uint16_t port, int32_t backlog)
+{
+
+}
+TcpServer::TcpServer(std::string ip, uint16_t port, int32_t backlog)
+{
+
+}
+NetworkStream* TcpServer::GetStream(std::string& ip, uint16_t& port)
+{
+    return nullptr;
+}
+TcpServer::~TcpServer()
+{
+
+}
+void TcpServer::Close()
+{
+    
+}
+bool NetworkStream::EndOfStream() {
+    return true;
+}
+bool NetworkStream::CanRead() {
+    return false;
+}
+bool NetworkStream::CanWrite() {
+    return false;
+}
+    
+NetworkStream::NetworkStream(bool ipV6,bool datagram)
+{
+
+}
+NetworkStream::NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,bool broadcast,bool supportIPv6)
+{
+
+}
+NetworkStream::NetworkStream(int32_t sock, bool owns)
+{
+
+}
+void NetworkStream::Listen(int32_t backlog)
+{
+
+}
+void NetworkStream::Bind(std::string ip, uint16_t port)
+{
+
+}
+void NetworkStream::SetBroadcast(bool bC)
+{
+
+}
+NetworkStream* NetworkStream::Accept(std::string& ip, uint16_t& port)
+{
+    return nullptr;
+}
+size_t NetworkStream::Read(uint8_t* buff, size_t sz)
+{
+    return 0;
+}
+size_t NetworkStream::Write(const uint8_t* buff, size_t sz)
+{
+    return 0;
+}
+size_t NetworkStream::ReadFrom(uint8_t* buff, size_t sz, std::string& ip, uint16_t& port)
+{
+    return 0;
+}
+size_t NetworkStream::WriteTo(const uint8_t* buff, size_t sz, std::string ip, uint16_t port)
+{
+    return 0;
+}
+std::vector<std::pair<std::string,std::string>> NetworkStream::GetIPs(bool ipV6)
+{
+    return {};
+}
+NetworkStream::~NetworkStream()
+{
+
+}
+void NetworkStream::SetNoDelay(bool noDelay)
+{
+    
+}
+
+}
+#endif

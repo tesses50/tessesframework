@@ -8,12 +8,15 @@ namespace Tesses::Framework::Threading
     {
         #if defined(GEKKO)
         return 1;
-        #else
+        #elif defined(TESSESFRAMEWORK_ENABLE_THREADING)
         return (size_t)std::thread::hardware_concurrency();
+        #else
+        return 1;
         #endif
     }
     ThreadPool::ThreadPool(size_t threads)
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         this->isRunning=true;
         for(size_t i = 0; i < threads; i++)
         {
@@ -41,15 +44,19 @@ namespace Tesses::Framework::Threading
                 }
             }));
         }
+        #endif
     }
     void ThreadPool::Schedule(std::function<void()> cb)
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         this->mtx.Lock();
         this->callbacks.push(cb);
         this->mtx.Unlock();
+        #endif
     }
     ThreadPool::~ThreadPool()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         while(true)
         {
             this->mtx.Lock();
@@ -64,6 +71,6 @@ namespace Tesses::Framework::Threading
             item->Join();
             delete item;
         }
-
+        #endif
     }
 }

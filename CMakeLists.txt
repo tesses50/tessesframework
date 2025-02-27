@@ -18,6 +18,8 @@ src/Streams/MemoryStream.cpp
 src/Streams/NetworkStream.cpp
 src/Streams/Stream.cpp
 src/Streams/BufferedStream.cpp
+src/Streams/ByteReader.cpp
+src/Streams/ByteWriter.cpp
 src/TextStreams/StreamReader.cpp
 src/TextStreams/StreamWriter.cpp
 src/TextStreams/TextReader.cpp
@@ -32,13 +34,24 @@ src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
 src/Crypto/ClientTLSStream.cpp
 src/Crypto/MbedHelpers.cpp
+src/Graphics/ImageFormats/Bitmap.cpp
+src/Graphics/ImageFormats/ImageFormat.cpp
+src/Graphics/Renderers/ImageRenderer.cpp
+src/Graphics/Renderers/Renderer.cpp
+src/Graphics/Color.cpp
+src/Graphics/Image.cpp
 src/TF_Init.cpp
 src/wrapper.cpp
+src/HiddenField.cpp
 )
 
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
+option(TESSESFRAMEWORK_ENABLE_LIBWEBCAM "Enable LibWebCam" ON)
+option(TESSESFRAMEWORK_ENABLE_NETWORKING "Enable Networking" ON)
+option(TESSESFRAMEWORK_ENABLE_THREADING "Enable Threading" ON)
+
 option(TESSESFRAMEWORK_ENABLE_EXAMPLES "Enable Tesses Framework examples" ON)
 option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
@@ -62,6 +75,17 @@ endif()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
 
 function(link_deps TessesFramework_TARGET)
+if(TESSESFRAMEWORK_ENABLE_THREADING)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_THREADING)
+endif()
+if(TESSESFRAMEWORK_ENABLE_NETWORKING)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_NETWORKING)
+endif()
+if(TESSESFRAMEWORK_ENABLE_LIBWEBCAM)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_LIBWEBCAM)
+find_package(libwebcam REQUIRED)
+target_link_libraries(${TessesFramework_TARGET} PUBLIC libwebcam)
+endif()
 if(TESSESFRAMEWORK_ENABLE_MBED)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_MBED)
 if(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
@@ -165,7 +189,14 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(mountabletest examples/mountabletest.cpp)
         target_link_libraries(mountabletest PUBLIC tessesframework)
 
-        
+        add_executable(bmp examples/bmp.cpp)
+        target_link_libraries(bmp PUBLIC tessesframework)      
+        add_executable(bmp2 examples/bmp2.cpp)
+        target_link_libraries(bmp2 PUBLIC tessesframework)     
+        add_executable(bmp3 examples/bmp3.cpp)
+        target_link_libraries(bmp3 PUBLIC tessesframework)
+        add_executable(bmp4 examples/bmp4.cpp)
+        target_link_libraries(bmp4 PUBLIC tessesframework)  
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)
