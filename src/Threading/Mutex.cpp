@@ -39,7 +39,7 @@ namespace Tesses::Framework::Threading
     Mutex::Mutex()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto md=this->data.AllocField<MutexHiddenFieldData>();
+        auto md=this->data.SetField(new MutexHiddenFieldData());
         #if defined(_WIN32)
         md->mtx = CreateMutex(NULL,false,NULL);
         #elif defined(GEKKO)

@@ -20,13 +20,7 @@ class HiddenField {
         {
             return dynamic_cast<T>(ptr);
         }
-        template<typename T>
-        T* AllocField()
-        {
-            auto v = new T();
-            SetField(v);
-            return v;
-        }
+        
         ~HiddenField();
 };
 }

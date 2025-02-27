@@ -5,7 +5,7 @@ namespace Tesses::Framework::Threading
 {
    #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
 
-    class ThreadHiddenFieldData {
+    class ThreadHiddenFieldData : public HiddenFieldData {
         public:
         #if defined(_WIN32)
 
@@ -50,7 +50,7 @@ namespace Tesses::Framework::Threading
     Thread::Thread(std::function<void()> fn)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto data = this->data.AllocField<ThreadHiddenFieldData>();
+        auto data = this->data.SetField(new ThreadHiddenFieldData());
         data->hasInvoked=false;
         data->fn = fn;
         #if defined(_WIN32) 
