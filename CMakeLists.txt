@@ -48,7 +48,7 @@ src/HiddenField.cpp
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
-option(TESSESFRAMEWORK_ENABLE_LIBWEBCAM "Enable LibWebCam" ON)
+option(TESSESFRAMEWORK_ENABLE_LIBWEBCAM "Enable LibWebCam" OFF)
 option(TESSESFRAMEWORK_ENABLE_NETWORKING "Enable Networking" ON)
 option(TESSESFRAMEWORK_ENABLE_THREADING "Enable Threading" ON)
 
