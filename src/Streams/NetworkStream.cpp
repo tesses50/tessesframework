@@ -566,18 +566,7 @@ namespace Tesses::Framework::Streams {
 }
 #else
 namespace Tesses::Framework::Streams {
-class TcpServer {
-    int32_t sock;
-    bool owns;
-    bool valid;
-    public:
-        TcpServer(int32_t sock,bool owns);
-        TcpServer(uint16_t port, int32_t backlog);
-        TcpServer(std::string ip, uint16_t port, int32_t backlog);
-        NetworkStream* GetStream(std::string& ip, uint16_t& port);
-        ~TcpServer();
-        void Close();
-};  
+
 TcpServer::TcpServer(int32_t sock,bool owns)
 {
 
