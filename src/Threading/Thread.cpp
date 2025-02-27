@@ -50,7 +50,7 @@ namespace Tesses::Framework::Threading
     Thread::Thread(std::function<void()> fn)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto data = this->data.SetField(new ThreadHiddenFieldData());
+        auto data = this->data.AllocField<ThreadHiddenFieldData>();
         data->hasInvoked=false;
         data->fn = fn;
         #if defined(_WIN32) 
@@ -67,7 +67,7 @@ namespace Tesses::Framework::Threading
     void Thread::Detach()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto data = this->data.AllocField<ThreadHiddenFieldData*>();
+        auto data = this->data.GetField<ThreadHiddenFieldData*>();
         #if !defined(GEKKO)
             #if defined(_WIN32)
             CloseHandle(data->thrd);
@@ -81,7 +81,7 @@ namespace Tesses::Framework::Threading
     void Thread::Join()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-        auto data = this->data.AllocField<ThreadHiddenFieldData>();
+        auto data = this->data.GetField<ThreadHiddenFieldData*>();
         #if defined(_WIN32)
             WaitForSingleObject(data->thrd, INFINITE);
         #elif defined(GEKKO)
