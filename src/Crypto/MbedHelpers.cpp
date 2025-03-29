@@ -65,7 +65,7 @@ namespace Tesses::Framework::Crypto
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha1_context*>(this->inner);
-        if(mbedtls_sha1_starts_ret(ctx) != 0) return false;
+        mbedtls_sha1_starts(ctx);
         return true;
         #endif
         return false;
@@ -74,7 +74,7 @@ namespace Tesses::Framework::Crypto
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha1_context*>(this->inner);
-        if(mbedtls_sha1_update_ret(ctx,buffer,sz) != 0) return false;
+        mbedtls_sha1_update(ctx,buffer,sz);
         return true;
         #endif
         return false;
@@ -103,7 +103,7 @@ namespace Tesses::Framework::Crypto
         auto ctx = static_cast<mbedtls_sha1_context*>(this->inner);
         std::vector<uint8_t> hash;
         hash.resize(20);
-        if(mbedtls_sha1_finish_ret(ctx,hash.data()) != 0) return {};
+        mbedtls_sha1_finish(ctx,hash.data());
         return hash;
         #endif
         return {};
@@ -152,7 +152,7 @@ namespace Tesses::Framework::Crypto
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha256_context*>(this->inner);
         this->is224=is224;
-        if(mbedtls_sha256_starts_ret(ctx,is224) != 0) return false;
+        mbedtls_sha256_starts(ctx,is224);
         return true;
         #endif
         return false;
@@ -166,7 +166,7 @@ namespace Tesses::Framework::Crypto
 
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha256_context*>(this->inner);
-        if(mbedtls_sha256_update_ret(ctx,buffer,sz) != 0) return false;
+        mbedtls_sha256_update(ctx,buffer,sz);
         return true;
         #endif
         return false;
@@ -195,7 +195,7 @@ namespace Tesses::Framework::Crypto
         auto ctx = static_cast<mbedtls_sha256_context*>(this->inner);
         std::vector<uint8_t> hash;
         hash.resize(32);
-        if(mbedtls_sha256_finish_ret(ctx,hash.data()) != 0) return {};
+        mbedtls_sha256_finish(ctx,hash.data());
         return hash;
         #endif
         return {};
@@ -243,7 +243,7 @@ namespace Tesses::Framework::Crypto
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha512_context*>(this->inner);
         this->is384=is384;
-        if(mbedtls_sha512_starts_ret(ctx,is384) != 0) return false;
+        mbedtls_sha512_starts(ctx,is384);
         return true;
         #endif
         return false;
@@ -256,7 +256,7 @@ namespace Tesses::Framework::Crypto
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         auto ctx = static_cast<mbedtls_sha512_context*>(this->inner);
-        if(mbedtls_sha512_update_ret(ctx,buffer,sz) != 0) return false;
+        mbedtls_sha512_update(ctx,buffer,sz);
         return true;
         #endif
         return false;
@@ -285,7 +285,7 @@ namespace Tesses::Framework::Crypto
         auto ctx = static_cast<mbedtls_sha512_context*>(this->inner);
         std::vector<uint8_t> hash;
         hash.resize(64);
-        if(mbedtls_sha512_finish_ret(ctx,hash.data()) != 0) return {};
+        mbedtls_sha512_finish(ctx,hash.data());
         return hash;
         #endif
         return {};

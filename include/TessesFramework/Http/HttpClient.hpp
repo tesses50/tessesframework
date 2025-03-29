@@ -23,7 +23,15 @@ namespace Tesses::Framework::Http
             ~StreamHttpRequestBody();
     };
 
-
+    class TextHttpRequestBody : public HttpRequestBody {
+        std::string text;
+        std::string mimeType;
+        public:
+            TextHttpRequestBody(std::string text, std::string mimeType);
+            void HandleHeaders(HttpDictionary& dict);
+            void Write(Tesses::Framework::Streams::Stream* strm);
+            ~TextHttpRequestBody();
+    };
 
 
     class HttpRequest {

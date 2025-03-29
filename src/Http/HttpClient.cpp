@@ -6,6 +6,7 @@
 #include "TessesFramework/Http/HttpStream.hpp"
 #include "TessesFramework/Streams/BufferedStream.hpp"
 #include <iostream>
+#include <string>
 using Stream = Tesses::Framework::Streams::Stream;
 using NetworkStream = Tesses::Framework::Streams::NetworkStream;
 using ClientTLSStream = Tesses::Framework::Crypto::ClientTLSStream;
@@ -23,6 +24,24 @@ namespace Tesses::Framework::Http
     }
 
     HttpRequestBody::~HttpRequestBody()
+    {
+
+    }
+    TextHttpRequestBody::TextHttpRequestBody(std::string text, std::string mimeType)
+    {
+        this->text = text;
+        this->mimeType = mimeType;
+    }
+    void TextHttpRequestBody::HandleHeaders(HttpDictionary& dict)
+    {
+        dict.SetValue("Content-Type",this->mimeType);
+        dict.SetValue("Content-Length",std::to_string(this->text.size()));
+    }
+    void TextHttpRequestBody::Write(Tesses::Framework::Streams::Stream* strm)
+    {
+        strm->WriteBlock((const uint8_t*)this->text.c_str(),this->text.size());
+    }
+    TextHttpRequestBody::~TextHttpRequestBody()
     {
 
     }
