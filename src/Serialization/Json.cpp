@@ -480,15 +480,17 @@ namespace Tesses::Framework::Serialization::Json
             bool first=true;
             for(auto item : dict)
             {
-                if(!first) {
-                    str.push_back(',');
-                }
+                
                 if(indent) {
+                    if(first) str.push_back(',');
                     str.append("\n");
                     str.append(tab(Encode(item.first,true) + ": " + Encode(item.second,true)));
                 }
                 else
                 {
+                    if(!first) {
+                        str.append(", ");
+                    }
                     str.append(Encode(item.first,false)+": "+Encode(item.second,false));
                 }
                 first=false;
@@ -504,16 +506,18 @@ namespace Tesses::Framework::Serialization::Json
             for(auto item : ls)
             {
                     
-                if(!first) {
-                    str.push_back(',');
-                }
                 if(indent) {
+
+                    if(!first) {
+                        str.push_back(',');
+                    }
                     str.append("\n");
                     str.append(tab(Encode(item,true)));
                 }
                 else
                 {
-                        str.append(Encode(item,false));
+                    if(!first) str.append(", ");
+                    str.append(Encode(item,false));
                 }
                 first=false;
             }
