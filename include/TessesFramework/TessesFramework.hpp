@@ -26,3 +26,4 @@
 #include "Lazy.hpp"
 #include "Mail/Smtp.hpp"
 #include "HiddenField.hpp"
+#include "Serialization/Json.hpp"

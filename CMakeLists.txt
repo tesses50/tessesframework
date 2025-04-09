@@ -14,6 +14,7 @@ src/Http/HttpClient.cpp
 src/Http/HttpStream.cpp
 src/Http/ContentDisposition.cpp
 src/Mail/Smtp.cpp
+src/Serialization/Json.cpp
 src/Streams/FileStream.cpp
 src/Streams/MemoryStream.cpp
 src/Streams/NetworkStream.cpp
@@ -178,6 +179,8 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(mountabletest examples/mountabletest.cpp)
         target_link_libraries(mountabletest PUBLIC tessesframework)
 
+        add_executable(printjsondecodedemoji examples/printjsondecodedemoji.cpp)
+        target_link_libraries(printjsondecodedemoji PUBLIC tessesframework)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)
@@ -188,6 +191,13 @@ add_executable(tfileserver apps/tfileserver.cpp)
 target_link_libraries(tfileserver PUBLIC tessesframework)
 install(TARGETS tfileserver DESTINATION bin)
 
+add_executable(tjsonpretty apps/tjsonpretty.cpp)
+target_link_libraries(tjsonpretty PUBLIC tessesframework)
+install(TARGETS tjsonpretty DESTINATION bin)
+
+add_executable(tjsonunpretty apps/tjsonunpretty.cpp)
+target_link_libraries(tjsonunpretty PUBLIC tessesframework)
+install(TARGETS tjsonunpretty DESTINATION bin)
 endif()
 
 include(InstallRequiredSystemLibraries)
