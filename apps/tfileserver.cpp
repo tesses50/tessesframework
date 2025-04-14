@@ -14,8 +14,10 @@ void print_help(const char* name)
 }
 int main(int argc, char** argv)
 {
-    TF_Init();
+    try {
 
+    TF_InitWithConsole();
+    TF_LOG("INIT");
     const char* directory = "wwwroot";
     bool spa=false;
     bool allowListing = false;
@@ -53,6 +55,8 @@ int main(int argc, char** argv)
             directory = argv[i];
         }
     }
+    
+    std::cout << "In folder: " << std::filesystem::absolute(directory).string() << std::endl;
 
 
     FileServer fs(directory,allowListing, spa);
@@ -60,5 +64,10 @@ int main(int argc, char** argv)
     server.StartAccepting();
     TF_RunEventLoop();
     std::cout << "Closing server" << std::endl;
+    TF_Quit();
+}catch(std::exception& ex)
+{
+    TF_LOG(ex.what());
+}
     return 0;
 }

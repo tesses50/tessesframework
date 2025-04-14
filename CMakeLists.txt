@@ -52,16 +52,17 @@ option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
 option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
+option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" ON)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 if(TESSESFRAMEWORK_ENABLE_MBED)
 if(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
 include(cmake/bin2h.cmake)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/CertificateChain.h "#pragma once\n")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h "#pragma once\n")
 #target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
-bin2h(SOURCE_FILE ${TESSESFRAMEWORK_CERT_BUNDLE_FILE} HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/include/CertificateChain.h VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/include/CertificateChain.h "\n")
+bin2h(SOURCE_FILE ${TESSESFRAMEWORK_CERT_BUNDLE_FILE} HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h "\n")
 #else()
 #target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
 
@@ -89,11 +90,15 @@ target_include_directories(${TessesFramework_TARGET} PUBLIC ${MBEDTLS_DIR}/inclu
 target_link_directories(${TessesFramework_TARGET} PUBLIC ${MBEDTLS_DIR}/lib)
 endif()
 target_link_libraries(${TessesFramework_TARGET} PUBLIC mbedtls mbedx509 mbedcrypto)
-target_include_directories(${TessesFramework_TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
 endif()
 target_include_directories(${TessesFramework_TARGET}
     PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+target_include_directories(${TessesFramework_TARGET}
+    PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube")
@@ -145,7 +150,8 @@ install(TARGETS ${TessesFrameworkLibs}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(DIRECTORY include/TessesFramework DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/TessesFramework DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(EXPORT TessesFrameworkTargets
     FILE TessesFrameworkTargets.cmake
@@ -157,15 +163,13 @@ install(EXPORT TessesFrameworkTargets
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/TessesFrameworkFeatures.h.in "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkFeatures.h"
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/TessesFrameworkFeatures.h.in "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TessesFrameworkFeatures.h"
 INSTALL_DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TessesFramework/TessesFrameworkFeatures.h)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkConfig.cmake"
 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
-
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/TessesFrameworkFeatures.h"
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/TessesFramework)
 endif()
+
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)

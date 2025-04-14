@@ -15,6 +15,7 @@ namespace Tesses::Framework::Streams
             TcpServer(std::string ip, uint16_t port, int32_t backlog);
             NetworkStream* GetStream(std::string& ip, uint16_t& port);
             ~TcpServer();
+            bool IsValid();
             void Close();
     };  
     class NetworkStream : public Stream {

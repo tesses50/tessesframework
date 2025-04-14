@@ -4,6 +4,7 @@
 #include <windows.h>
 #elif defined(GEKKO)
 #include <ogc/lwp.h>
+#elif defined(__SWITCH__)
 #else
 #include <pthread.h>
 #endif

@@ -2,7 +2,7 @@
 
 #if defined(TESSESFRAMEWORK_ENABLE_MBED)
 #if defined(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
-#include "CertificateChain.h"
+#include "TessesFramework/CertificateChain.h"
 #else
 #include "TessesFramework/TextStreams/StreamReader.hpp"
 using StreamReader = Tesses::Framework::TextStreams::StreamReader;

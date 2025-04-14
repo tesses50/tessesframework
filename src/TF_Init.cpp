@@ -5,6 +5,10 @@
 #if defined(_WIN32)
 #include <windows.h>
 #include <cstdio>
+#elif defined(__SWITCH__)
+extern "C" {
+#include <switch.h>
+}
 #elif defined(GEKKO)
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,10 +29,23 @@ static GXRModeObj *rmode = NULL;
 
 #endif
 
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+#include "TessesFramework/Threading/Mutex.hpp"
+#endif
+
 namespace Tesses::Framework
 {
+    
+    #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
+    namespace Threading
+    {
+        extern void JoinAllThreads();
+        extern void LookForFinishedThreads();
+    }
+    #endif
     volatile static bool isRunningSig=true;
     volatile static std::atomic<bool> isRunning;
+    volatile static std::atomic<bool> gaming_console_events=true;
     void TF_ConnectToSelf(uint16_t port)
     {
         Tesses::Framework::Streams::NetworkStream ns("127.0.0.1",port,false,false,false);
@@ -49,21 +66,52 @@ namespace Tesses::Framework
             TF_RunEventLoopItteration();
         }
     }
+    #if defined(__SWITCH__)
+    bool initedConsole=false;
+    PadState default_pad;        
+    #endif
     void TF_RunEventLoopItteration()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
+        Tesses::Framework::Threading::LookForFinishedThreads();
+        #endif
     
         if(!isRunningSig) isRunning=false;
         #if defined(GEKKO)
-        PAD_ScanPads();
-        if(PAD_ButtonsDown(0) & PAD_BUTTON_START) isRunning=false;
+        if(gaming_console_events)
+        {
+            PAD_ScanPads();
+            if(PAD_ButtonsDown(0) & PAD_BUTTON_START) isRunning=false;
+        }
+        #elif defined(__SWITCH__)
+        if(gaming_console_events)
+        {
+            if(!appletMainLoop()) isRunning=false;
+            
+            padUpdate(&default_pad);
+
+            u64 kDown = padGetButtonsDown(&default_pad);
+
+            if (kDown & HidNpadButton_Plus)
+                isRunning=false;
+
+
+            if(initedConsole)
+            consoleUpdate(NULL);
+
+
+        }
         #endif
+        
     }
     
     void TF_Quit()
     {
         isRunning=false;
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
+        Tesses::Framework::Threading::JoinAllThreads();
+        #endif
     }
-    
     void TF_Init()
     {
         #if defined(_WIN32)
@@ -91,6 +139,29 @@ if (iResult != 0) {
         #endif
         WPAD_Init();
         #endif
+        #elif defined(__SWITCH__)
+        padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+        padInitializeDefault(&default_pad);
+        socketInitializeDefault();
+
+        // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+        #else
+        signal(SIGPIPE,SIG_IGN);
+        signal(SIGINT,_sigInt);
+        #endif
+ 
+    }
+    bool TF_GetConsoleEventsEnabled()
+    {
+        return gaming_console_events;
+    }
+    void TF_SetConsoleEventsEnabled(bool flag)
+    {
+        gaming_console_events=flag;
+    }
+    void TF_InitConsole()
+    {
+        #if defined(GEKKO)
         rmode = VIDEO_GetPreferredMode(NULL);
 
         // Allocate memory for the display in the uncached region
@@ -121,9 +192,34 @@ if (iResult != 0) {
         // we can use variables for this with format codes too
         // e.g. printf ("\x1b[%d;%dH", row, column );
         printf("\x1b[2;0H");
-        #else
-        signal(SIGPIPE,SIG_IGN);
-        signal(SIGINT,_sigInt);
+        #elif defined(__SWITCH__)
+        consoleInit(NULL);
+        initedConsole=true;
         #endif
     }
+    void TF_InitWithConsole()
+    {
+        TF_Init();
+        TF_InitConsole();
+        #if defined(TESSESFRAMEWORK_LOGTOFILE)
+        printf("Enabled Logging\n");
+        #endif
+    }
+    #if defined(TESSESFRAMEWORK_LOGTOFILE)
+    #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    Tesses::Framework::Threading::Mutex log_mtx;
+    #endif
+    void TF_Log(std::string txtToLog)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        log_mtx.Lock();
+        #endif
+        FILE* f = fopen("TF_Log.log","a");
+        fprintf(f,"%s\n",txtToLog.c_str());
+        fclose(f);
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        log_mtx.Unlock();
+        #endif
+    }
+    #endif
 }

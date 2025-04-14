@@ -1,6 +1,6 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
-
+#include <iostream>
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
@@ -36,7 +36,7 @@ extern "C" {
 #if defined(GEKKO)
 
 extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool use_dhcp, int max_retries);
-#elif !defined(_WIN32) && !defined(__ANDROID__)
+#elif !defined(_WIN32) && !defined(__ANDROID__) && !defined(__SWITCH__)
 #include <ifaddrs.h>
 #endif
 
@@ -75,7 +75,7 @@ namespace Tesses::Framework::Streams {
         char gateway[16];
         if_config(localIp,netmask, gateway, true, 1);
         ipConfig.push_back(std::pair<std::string,std::string>("net",localIp));
-        #elif defined(_WIN32) || defined(__ANDROID__)
+        #elif defined(_WIN32) || defined(__ANDROID__) || defined(__SWITCH__)
 
         #else
         struct ifaddrs *ifAddrStruct = NULL;
@@ -228,6 +228,7 @@ namespace Tesses::Framework::Streams {
         this->sock = NETWORK_SOCKET(AF_INET, SOCK_STREAM, 0);    
         if(this->sock < 0) 
         {
+            std::cout << "FAILED TO CREATE SOCKET FOR SOME REASON" << std::endl;
             this->valid=false;
             return;
         }    
@@ -245,16 +246,22 @@ namespace Tesses::Framework::Streams {
         #endif
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
+            std::cout << "FAILED TO BIND FOR SOME REASON" << std::endl;
             this->valid = false;
             return;
         }
 
         if(NETWORK_LISTEN(this->sock, backlog) != 0) 
         {
+            std::cout << "FAILED TO LISTEN FOR SOME REASON" << std::endl;
             this->valid = false;
             return;
         }
         this->valid = true;
+    }
+    bool TcpServer::IsValid()
+    {
+        return this->valid;
     }
     TcpServer::TcpServer(std::string ip, uint16_t port, int32_t backlog)
     {
@@ -345,14 +352,14 @@ namespace Tesses::Framework::Streams {
         if(ipV6)
         {
             #if defined(AF_INET6)
-            this->sock = socket(AF_INET6, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
+            this->sock = NETWORK_SOCKET(AF_INET6, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
             if(this->sock >= 0) this->success=true;
             #endif
         }
         else
         {
             #if defined(AF_INET)
-            this->sock = socket(AF_INET, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
+            this->sock = NETWORK_SOCKET(AF_INET, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
             if(this->sock >= 0) this->success=true;
             #endif
         }
@@ -563,6 +570,7 @@ namespace Tesses::Framework::Streams {
         int noDelay2 = noDelay;
         NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, TCP_NODELAY, (const char*)&noDelay2,(socklen_t)sizeof(noDelay2));
     }
+    
 }
 #else
 namespace Tesses::Framework::Streams {
@@ -587,6 +595,10 @@ TcpServer::~TcpServer()
 {
 
 }
+bool TcpServer::IsValid()
+    {
+        return this->valid;
+    }
 void TcpServer::Close()
 {
     

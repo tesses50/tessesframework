@@ -3,6 +3,7 @@
 #include "TessesFramework/Filesystem/SubdirFilesystem.hpp"
 #include <iostream>
 #include <unistd.h>
+#include "TessesFramework/Common.hpp"
 using LocalFilesystem = Tesses::Framework::Filesystem::LocalFilesystem;
 using SubdirFilesystem = Tesses::Framework::Filesystem::SubdirFilesystem;
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
@@ -38,7 +39,7 @@ namespace Tesses::Framework::Http
     }
     bool FileServer::SendFile(ServerContext& ctx,VFSPath path)
     {
-       
+        TF_LOG("File: " + path.ToString());
         auto strm = this->vfs->OpenFile(path,"rb");
         bool retVal = false;
         if(strm != nullptr)
@@ -55,14 +56,18 @@ namespace Tesses::Framework::Http
     bool FileServer::Handle(ServerContext& ctx)
     {
         auto path = HttpUtils::UrlPathDecode(ctx.path);
-
+        
         if(this->vfs->DirectoryExists(path))
         {
+            TF_LOG("Directory exists");
             for(auto f : defaultNames)
             {
-                VFSPath p(path,f);
-                
-
+                VFSPath p=path;
+                p = p / f;
+                TF_LOG("Trying " + p.ToString());
+                TF_LOG("Before file exists");
+                TF_LOG(this->vfs->FileExists(p)?"File Exists" : "File Does Not Exist");
+                TF_LOG("After file exists");
                 if(this->vfs->FileExists(p))
                     return SendFile(ctx,p);
             }

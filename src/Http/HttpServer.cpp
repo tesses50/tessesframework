@@ -8,6 +8,7 @@
 #include "TessesFramework/Http/HttpStream.hpp"
 #include "TessesFramework/Crypto/MbedHelpers.hpp"
 #include "TessesFramework/Threading/Mutex.hpp"
+#include "TessesFramework/Common.hpp"
 
 #include <iostream>
 using FileStream = Tesses::Framework::Streams::FileStream;
@@ -536,20 +537,36 @@ namespace Tesses::Framework::Http
         if(http == nullptr) return;
         auto svr=this->server;
         auto http = this->http;
+        TF_LOG("Before Creating Thread");
         thrd = new Threading::Thread([svr,http]()->void {
             while(TF_IsRunning())
             {
+                TF_LOG("after TF_IsRunning");
                 std::string ip;
                 uint16_t port;
                 auto sock =svr->GetStream(ip,port);
-                if(sock == nullptr) return;
+                
+                TF_LOG("New Host IP: " + ip + ":" + std::to_string(port));
+                
+                if(sock == nullptr) 
+                {
+                    std::cout << "STREAM ERROR" << std::endl;
+                    return;
+                }
+                TF_LOG("Before entering socket thread");
                 Threading::Thread thrd2([sock,http,ip,port]()->void {
+                    TF_LOG("In thread to process");
                     HttpServer::Process(*sock,*http,ip,port,false);
+                    TF_LOG("In thread after process");
                     delete sock;
                 });
+                TF_LOG("Before attach");
                 thrd2.Detach();
+                TF_LOG("After attach");
             }
         });
+        TF_LOG("Before printing interfaces");
+
         std::cout << "\e[34mInterfaces:\n";
         for(auto _ip : NetworkStream::GetIPs())
         {
@@ -558,7 +575,9 @@ namespace Tesses::Framework::Http
             std::cout << "\e[35mhttp://";
             std::cout << _ip.second << ":" << std::to_string(this->port) << "/\n";
         }
+        if(!svr->IsValid()) std::cout << "\e[31mError, we failed to bind or something\e[39m\n" << std::endl;
         std::cout << "\e[31mAlmost Ready to Listen\e[39m\n";
+        TF_LOG("After printing interfaces");
     }
     HttpServer::~HttpServer()
     {
@@ -834,7 +853,7 @@ namespace Tesses::Framework::Http
     }
     void HttpServer::Process(Stream& strm, IHttpServer& server, std::string ip, uint16_t port, bool encrypted)
     {
-        
+        TF_LOG("In process");
         while(true)
         {
             BufferedStream bStrm(strm);
@@ -862,6 +881,8 @@ namespace Tesses::Framework::Http
 
                     ctx.originalPath = pp[0];
                     ctx.path = ctx.originalPath;
+
+                    TF_LOG(ctx.method + " with path " + ctx.path);
 
                     auto queryPart = pp[1];
                     if(!queryPart.empty())

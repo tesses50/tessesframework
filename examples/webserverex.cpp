@@ -86,12 +86,14 @@ class MyOtherWebServer : public IHttpServer
     public:
         bool Handle(ServerContext& ctx)
         {
+            TF_LOG("IN HANDLE");
             if(ctx.path == "/")
             {
             std::string name;
             if(ctx.queryParams.TryGetFirst("name",name))
             {
                 std::cout << name << std::endl;
+                TF_LOG(name);
                 ctx
                 .WithMimeType("text/plain")
                 .WithContentDisposition(HttpUtils::Sanitise(name) + ".txt",false)
@@ -114,7 +116,7 @@ class MyOtherWebServer : public IHttpServer
 
 int main(int argc, char** argv)
 {
-    TF_Init();
+    TF_InitWithConsole();
     MyOtherWebServer myo;
     MyWebServer mws;
 
