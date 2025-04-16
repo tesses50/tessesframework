@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #if defined(_WIN32)
 #include <windows.h>
+#include "TessesFramework/Filesystem/VFSFix.hpp"
 #undef min
 #else
 #include <utime.h>
