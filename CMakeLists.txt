@@ -40,6 +40,7 @@ src/TF_Init.cpp
 src/wrapper.cpp
 src/HiddenField.cpp
 )
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
