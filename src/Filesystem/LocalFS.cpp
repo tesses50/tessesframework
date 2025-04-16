@@ -2,9 +2,22 @@
 #include "TessesFramework/Streams/FileStream.hpp"
 #include <iostream>
 #include <sys/stat.h>
+#if defined(_WIN32)
+#include <windows.h>
+#undef min
+#else
 #include <utime.h>
+#endif
 namespace Tesses::Framework::Filesystem
 {
+    #if defined(_WIN32)
+    static void TimetToFileTime(time_t t, LPFILETIME pft) {
+        ULARGE_INTEGER time_value;
+        time_value.QuadPart = (t * 10000000LL) + 116444736000000000LL;
+        pft->dwLowDateTime = time_value.LowPart;
+        pft->dwHighDateTime = time_value.HighPart;
+    }
+    #endif
     void LocalFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
     {
         std::string s = VFSPathToSystem(path);
@@ -18,10 +31,36 @@ namespace Tesses::Framework::Filesystem
     void LocalFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
     {
         std::string s = VFSPathToSystem(path);
+        #if defined(_WIN32)
+        FILETIME lastWriteF;
+        FILETIME lastAccessF;
+        TimetToFileTime(lastWrite,&lastWriteF);
+        TimetToFileTime(lastAccess,&lastAccessF);
+        HANDLE hFile = CreateFileA(
+            s.c_str(),
+            FILE_WRITE_ATTRIBUTES,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS, // For directories
+            NULL
+        );
+        if(hFile != INVALID_HANDLE_VALUE)
+        {
+            SetFileTime(
+                hFile,
+                NULL,
+                &lastAccessF,
+                &lastWriteF
+            );
+            CloseHandle(hFile);
+        }
+        #else
         struct utimbuf utim;
         utim.actime = lastAccess;
         utim.modtime = lastWrite;
         utime(s.c_str(),&utim);
+        #endif
     }
     VFSPath LocalFilesystem::ReadLink(VFSPath path)
     {
