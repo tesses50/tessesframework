@@ -107,11 +107,9 @@ namespace Tesses::Framework::Http
                 uint8_t finField =  fin ?  0b10000000 : 0;
                 uint8_t opcode2 = i == 0 ? opcode : 0;
                 uint8_t firstByte = finField | (opcode2 & 0xF);
-                #if defined(_WIN32)
-                size_t len = min((size_t)4096,msg->data.size() - offset);
-                #else
+                
                 size_t len = std::min((size_t)4096,msg->data.size()- offset);
-                #endif
+                
                 strm->WriteByte(firstByte);
                 write_len_bytes((uint64_t)len);
                 strm->WriteBlock(msg->data.data() + offset,len);

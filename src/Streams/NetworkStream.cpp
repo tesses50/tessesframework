@@ -21,6 +21,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <ws2tcpip.h>
 #include <winsock2.h>
 #include <windows.h>
+#undef min
 #pragma comment(lib, "ws2_32.lib")
 #else
 extern "C" {

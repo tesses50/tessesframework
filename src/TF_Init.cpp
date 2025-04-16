@@ -4,6 +4,7 @@
 #include <csignal>
 #if defined(_WIN32)
 #include <windows.h>
+#undef min
 #include <cstdio>
 #elif defined(__SWITCH__)
 extern "C" {

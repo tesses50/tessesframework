@@ -57,11 +57,9 @@ namespace Tesses::Framework::Http
         if(this->length == 0) return 0;
         if(this->length > 0)
         {
-            #if defined(_WIN32)
-            len = min((size_t)(this->length - this->position), len);
-            #else
+            
             len = std::min((size_t)(this->length - this->position), len);
-            #endif
+            
             if(len > 0)
                 len = this->strm->Read(buff,len);
             this->position += len;
@@ -73,11 +71,8 @@ namespace Tesses::Framework::Http
             {
                 if(this->offset < this->read)
                 {
-                    #if defined(_WIN32)
-                    len = min((size_t)(this->read - this->offset), len);
-                    #else
+                    
                     len = std::min((size_t)(this->read - this->offset), len);
-                    #endif
                     if(len > 0)
                         len = this->strm->Read(buff,len);
                     this->offset += len;
@@ -107,12 +102,8 @@ namespace Tesses::Framework::Http
                         else
                         {
                             this->offset=0;
-                            #if defined(_WIN32)
-
-                            len = min((size_t)(this->read - this->offset), len);
-                            #else
+                            
                             len = std::min((size_t)(this->read - this->offset), len);
-                            #endif
                             if(len > 0)
                                 len = this->strm->Read(buff,len);
                             this->offset += len;
@@ -136,11 +127,8 @@ namespace Tesses::Framework::Http
         if(this->length == 0) return 0;
         if(this->length > 0)
         {
-            #if defined(_WIN32)
-            len = min((size_t)(this->length - this->position), len);
-            #else
+            
             len = std::min((size_t)(this->length - this->position), len);
-            #endif
             if(len > 0)
                 len = this->strm->Write(buff,len);
             this->position += len;

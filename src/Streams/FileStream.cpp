@@ -1,6 +1,7 @@
 #include "TessesFramework/Streams/FileStream.hpp"
 #if defined(_WIN32)
 #include <windows.h>
+#undef min
 #endif
 namespace Tesses::Framework::Streams
 {

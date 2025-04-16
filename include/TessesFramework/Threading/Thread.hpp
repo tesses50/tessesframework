@@ -2,6 +2,7 @@
 #include <functional>
 #if defined(_WIN32)
 #include <windows.h>
+#undef min
 #elif defined(GEKKO)
 #include <ogc/lwp.h>
 #elif defined(__SWITCH__)
