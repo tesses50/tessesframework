@@ -39,7 +39,7 @@ namespace Tesses::Framework
     bool TF_GetConsoleEventsEnabled();
     void TF_SetConsoleEventsEnabled(bool flag);
     void TF_InitConsole();
-    #define TESSESFRAMEWORK_LOGTOFILE
+   
     #if defined(TESSESFRAMEWORK_LOGTOFILE)
     void TF_Log(std::string dataToLog);
     #endif
