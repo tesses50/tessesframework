@@ -31,7 +31,11 @@ namespace Tesses::Framework::Streams {
     {
         if(this->offset < this->read)
         {
+            #if defined(_WIN32)
+            sz = min(sz,this->read-this->offset);
+            #else
             sz = std::min(sz,this->read-this->offset);
+            #endif
             memcpy(buff, this->buffer+this->offset, sz);
             this->offset+=sz;
             return sz;
@@ -40,8 +44,11 @@ namespace Tesses::Framework::Streams {
         {
             this->read = this->strm->Read(this->buffer, this->bufferSize);
             this->offset=0;
-
+            #if defined(_WIN32)
+            sz = min(sz,this->read-this->offset);
+            #else
             sz = std::min(sz,this->read-this->offset);
+            #endif
             memcpy(buff, this->buffer+this->offset, sz);
             this->offset+=sz;
             return sz;

@@ -13,7 +13,11 @@ namespace Tesses::Framework::Mail
         size_t offset = 0;
         do {
             if(!first) myStr.append("\r\n");
+            #if defined(_WIN32)
+            read = min<size_t>(72, txt.size()-offset);
+            #else
             read = std::min<size_t>(72, txt.size()-offset);
+            #endif
             if(read > 0)
                 myStr.insert(myStr.end(),txt.begin()+offset,txt.begin()+offset+read);
             

@@ -14,7 +14,11 @@ namespace Tesses::Framework::Streams
     size_t MemoryStream::Read(uint8_t* buff, size_t sz)
     {
         if(this->offset >= this->buffer.size()) return 0;
+        #if defined(_WIN32)
+        size_t toRead = min(sz, this->buffer.size()-this->offset);
+        #else
         size_t toRead = std::min(sz, this->buffer.size()-this->offset);
+        #endif
         memcpy(buff, this->buffer.data() + this->offset, toRead);
         this->offset += toRead;
         return toRead;

@@ -498,7 +498,7 @@ namespace Tesses::Framework::Streams {
     {
         
         if(!this->success) return 0;
-        ssize_t r = NETWORK_RECV(this->sock,(char*)buff,sz,0);
+        auto r = NETWORK_RECV(this->sock,(char*)buff,sz,0);
 
         if(r <= 0)
         {
@@ -513,7 +513,7 @@ namespace Tesses::Framework::Streams {
 
         if(!this->success) return 0;
        
-        ssize_t sz2 = NETWORK_SEND(this->sock,(const char*)buff,sz, 0);
+        auto sz2 = NETWORK_SEND(this->sock,(const char*)buff,sz, 0);
         if(sz2 <= 0) {
             this->endOfStream=true;
             return 0;
@@ -526,7 +526,7 @@ namespace Tesses::Framework::Streams {
         if(!this->success) return 0;
         struct sockaddr_storage storage;
         socklen_t addrlen=(socklen_t)sizeof(storage);
-        ssize_t r = NETWORK_RECVFROM(this->sock,(char*)buff,sz,0, (struct sockaddr*)&storage, (socklen_t*)&addrlen);
+        auto r = NETWORK_RECVFROM(this->sock,(char*)buff,sz,0, (struct sockaddr*)&storage, (socklen_t*)&addrlen);
         ip = StringifyIP((struct sockaddr*)&storage);
         port = GetPort((struct sockaddr*)&storage);
         if(r < 0) return 0;
@@ -555,7 +555,7 @@ namespace Tesses::Framework::Streams {
         }
        
         SetPort((struct sockaddr*)&addr, port);
-        ssize_t sz2 = NETWORK_SENDTO(this->sock,(const char*)buff,sz, 0, (const sockaddr*)&addr, (socklen_t)sizeof(addr));
+        auto sz2 = NETWORK_SENDTO(this->sock,(const char*)buff,sz, 0, (const sockaddr*)&addr, (socklen_t)sizeof(addr));
         if(sz2 < 0) return 0;
         return (size_t)sz2;
     }

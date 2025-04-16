@@ -107,7 +107,11 @@ namespace Tesses::Framework::Http
                 uint8_t finField =  fin ?  0b10000000 : 0;
                 uint8_t opcode2 = i == 0 ? opcode : 0;
                 uint8_t firstByte = finField | (opcode2 & 0xF);
+                #if defined(_WIN32)
+                size_t len = min((size_t)4096,msg->data.size() - offset);
+                #else
                 size_t len = std::min((size_t)4096,msg->data.size()- offset);
+                #endif
                 strm->WriteByte(firstByte);
                 write_len_bytes((uint64_t)len);
                 strm->WriteBlock(msg->data.data() + offset,len);
@@ -368,7 +372,11 @@ namespace Tesses::Framework::Http
     static bool parseUntillBoundaryEnd(Tesses::Framework::Streams::Stream* src, Tesses::Framework::Streams::Stream* dest, std::string boundary)
     {
         bool hasMore=true;
+        #if defined(_WIN32)
+        uint8_t* checkBuffer = new uint8_t[boundary.size()];
+        #else
         uint8_t checkBuffer[boundary.size()];
+        #endif
         int b;
         size_t i = 0;
         size_t i2 = 0;
@@ -432,6 +440,9 @@ namespace Tesses::Framework::Http
         {
             dest->Write(buffer,offsetInMem);
         }
+        #if defined(_WIN32)
+        delete checkBuffer;
+        #endif
         return hasMore;
     }
 
@@ -567,16 +578,16 @@ namespace Tesses::Framework::Http
         });
         TF_LOG("Before printing interfaces");
 
-        std::cout << "\e[34mInterfaces:\n";
+        std::cout << "\x1B[34mInterfaces:\n";
         for(auto _ip : NetworkStream::GetIPs())
         {
-            std::cout << "\e[32m";
+            std::cout << "\x1B[32m";
             std::cout << _ip.first << ": ";
-            std::cout << "\e[35mhttp://";
+            std::cout << "\x1B[35mhttp://";
             std::cout << _ip.second << ":" << std::to_string(this->port) << "/\n";
         }
-        if(!svr->IsValid()) std::cout << "\e[31mError, we failed to bind or something\e[39m\n" << std::endl;
-        std::cout << "\e[31mAlmost Ready to Listen\e[39m\n";
+        if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
+        std::cout << "\x1B[31mAlmost Ready to Listen\x1B[39m\n";
         TF_LOG("After printing interfaces");
     }
     HttpServer::~HttpServer()

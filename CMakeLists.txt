@@ -52,7 +52,7 @@ option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
 option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
-option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" ON)
+option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 

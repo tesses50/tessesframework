@@ -25,10 +25,17 @@ namespace Tesses::Framework::TextStreams {
 
     bool StreamReader::ReadBlock(std::string& str, size_t len)
     {
+        #if defined(_WIN32)
+        uint8_t* buff = new uint8_t[len];
+        #else
         uint8_t buff[len];
+        #endif
         len = strm->ReadBlock(buff,len);
         if(len == 0) return false;
         str.append((const char*)buff, len);
+        #if defined(_WIN32)
+        delete buff;
+        #endif
         return true;
     }
     StreamReader::~StreamReader()

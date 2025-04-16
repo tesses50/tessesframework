@@ -16,7 +16,11 @@ namespace Tesses::Framework::Filesystem
     {
         if(!this->canRead) return 0;
         if(this->pos >= this->data->file.size()) return 0;
+        #if defined(_WIN32)
+        size_t toRead = min(sz, (size_t)(this->data->file.size()-this->pos));
+        #else
         size_t toRead = std::min(sz, (size_t)(this->data->file.size()-this->pos));
+        #endif
         memcpy(buff, this->data->file.data() + this->pos, toRead);
 
         this->pos += toRead;
