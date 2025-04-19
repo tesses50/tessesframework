@@ -184,6 +184,9 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         add_executable(safesubpath examples/safesubpath.cpp)
         target_link_libraries(safesubpath PUBLIC tessesframework)
 
+        add_executable(pathtest examples/pathtest.cpp)
+        target_link_libraries(pathtest PUBLIC tessesframework)
+
         add_executable(mountabletest examples/mountabletest.cpp)
         target_link_libraries(mountabletest PUBLIC tessesframework)
 

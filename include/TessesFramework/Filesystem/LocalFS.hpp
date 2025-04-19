@@ -34,4 +34,5 @@ namespace Tesses::Framework::Filesystem
             void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
             void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
     };
+    extern LocalFilesystem LocalFS;
 }

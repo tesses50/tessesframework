@@ -1,5 +1,6 @@
 #include "TessesFramework/Filesystem/VFS.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
+#include "TessesFramework/Filesystem/LocalFS.hpp"
 namespace Tesses::Framework::Filesystem
 {
     VFSPathEnumeratorItterator::VFSPathEnumeratorItterator()
@@ -190,6 +191,64 @@ namespace Tesses::Framework::Filesystem
     {
         return VFSPath("/");
     }
+    VFSPath VFSPath::GetAbsoluteCurrentDirectory()
+    {
+        auto p = std::filesystem::current_path();
+        return LocalFS.SystemToVFSPath(p.string());
+    }
+    void VFSPath::SetAbsoluteCurrentDirectory(VFSPath path)
+    {
+        auto res = LocalFS.VFSPathToSystem(path);
+        std::filesystem::path mpath=res;
+        std::filesystem::current_path(mpath);
+    }
+    VFSPath VFSPath::MakeAbsolute()
+    {
+        return MakeAbsolute(GetAbsoluteCurrentDirectory());
+    }
+    VFSPath VFSPath::MakeAbsolute(VFSPath curDir)
+    {
+        VFSPath p2 = curDir / *this;
+        return p2.CollapseRelativeParents();
+    }
+    VFSPath VFSPath::MakeRelative()
+    {
+        return MakeRelative(GetAbsoluteCurrentDirectory());
+    }
+    VFSPath VFSPath::MakeRelative(VFSPath toMakeRelativeTo)
+    {
+
+        if(this->relative) return *this;
+        
+        
+        
+        size_t i;
+        size_t len = std::min(toMakeRelativeTo.path.size(),this->path.size());
+        for(i = 0; i < len; i++)
+        {
+            if(this->path[i] != toMakeRelativeTo.path[i]) break;
+        }
+
+        if(i == this->path.size()-1 && i == toMakeRelativeTo.path.size()-1)
+        {
+            VFSPath path({this->path[this->path.size()-1]});
+            path.relative = true;
+            return path;
+        }
+
+        std::vector<std::string> parts(this->path.begin()+i, this->path.end());
+        
+        if(i < toMakeRelativeTo.path.size())
+        {
+            for(; i < toMakeRelativeTo.path.size();i++)
+            {
+                parts.insert(parts.begin(),"..");
+            }
+        }
+        VFSPath p2(parts);
+        p2.relative = true;
+        return p2;
+    }
     VFSPath VFSPath::CollapseRelativeParents()
     {
         std::vector<std::string> parts;
@@ -217,7 +276,7 @@ namespace Tesses::Framework::Filesystem
         newpath.path = parts;
         return newpath;
     }
-    VFSPath VFSPath::RelativeCurrentDirectory()
+    VFSPath VFSPath::CurrentDirectoryAsRelative()
     {
         VFSPath path;
         path.relative=true;

@@ -459,7 +459,7 @@ namespace Tesses::Framework::Serialization::Json
                 }
                 else if((c >= 0 && c < 32) || c == 127 )
                 {
-                    str2.append("\\\\u00");
+                    str2.append("\\u00");
                     uint8_t c2 = (uint8_t)c;
 
                     str2.push_back(HttpUtils::NibbleToHex((c2 >> 4) & 0x0F));

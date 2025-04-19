@@ -188,6 +188,7 @@ namespace Tesses::Framework::Filesystem
             delete dir;
         });
     }
+    LocalFilesystem LocalFS;
 }
 
 // C:/Users/Jim/Joel

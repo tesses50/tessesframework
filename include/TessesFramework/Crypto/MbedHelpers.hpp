@@ -53,4 +53,14 @@ namespace Tesses::Framework::Crypto
             static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream* strm,bool is384=false);
             static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream& strm,bool is384=false);
     };
+    typedef enum  {
+        VERSION_SHA1=1,
+        VERSION_SHA224=224,
+        VERSION_SHA256=256,
+        VERSION_SHA384=384,
+        VERSION_SHA512=512
+    } ShaVersion;
+    bool PBKDF2(std::vector<uint8_t>& output,std::string pass, std::vector<uint8_t>& salt, long itterations, ShaVersion version);
+
+    bool RandomBytes(std::vector<uint8_t>& output, std::string personal_str);
 }

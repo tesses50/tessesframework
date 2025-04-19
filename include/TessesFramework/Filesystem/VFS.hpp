@@ -9,7 +9,7 @@ namespace Tesses::Framework::Filesystem
 {
     class VFSPath {
         public:
-            static VFSPath RelativeCurrentDirectory();
+            static VFSPath CurrentDirectoryAsRelative();
             bool relative;
             static std::vector<std::string> SplitPath(std::string path);
             std::vector<std::string> path;  
@@ -29,6 +29,14 @@ namespace Tesses::Framework::Filesystem
             void ChangeExtension(std::string ext);
             void RemoveExtension();
             std::string ToString();
+
+            static VFSPath GetAbsoluteCurrentDirectory();
+            static void SetAbsoluteCurrentDirectory(VFSPath path);
+            VFSPath MakeAbsolute();
+    
+            VFSPath MakeAbsolute(VFSPath curDir);
+            VFSPath MakeRelative();
+            VFSPath MakeRelative(VFSPath toMakeRelativeTo);
     };
     VFSPath operator/(VFSPath p, VFSPath p2);
     VFSPath operator/(VFSPath p, std::string p2);

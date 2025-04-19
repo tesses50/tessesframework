@@ -5,6 +5,10 @@
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 #include <mbedtls/base64.h>
+
+#include <mbedtls/pkcs5.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
 #endif
 namespace Tesses::Framework::Crypto
 {
@@ -319,5 +323,76 @@ namespace Tesses::Framework::Crypto
         if(!sha512.Start(is384)) return {};
         if(!sha512.Update(strm)) return {};
         return sha512.Finish();
+    }
+
+
+    bool PBKDF2(std::vector<uint8_t>& output,std::string pass, std::vector<uint8_t>& salt, long itterations, ShaVersion version)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_MBED)
+        
+        mbedtls_md_context_t ctx;
+            mbedtls_md_init(&ctx);
+            const mbedtls_md_info_t* info = NULL;
+            switch(version)
+            {
+                case ShaVersion::VERSION_SHA1:
+                    info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA1);
+                    break;
+                case ShaVersion::VERSION_SHA224:
+                    info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA224);
+                    break;
+                case ShaVersion::VERSION_SHA256:
+                    info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+                    break;
+                default:
+                case ShaVersion::VERSION_SHA384:
+                    info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA384);
+                    break;
+                case ShaVersion::VERSION_SHA512:
+                    info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA512);
+                    break;
+            }
+             
+            
+            mbedtls_md_setup(&ctx,  info, 1);
+
+            
+    
+            if(mbedtls_pkcs5_pbkdf2_hmac(&ctx, (const unsigned char*)pass.c_str(), pass.size(), salt.data(), salt.size(), (int)itterations,(uint32_t)output.size(),output.data()) == 0)
+            {
+                mbedtls_md_free(&ctx);
+                return true;
+            }
+            mbedtls_md_free(&ctx);
+            return false;
+        #else
+        return false;
+        #endif
+    }
+    bool RandomBytes(std::vector<uint8_t>& output, std::string personal_str)
+    {
+            mbedtls_entropy_context entropy;
+            mbedtls_ctr_drbg_context ctr_drbg;
+
+            mbedtls_entropy_init(&entropy);
+            mbedtls_ctr_drbg_init(&ctr_drbg);
+
+            int ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) personal_str.c_str(), personal_str.size());
+            if(ret != 0)
+            {
+                mbedtls_ctr_drbg_free(&ctr_drbg);
+                mbedtls_entropy_free(&entropy);
+                return false;
+            }
+            ret = mbedtls_ctr_drbg_random(&ctr_drbg, output.data(),output.size());
+            if (ret != 0) 
+            {
+                mbedtls_ctr_drbg_free(&ctr_drbg);
+                mbedtls_entropy_free(&entropy);
+                return false;
+            }       
+            mbedtls_ctr_drbg_free(&ctr_drbg);
+            mbedtls_entropy_free(&entropy);
+           return true;
     }
 }
