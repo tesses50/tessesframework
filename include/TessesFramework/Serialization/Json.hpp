@@ -4,6 +4,7 @@
 #include <variant>
 #include <map>
 #include <iostream>
+#include <cstdint>
 namespace Tesses::Framework::Serialization::Json
 {
     class JArray;

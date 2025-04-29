@@ -32,7 +32,8 @@ namespace Tesses::Framework::Filesystem
     void LocalFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
     {
         std::string s = VFSPathToSystem(path);
-        #if defined(_WIN32)
+        #if defined(TESSESFRAMEWORK_ENABLE_SETDATE)
+	#if defined(_WIN32)
         FILETIME lastWriteF;
         FILETIME lastAccessF;
         TimetToFileTime(lastWrite,&lastWriteF);
@@ -62,6 +63,7 @@ namespace Tesses::Framework::Filesystem
         utim.modtime = lastWrite;
         utime(s.c_str(),&utim);
         #endif
+	#endif
     }
     VFSPath LocalFilesystem::ReadLink(VFSPath path)
     {

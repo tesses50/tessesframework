@@ -5,9 +5,10 @@ include("${CMAKE_CURRENT_LIST_DIR}/TessesFrameworkTargets.cmake")
 check_required_components(TessesFramework)
 
 if(NOT ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube"))
+if(@TESSESFRAMEWORK_ENABLE_THREADING@)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
+endif()
 endif()
 
 set(TESSESFRAMEWORK_ENABLE_LIBWEBCAM @TESSESFRAMEWORK_ENABLE_LIBWEBCAM@)

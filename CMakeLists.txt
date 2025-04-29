@@ -53,6 +53,7 @@ option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
 option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
+option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -119,9 +120,15 @@ target_link_libraries(${TessesFramework_TARGET} PUBLIC ws2_32)
 endif()
 
 if(NOT ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube"))
+
+if(TESSESFRAMEWORK_ENABLE_THREADING)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(${TessesFramework_TARGET} PRIVATE Threads::Threads)
+endif()
+endif()
+if(TESSESFRAMEWORK_ENABLE_SETDATE)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SETDATE)
 endif()
 endfunction()
 
