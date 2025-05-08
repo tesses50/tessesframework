@@ -12,7 +12,6 @@ jobs:
     name: Execute build
     runInContainer: true
     image: onedev.site.tesses.net/dependencies/dependencies:latest
-    platform: linux/arm64
     interpreter: !DefaultInterpreter
       commands: |
         mkdir build
