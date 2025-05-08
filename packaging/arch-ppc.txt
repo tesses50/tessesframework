@@ -1,0 +1,39 @@
+# Maintainer: Mike Nolan <tesses@tesses.net>
+pkgname=tesses-framework
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A C++ Cross Platform Framework used by crosslang"
+arch=("powerpc")
+url="https://tesses.net/apps/tesses-framework"
+license=('MIT')
+groups=()
+depends=("mbedtls")
+makedepends=("git" "cmake" "make" "gcc")
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("tesses-framework::git+https://onedev.site.tesses.net/tesses-framework")
+sha256sums=("SKIP")
+pkgver() {
+  cd "$pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+build() {
+  cd "$pkgname"
+  mkdir -p build
+  cd build
+  cmake -S .. -B . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
+  make -j12
+}
+
+
+package() {
+    cd "$pkgname/build"
+    make DESTDIR="$pkgdir/" install
+}

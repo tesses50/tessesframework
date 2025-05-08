@@ -1,31 +1,12 @@
-version: 38
+version: 39
 jobs:
-- name: Build for x86_64
+- name: Build
   steps:
   - !CheckoutStep
     name: Checkout
     cloneCredential: !DefaultCredential {}
     withLfs: true
     withSubmodules: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !CommandStep
-    name: Execute build
-    runInContainer: true
-    image: onedev.site.tesses.net/dependencies/dependencies:latest
-    interpreter: !DefaultInterpreter
-      commands: |
-        mkdir build
-        cd build
-        cmake -S .. -B . -DCMAKE_INSTALL_PREFIX=/usr
-        make -j12
-        make install DESTDIR=out
-        cpack -G DEB
-        curl --user $GITEA_USERPASS -X DELETE https://gitea-pkg.site.tesses.net/api/packages/tesses50/debian/pool/noble/main/tessesframework/1.0.0/amd64 || true
-        curl --user $GITEA_USERPASS --upload-file TessesFramework-1.0.0-Linux.deb https://gitea-pkg.site.tesses.net/api/packages/tesses50/debian/pool/noble/main/upload
-    envVars:
-    - name: GITEA_USERPASS
-      value: '@secret:GITEA_USERPASS@'
-    useTTY: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !BuildImageStep
     name: Build Docker Image
@@ -36,7 +17,7 @@ jobs:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
       passwordSecret: dockersecret
-    platforms: linux/amd64
+    platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/riscv64,linux/s390x
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
   - !BranchUpdateTrigger
