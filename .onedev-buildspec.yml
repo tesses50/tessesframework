@@ -16,7 +16,7 @@ jobs:
       commands: |
         mkdir build
         cd build
-        cmake -S .. -B .
+        cmake -S .. -B . -DCMAKE_INSTALL_PREFIX=/usr
         make -j12
         make install DESTDIR=out
         cpack -G DEB
