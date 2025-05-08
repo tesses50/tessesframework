@@ -11,7 +11,7 @@ jobs:
   - !CommandStep
     name: Execute build
     runInContainer: true
-    image: onedev.site.tesses.net/dependencies/x86_64:latest
+    image: onedev.site.tesses.net/dependencies/dependencies:latest
     interpreter: !DefaultInterpreter
       commands: |
         mkdir build
