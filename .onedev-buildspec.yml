@@ -18,6 +18,7 @@ jobs:
       userName: '@job_token@'
       passwordSecret: dockersecret
     platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/riscv64,linux/s390x
+    moreOptions: --build-arg GITEA_USERPASS="@secret:GITEA_USERPASS@"
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
   - !BranchUpdateTrigger
