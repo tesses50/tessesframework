@@ -1,5 +1,0 @@
-FROM onedev.site.tesses.net/dependencies/dependencies:latest
-COPY . /usr/src
-
-WORKDIR /usr/src
-RUN mkdir build && cd build && cmake -S .. -B . -DCMAKE_INSTALL_PREFIX=/usr && make -j12 && make install && cpack -G DEB && curl --user $GITEA_USERPASS --upload-file TessesFramework-1.0.0-Linux.deb https://gitea-pkg.site.tesses.net/api/packages/tesses50/debian/pool/noble/main/upload ; true && cd .. && rm -rf build
