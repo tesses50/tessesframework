@@ -19,6 +19,12 @@ jobs:
         cmake -S .. -B .
         make -j12
         make install DESTDIR=out
+        cpack -G DEB
+        curl --user $GITEA_USERPASS -X DELETE https://gitea-pkg.site.tesses.net/api/packages/tesses50/debian/pool/noble/main/tessesframework/1.0.0/amd64 || true
+        curl --user $GITEA_USERPASS --upload-file TessesFramework-1.0.0-Linux.deb https://gitea-pkg.site.tesses.net/api/packages/tesses50/debian/pool/noble/main/upload
+    envVars:
+    - name: GITEA_USERPASS
+      value: '@secret:GITEA_USERPASS@'
     useTTY: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !BuildImageStep

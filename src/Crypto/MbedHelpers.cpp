@@ -358,7 +358,7 @@ namespace Tesses::Framework::Crypto
 
             
     
-            if(mbedtls_pkcs5_pbkdf2_hmac(&ctx, (const unsigned char*)pass.c_str(), pass.size(), salt.data(), salt.size(), (int)itterations,(uint32_t)output.size(),output.data()) == 0)
+            if(mbedtls_pkcs5_pbkdf2_hmac(&ctx, (const unsigned char*)pass.c_str(), pass.size(), salt.data(), salt.size(), (uint32_t)itterations,(uint32_t)output.size(),output.data()) == 0)
             {
                 mbedtls_md_free(&ctx);
                 return true;
