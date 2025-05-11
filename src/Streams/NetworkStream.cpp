@@ -26,7 +26,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <windows.h>
 #undef min
 #pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "Iphlpapi.lib")
+#pragma comment(lib, "Iphlpapi2.lib")
 #else
 extern "C" {
 #include <netinet/in.h>
