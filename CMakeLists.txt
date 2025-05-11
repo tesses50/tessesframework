@@ -75,7 +75,7 @@ set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
 
 function(TESSESFRAMEWORK_LINKDEPS TessesFramework_TARGET)
 if(WIN32)
-target_link_libraries(${TessesFramework_TARGET} PUBLIC Iphlpapi)
+target_link_libraries(${TessesFramework_TARGET} PUBLIC iphlpapi)
 endif()
 if(TESSESFRAMEWORK_LOGTOFILE)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_LOGTOFILE)
