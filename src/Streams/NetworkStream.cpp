@@ -261,7 +261,7 @@ namespace Tesses::Framework::Streams {
     }
 
     typedef union {
-        in_addr_t addr;
+        uint32_t addr;
         uint8_t addr_parts[4];
     } my_addr_t;
 
