@@ -22,9 +22,11 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #if defined(_WIN32)
 #include <ws2tcpip.h>
 #include <winsock2.h>
+#include <iphlpapi.h>
 #include <windows.h>
 #undef min
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
 #else
 extern "C" {
 #include <netinet/in.h>
