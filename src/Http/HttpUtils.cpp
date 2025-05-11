@@ -1,5 +1,7 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Filesystem/VFS.hpp"
+#include <iostream>
+#include <algorithm>
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
 namespace Tesses::Framework::Http {
     
@@ -157,6 +159,38 @@ namespace Tesses::Framework::Http {
         }
         uri.append(this->GetPathAndQuery());
         return uri;
+    }
+    std::string HttpUtils::Replace(std::string text, std::string find, std::string replace)
+    {
+        std::string dest;
+        while(text.length() > 0)
+        {
+           std::size_t index= text.find(find);
+
+           
+
+           if(index == std::string::npos)
+           {
+                dest.append(text);
+                break;
+           }
+           else
+           {
+                std::string left = text.substr(0,index);
+
+                text = text.substr(index+find.size());
+                dest.append(left);
+                dest.append(replace);
+
+           }
+        }
+        return dest;
+    }
+    std::string HttpUtils::LeftPad(std::string text, int count, char c)
+    {
+        std::stringstream strm(std::ios_base::out);
+        strm << std::setfill(c) << std::setw(count) << text;
+        return strm.str();
     }
     char HttpUtils::NibbleToHex(uint8_t b)
     {
@@ -672,6 +706,18 @@ namespace Tesses::Framework::Http {
     {
         kvp[key] = {value};
     }
+    void HttpDictionary::SetValue(std::string key, int64_t value)
+    {
+        kvp[key] = {std::to_string(value)};
+    }
+    void HttpDictionary::SetValue(std::string key, double value)
+    {
+        kvp[key] = {std::to_string(value)};
+    }
+    void HttpDictionary::SetValue(std::string key, Date::DateTime value)
+    {
+        kvp[key] = {value.ToHttpDate()};
+    }
     void HttpDictionary::SetValue(std::string key, std::vector<std::string> value)
     {
         kvp[key] = value;
@@ -679,6 +725,20 @@ namespace Tesses::Framework::Http {
     void HttpDictionary::AddValue(std::string key, std::string value)
     {
         kvp[key].push_back(value);
+    }
+    void HttpDictionary::AddValue(std::string key, int64_t value)
+    {
+        kvp[key].push_back(std::to_string(value));
+    }
+
+    void HttpDictionary::AddValue(std::string key, double value)
+    {
+        kvp[key].push_back(std::to_string(value));
+    }
+
+    void HttpDictionary::AddValue(std::string key, Date::DateTime value)
+    {
+        kvp[key].push_back(value.ToHttpDate());
     }
     void HttpDictionary::AddValue(std::string key, std::vector<std::string> value)
     {
@@ -711,7 +771,12 @@ namespace Tesses::Framework::Http {
         }
         return true;
     }
-
+    bool HttpDictionary::TryGetFirstDate(std::string key, Date::DateTime& dt)
+    {
+        std::string val;
+        if(!TryGetFirst(key,val)) return false;
+        return Date::DateTime::TryParseHttpDate(val,dt);
+    }
     bool HttpDictionary::TryGetFirstDouble(std::string key, double& value)
     {
         std::string val;

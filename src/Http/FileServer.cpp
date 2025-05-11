@@ -43,7 +43,9 @@ namespace Tesses::Framework::Http
         bool retVal = false;
         if(strm != nullptr)
         {
-            ctx.WithMimeType(HttpUtils::MimeType(path.GetFileName())).SendStream(strm);
+            Date::DateTime lw,la;
+            this->vfs->GetDate(path,lw,la);
+            ctx.WithLastModified(lw).WithMimeType(HttpUtils::MimeType(path.GetFileName())).SendStream(strm);
             retVal = true;
            
         }

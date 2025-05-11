@@ -3,6 +3,7 @@
 
 #include "HttpUtils.hpp"
 #include "../Threading/Thread.hpp"
+#include "../Date/Date.hpp"
 #include <unordered_map>
 namespace Tesses::Framework::Http
 {
@@ -79,6 +80,7 @@ namespace Tesses::Framework::Http
             void SendException(std::exception& ex);
             Tesses::Framework::Streams::Stream* OpenResponseStream();
             Tesses::Framework::Streams::Stream* OpenRequestStream();
+            ServerContext& WithLastModified(Date::DateTime time);
             ServerContext& WithHeader(std::string key, std::string value);
             ServerContext& WithSingleHeader(std::string key, std::string value);
             ServerContext& WithMimeType(std::string mime);
@@ -110,11 +112,19 @@ namespace Tesses::Framework::Http
         Tesses::Framework::Streams::TcpServer* server;
         IHttpServer* http;
         Tesses::Framework::Threading::Thread* thrd;
-        bool owns;
-        uint16_t port;
+
+        bool ownsTCP;
+        bool ownsHttp;
+        bool showIPs;
+    
         public:
-            HttpServer(uint16_t port, IHttpServer& http);
-            HttpServer(uint16_t port, IHttpServer* http, bool owns);
+            HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer& http, bool showIPs=true);
+            HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer& http, bool showIPs=true);
+            HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer* http, bool ownsHttpServer, bool showIPs=true);
+            HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer* http, bool ownsHttpServer, bool showIPs=true);
+            HttpServer(uint16_t port, IHttpServer& http, bool showIPs=true);
+            HttpServer(uint16_t port, IHttpServer* http, bool owns, bool showIPs=true);
+            uint16_t GetPort();
             void StartAccepting();
             static void Process(Tesses::Framework::Streams::Stream& strm, IHttpServer& server, std::string ip, uint16_t port, bool encrypted);
             ~HttpServer();

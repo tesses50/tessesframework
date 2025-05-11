@@ -31,8 +31,10 @@ namespace Tesses::Framework::Filesystem
             VFSPath ReadLink(VFSPath path);
             std::string VFSPathToSystem(VFSPath path);
             VFSPath SystemToVFSPath(std::string path);
-            void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
-            void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
-    };
+            
+            void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
+            void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
+
+    };  
     extern LocalFilesystem LocalFS;
 }

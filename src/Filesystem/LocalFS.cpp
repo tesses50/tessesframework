@@ -19,25 +19,26 @@ namespace Tesses::Framework::Filesystem
         pft->dwHighDateTime = time_value.HighPart;
     }
     #endif
-    void LocalFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    void LocalFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
         std::string s = VFSPathToSystem(path);
         struct stat st;
         if(stat(s.c_str(),&st) == 0)
         {
-            lastAccess = st.st_atime;
-            lastWrite = st.st_mtime;
+            lastAccess = Date::DateTime((int64_t)st.st_atime);
+            lastWrite = Date::DateTime((int64_t)st.st_mtime);
         }
     }
-    void LocalFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    void LocalFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
         std::string s = VFSPathToSystem(path);
         #if defined(TESSESFRAMEWORK_ENABLE_SETDATE)
 	#if defined(_WIN32)
         FILETIME lastWriteF;
         FILETIME lastAccessF;
-        TimetToFileTime(lastWrite,&lastWriteF);
-        TimetToFileTime(lastAccess,&lastAccessF);
+        
+        TimetToFileTime((time_t)lastWrite.ToEpoch(),&lastWriteF);
+        TimetToFileTime((time_t)lastAccess.ToEpoch(),&lastAccessF);
         HANDLE hFile = CreateFileA(
             s.c_str(),
             FILE_WRITE_ATTRIBUTES,
@@ -59,8 +60,8 @@ namespace Tesses::Framework::Filesystem
         }
         #else
         struct utimbuf utim;
-        utim.actime = lastAccess;
-        utim.modtime = lastWrite;
+        utim.actime = (time_t)lastAccess.ToEpoch();
+        utim.modtime = (time_t)lastWrite.ToEpoch();
         utime(s.c_str(),&utim);
         #endif
 	#endif

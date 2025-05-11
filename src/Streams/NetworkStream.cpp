@@ -2,6 +2,7 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include <iostream>
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
+
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
 
@@ -11,6 +12,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #endif
 #if defined(GEKKO) && !(defined(TESSESFRAMEWORK_USE_WII_SOCKET) && defined(HW_RVL)) 
 #include <network.h>
+#define NETWORK_GETSOCKNAME net_getsockname
 #define NETWORK_RECV net_recv
 #define sockaddr_storage sockaddr_in
 #error "Not supported yet"
@@ -53,6 +55,7 @@ extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool
 #define NETWORK_ACCEPT accept
 #define NETWORK_GETADDRINFO getaddrinfo
 #define NETWORK_FREEADDRINFO freeaddrinfo
+#define NETWORK_GETSOCKNAME getsockname
 #if defined(_WIN32)
 #define NETWORK_CLOSE closesocket
 #else
@@ -76,7 +79,41 @@ namespace Tesses::Framework::Streams {
         char gateway[16];
         if_config(localIp,netmask, gateway, true, 1);
         ipConfig.push_back(std::pair<std::string,std::string>("net",localIp));
-        #elif defined(_WIN32) || defined(__ANDROID__) || defined(__SWITCH__)
+        #elif defined(_WIN32)
+        //Thanks https://www.youtube.com/watch?v=K446bcFeE3s
+        ULONG family = ipV6 ? 0 : AF_INET;
+        ULONG flags = 0;
+        ULONG size = 15000;
+        PIP_ADAPTER_ADDRESSES addresses = NULL;
+        addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+        
+        int retval = GetAdapterAddresses(family, flags, 0, addresses, &size);
+        if(retval != 0) {
+            free(addresses);
+            return {};
+        }
+        PIP_ADAPTER_ADDRESSES addrPtr = addresses;
+        while(addrPtr != NULL)
+        {
+            auto fname = addrPtr->FriendlyName;
+
+            size_t len = WideCharToMultiByte(CP_UTF8, 0,fname,-1,NULL, 0,  NULL, NULL);
+            std::string name(len, 0);
+            WideCharToMultiByte(CP_UTF8, 0,fname,-1,name.data(), len,  NULL, NULL);
+
+            auto ip = addrPtr->FirstUnicastAddress;
+            while(ip != NULL)
+            {
+                ipConfig.push_back(std::pair<std::string,std::string>(name, StringifyIP(ip->Address.lpSockaddr)));
+                ip = ip->Next;
+            }
+
+            addrPtr = addrPtr->Next;
+        }
+        free(addresses);
+
+
+        #elif defined(__ANDROID__) || defined(__SWITCH__)
 
         #else
         struct ifaddrs *ifAddrStruct = NULL;
@@ -119,7 +156,7 @@ namespace Tesses::Framework::Streams {
         #endif
         
     }
-    uint16_t GetPort(struct sockaddr* addr)
+    static uint16_t getPort(struct sockaddr* addr)
     {
         if(addr->sa_family == AF_INET)
         {
@@ -223,10 +260,16 @@ namespace Tesses::Framework::Streams {
         return "";
     }
 
+    typedef union {
+        in_addr_t addr;
+        uint8_t addr_parts[4];
+    } my_addr_t;
+
     TcpServer::TcpServer(uint16_t port, int32_t backlog)
     {
         this->owns=true;
-        this->sock = NETWORK_SOCKET(AF_INET, SOCK_STREAM, 0);    
+        this->sock = NETWORK_SOCKET(AF_INET, SOCK_STREAM, 0);   
+       
         if(this->sock < 0) 
         {
             std::cout << "FAILED TO CREATE SOCKET FOR SOME REASON" << std::endl;
@@ -238,6 +281,8 @@ namespace Tesses::Framework::Streams {
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
+        if(port > 0)
+        {
         int on=1;
         #if defined(SO_REUSEPORT)
         NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEPORT,(const char*)&on, (socklen_t)sizeof(on));
@@ -245,6 +290,16 @@ namespace Tesses::Framework::Streams {
         #if defined(SO_REUSEADDR)
         NETWORK_SETSOCKOPT(this->sock,SOL_SOCKET,SO_REUSEADDR,(const char*)&on, (socklen_t)sizeof(on));
         #endif
+        }
+        else
+        {
+            my_addr_t addr2;
+            addr2.addr_parts[0] = 127;
+            addr2.addr_parts[1] = 0;
+            addr2.addr_parts[2] = 0;
+            addr2.addr_parts[3] = 1;
+            addr.sin_addr.s_addr=addr2.addr;
+        }
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
             std::cout << "FAILED TO BIND FOR SOME REASON" << std::endl;
@@ -259,6 +314,46 @@ namespace Tesses::Framework::Streams {
             return;
         }
         this->valid = true;
+    }
+    TcpServer::TcpServer(int32_t backlog) : TcpServer(0U, backlog)
+    {
+
+    }
+    uint16_t TcpServer::GetPort()
+    {
+        struct sockaddr_storage addr;
+        memset(&addr, 0, sizeof(addr));
+        socklen_t len = sizeof(addr);
+        NETWORK_GETSOCKNAME(this->sock, (struct sockaddr*)&addr, &len);
+        if(addr.ss_family == AF_INET)
+        {
+            return (uint16_t)ntohs(((struct sockaddr_in*)&addr)->sin_port);
+        }
+        #if defined(AF_INET6)
+        if(addr.ss_family == AF_INET6)
+        {
+            return (uint16_t)ntohs(((struct sockaddr_in6*)&addr)->sin6_port);
+        }
+        #endif
+        return 0;
+    }
+    uint16_t NetworkStream::GetPort()
+    {
+        struct sockaddr_storage addr;
+        memset(&addr, 0, sizeof(addr));
+        socklen_t len = sizeof(addr);
+        NETWORK_GETSOCKNAME(this->sock, (struct sockaddr*)&addr, &len);
+        if(addr.ss_family == AF_INET)
+        {
+            return (uint16_t)(((struct sockaddr_in*)&addr)->sin_port);
+        }
+        #if defined(AF_INET6)
+        if(addr.ss_family == AF_INET6)
+        {
+            return (uint16_t)(((struct sockaddr_in6*)&addr)->sin6_port);
+        }
+        #endif
+        return 0;
     }
     bool TcpServer::IsValid()
     {
@@ -333,7 +428,7 @@ namespace Tesses::Framework::Streams {
         }
 
         ip = StringifyIP((struct sockaddr*)&storage);
-        port = GetPort((struct sockaddr*)&storage);
+        port = getPort((struct sockaddr*)&storage);
         
         return new NetworkStream(s,true);
     }
@@ -491,7 +586,7 @@ namespace Tesses::Framework::Streams {
         }
 
         ip = StringifyIP((struct sockaddr*)&storage);
-        port = GetPort((struct sockaddr*)&storage);
+        port = getPort((struct sockaddr*)&storage);
         
         return new NetworkStream(s,true);
     }
@@ -529,7 +624,7 @@ namespace Tesses::Framework::Streams {
         socklen_t addrlen=(socklen_t)sizeof(storage);
         auto r = NETWORK_RECVFROM(this->sock,(char*)buff,sz,0, (struct sockaddr*)&storage, (socklen_t*)&addrlen);
         ip = StringifyIP((struct sockaddr*)&storage);
-        port = GetPort((struct sockaddr*)&storage);
+        port = getPort((struct sockaddr*)&storage);
         if(r < 0) return 0;
         return (size_t)r;
 

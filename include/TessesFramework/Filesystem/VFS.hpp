@@ -3,6 +3,7 @@
 #include "../Streams/Stream.hpp"
 #include <functional>
 #include <memory>
+#include "../Date/Date.hpp"
 #include "VFSFix.hpp"
             
 namespace Tesses::Framework::Filesystem
@@ -130,8 +131,8 @@ namespace Tesses::Framework::Filesystem
             virtual VFSPath SystemToVFSPath(std::string path)=0;
 
 
-            virtual void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
-            virtual void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
+            virtual void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
+            virtual void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
 
             virtual ~VFS();
     };

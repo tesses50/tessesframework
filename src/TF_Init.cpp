@@ -115,6 +115,7 @@ namespace Tesses::Framework
     }
     void TF_Init()
     {
+        tzset();
         #if defined(_WIN32)
         system(" ");
         #endif

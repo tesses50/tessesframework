@@ -490,11 +490,11 @@ namespace Tesses::Framework::Filesystem
         }
         DeleteDirectory(path);
     }
-    void VFS::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    void VFS::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
 
     }
-    void VFS::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    void VFS::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
 
     }

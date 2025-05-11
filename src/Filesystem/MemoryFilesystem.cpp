@@ -202,7 +202,7 @@ namespace Tesses::Framework::Filesystem
                 }
                 file->data->canAccess=false;
                 file->data->readers++;
-                if(truncate) {file->data->file.clear(); file->data->lastWrite=time(NULL);}
+                if(truncate) {file->data->file.clear(); file->data->lastWrite=Date::DateTime::NowUTC();}
                 mtx->Unlock();
                 return new MemoryFilesystemStream(mtx,file->data,canRead,canWrite,canSeek);
                 
@@ -303,7 +303,7 @@ namespace Tesses::Framework::Filesystem
                 }
                 thefile->data->canAccess=false;
                 thefile->data->readers++;
-                if(truncate) {thefile->data->file.clear(); thefile->data->lastWrite=time(NULL);}
+                if(truncate) {thefile->data->file.clear(); thefile->data->lastWrite=Date::DateTime::NowUTC();}
                 mtx->Unlock();
                 return new MemoryFilesystemStream(mtx,thefile->data,canRead,canWrite,canSeek);
             }
@@ -350,10 +350,10 @@ namespace Tesses::Framework::Filesystem
                 MemoryDirectory* dir2 = new MemoryDirectory();
                 dir2->name = part;
 
-                dir2->lastWrite=time(NULL);
+                dir2->lastWrite=Date::DateTime::NowUTC();
                 
                 dir->entries.push_back(dir2);
-                dir->lastWrite=time(NULL);
+                dir->lastWrite=Date::DateTime::NowUTC();
                 
                 dir=dir2;
             }
@@ -387,7 +387,7 @@ namespace Tesses::Framework::Filesystem
                     delete item;
                     dir->entries.erase(index);
                     
-                    dir->lastWrite=time(NULL);
+                    dir->lastWrite=Date::DateTime::NowUTC();
                 }
                 break;
             }
@@ -450,7 +450,7 @@ namespace Tesses::Framework::Filesystem
                 {
                     delete item;
                     dir->entries.erase(index);
-                    dir->lastWrite=time(NULL);
+                    dir->lastWrite=Date::DateTime::NowUTC();
                 }
                 break;
             }
@@ -482,7 +482,7 @@ namespace Tesses::Framework::Filesystem
                 if(p != nullptr)
                 {
                     p->linkedTo = existingFile;
-                    p->lastWrite = time(NULL);
+                    p->lastWrite = Date::DateTime::NowUTC();
                 }
                 mtx->Unlock();
                 return;
@@ -491,9 +491,9 @@ namespace Tesses::Framework::Filesystem
         MemorySymlink* symlink = new MemorySymlink();
         symlink->name = fname;
         symlink->linkedTo = existingFile;
-        symlink->lastWrite = time(NULL);
+        symlink->lastWrite = Date::DateTime::NowUTC();
         dir->entries.push_back(symlink);
-        dir->lastWrite = time(NULL);
+        dir->lastWrite = Date::DateTime::NowUTC();
 
         mtx->Unlock();
     }
@@ -558,7 +558,7 @@ namespace Tesses::Framework::Filesystem
         memFile->name = fname;
         memFile->data = existing->data;
         dir->entries.push_back(memFile);
-        dir->lastWrite=time(NULL);
+        dir->lastWrite=Date::DateTime::NowUTC();
         
         mtx->Unlock();
     }
@@ -601,7 +601,7 @@ namespace Tesses::Framework::Filesystem
     {
         return path;
     }
-    void MemoryFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    void MemoryFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
         
         mtx->Lock();
@@ -618,7 +618,7 @@ namespace Tesses::Framework::Filesystem
         mtx->Unlock();
         lastAccess = lastWrite;
     }
-    void MemoryFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    void MemoryFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
         mtx->Lock();
         auto node = GetEntry(path,false);
@@ -652,7 +652,7 @@ namespace Tesses::Framework::Filesystem
     }
     MemoryDirectory::MemoryDirectory()
     {
-        this->lastWrite = time(NULL);
+        this->lastWrite = Date::DateTime::NowUTC();
     }
     MemoryDirectory::~MemoryDirectory()
     {
@@ -660,7 +660,7 @@ namespace Tesses::Framework::Filesystem
     }
     MemoryFileData::MemoryFileData()
     {
-        this->lastWrite = time(NULL);
+        this->lastWrite = Date::DateTime::NowUTC();
         this->canAccess=true;
         this->readers=0;
         

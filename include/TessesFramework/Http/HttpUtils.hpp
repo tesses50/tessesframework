@@ -1,5 +1,6 @@
 #pragma once
 #include "../Common.hpp"
+#include "../Date/Date.hpp"
 #include <algorithm>
 
 namespace Tesses::Framework::Http
@@ -78,6 +79,9 @@ struct CaseInsensitiveLess {
             void Clear();
             void Clear(std::string key, bool kvpExistsAfter);
             void SetValue(std::string key, std::string value);
+            void SetValue(std::string key, int64_t v);
+            void SetValue(std::string key, double v);
+            void SetValue(std::string key, Date::DateTime v);
             void SetValue(std::string key, std::vector<std::string> value);
             template<typename Itterator>
             void SetValue(std::string key, Itterator begin, Itterator end)
@@ -86,6 +90,9 @@ struct CaseInsensitiveLess {
                 AddValue(key, begin, end);
             }
             void AddValue(std::string key, std::string value);
+            void AddValue(std::string key, int64_t v);
+            void AddValue(std::string key, double v);
+            void AddValue(std::string key, Date::DateTime v);
             void AddValue(std::string key, std::vector<std::string> value);
             
             template<typename Itterator>
@@ -100,6 +107,7 @@ struct CaseInsensitiveLess {
             bool TryGetFirstInt(std::string key, int64_t& value);
 
             bool TryGetFirstDouble(std::string key, double& value);
+            bool TryGetFirstDate(std::string key, Date::DateTime& value);
 
             bool GetFirstBoolean(std::string key);
 
@@ -140,10 +148,11 @@ struct CaseInsensitiveLess {
         static std::string UrlPathEncode(std::string v, bool ignoreSpace=false);
         static std::string HtmlEncode(std::string v);
         static std::vector<std::string> SplitString(std::string text, std::string delimiter,std::size_t maxCnt = std::string::npos);
+        static std::string Replace(std::string str, std::string find, std::string replace);
         static std::string StatusCodeString(StatusCode code);
         static std::string ToLower(std::string str);
         static std::string ToUpper(std::string str);
-    
+        static std::string LeftPad(std::string text, int count, char c);
     };
 
  

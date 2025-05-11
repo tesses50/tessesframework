@@ -5,6 +5,7 @@ project(TessesFramework VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND TESSESFRAMEWORK_SOURCE 
+src/Date/Date.cpp
 src/Http/FileServer.cpp
 src/Http/MountableServer.cpp
 src/Http/CallbackServer.cpp
@@ -199,6 +200,7 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 
         add_executable(printjsondecodedemoji examples/printjsondecodedemoji.cpp)
         target_link_libraries(printjsondecodedemoji PUBLIC tessesframework)
+      
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)
@@ -216,6 +218,10 @@ install(TARGETS tjsonpretty DESTINATION bin)
 add_executable(tjsonunpretty apps/tjsonunpretty.cpp)
 target_link_libraries(tjsonunpretty PUBLIC tessesframework)
 install(TARGETS tjsonunpretty DESTINATION bin)
+
+add_executable(ttime apps/ttime.cpp)
+target_link_libraries(ttime PUBLIC tessesframework)
+install(TARGETS ttime DESTINATION bin)
 endif()
 
 include(InstallRequiredSystemLibraries)

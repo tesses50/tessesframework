@@ -10,10 +10,12 @@ namespace Tesses::Framework::Streams
         bool owns;
         bool valid;
         public:
+            TcpServer(int32_t backlog);
             TcpServer(int32_t sock,bool owns);
             TcpServer(uint16_t port, int32_t backlog);
             TcpServer(std::string ip, uint16_t port, int32_t backlog);
             NetworkStream* GetStream(std::string& ip, uint16_t& port);
+            uint16_t GetPort();
             ~TcpServer();
             bool IsValid();
             void Close();
@@ -30,6 +32,7 @@ namespace Tesses::Framework::Streams
         NetworkStream(bool ipV6,bool datagram);
         NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,bool broadcast,bool supportIPv6);
         NetworkStream(int32_t sock, bool owns);
+        uint16_t GetPort();
         void Listen(int32_t backlog);
         void Bind(std::string ip, uint16_t port);
         void SetBroadcast(bool bC);

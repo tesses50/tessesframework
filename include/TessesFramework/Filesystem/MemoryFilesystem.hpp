@@ -13,7 +13,7 @@ namespace Tesses::Framework::Filesystem
     class MemoryFileData {
         public:
             MemoryFileData();
-            time_t lastWrite;
+            Date::DateTime lastWrite;
             
             bool canAccess;
             size_t readers;
@@ -31,7 +31,7 @@ namespace Tesses::Framework::Filesystem
     {
         public:
             MemoryDirectory();
-            time_t lastWrite;
+            Date::DateTime lastWrite;
             std::vector<MemoryEntry*> entries;
             ~MemoryDirectory();
     };
@@ -39,7 +39,7 @@ namespace Tesses::Framework::Filesystem
     class MemorySymlink : public MemoryEntry
     {
         public:
-            time_t lastWrite;
+            Date::DateTime lastWrite;
             VFSPath linkedTo;
     };
 
@@ -92,8 +92,8 @@ namespace Tesses::Framework::Filesystem
             VFSPath ReadLink(VFSPath path);
             std::string VFSPathToSystem(VFSPath path);
             VFSPath SystemToVFSPath(std::string path);
-            void GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess);
-            void SetDate(VFSPath path, time_t lastWrite, time_t lastAccess);
+            void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
+            void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
             ~MemoryFilesystem();
     };
 };

@@ -107,11 +107,11 @@ namespace Tesses::Framework::Filesystem
             delete enumerator;
         });
     }
-    void SubdirFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+    void SubdirFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
         this->parent->GetDate(ToParent(path),lastWrite,lastAccess);
     }
-    void SubdirFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    void SubdirFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
         this->parent->SetDate(ToParent(path),lastWrite,lastAccess);
     }

@@ -288,7 +288,7 @@ namespace Tesses::Framework::Filesystem
             vfs->DeleteFile(destPath);
        
     }
-      void MountableFilesystem::GetDate(VFSPath path, time_t& lastWrite, time_t& lastAccess)
+      void MountableFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
 
         path = path.CollapseRelativeParents();
@@ -302,7 +302,7 @@ namespace Tesses::Framework::Filesystem
         if(vfs != nullptr)
             vfs->GetDate(destPath,lastWrite,lastAccess);
     }
-    void MountableFilesystem::SetDate(VFSPath path, time_t lastWrite, time_t lastAccess)
+    void MountableFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
 
         path = path.CollapseRelativeParents();

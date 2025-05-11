@@ -507,18 +507,42 @@ namespace Tesses::Framework::Http
 
         while(parseSection(this, ct, cb));
     }   
-            
-    HttpServer::HttpServer(uint16_t port, IHttpServer* http, bool owns)
-    {
-        this->server = new TcpServer(port, 10);
-        this->http = http;
-        this->owns = owns;
-        this->thrd=nullptr;
-        this->port = port;
-    }
-    HttpServer::HttpServer(uint16_t port, IHttpServer& http) : HttpServer(port,&http,false)
+    HttpServer::HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer& http, bool showIPs) : HttpServer(&tcpServer,false,&http,false,showIPs)
     {
 
+    }
+    HttpServer::HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer& http, bool showIPs) : HttpServer(tcpServer,ownsTCP,&http,false,showIPs)
+    {
+
+    }
+    HttpServer::HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer* http, bool ownsHttpServer, bool showIPs) : HttpServer(&tcpServer,false,http,ownsHttpServer,showIPs)
+    {
+
+    }
+    HttpServer::HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer* http, bool ownsHttpServer, bool showIPs)
+    {
+        this->server = tcpServer;
+        this->ownsTCP = ownsTCP;
+        this->http = http;
+        this->ownsHttp = ownsHttpServer;
+        this->showIPs = showIPs;
+        this->thrd=nullptr;
+    }
+   
+            
+    HttpServer::HttpServer(uint16_t port, IHttpServer* http, bool owns, bool showIPs) : HttpServer(new TcpServer(port,10),true,http,owns,showIPs)
+    {
+        
+    }
+    HttpServer::HttpServer(uint16_t port, IHttpServer& http,bool showIPs) : HttpServer(port,&http,false,showIPs)
+    {
+
+    }
+    uint16_t HttpServer::GetPort()
+    {
+        if(server != nullptr)
+        return server->GetPort();
+        return 0;
     }
     Stream* ServerContext::OpenResponseStream()
     {
@@ -543,7 +567,7 @@ namespace Tesses::Framework::Http
     void HttpServer::StartAccepting()
     {
         fflush(stdout);
-        if(http == nullptr) return;
+        if(http == nullptr || server == nullptr) return;
         auto svr=this->server;
         auto http = this->http;
         TF_LOG("Before Creating Thread");
@@ -574,31 +598,37 @@ namespace Tesses::Framework::Http
                 TF_LOG("After attach");
             }
         });
-        TF_LOG("Before printing interfaces");
-
-        std::cout << "\x1B[34mInterfaces:\n";
-        for(auto _ip : NetworkStream::GetIPs())
+        if(this->showIPs)
         {
-            std::cout << "\x1B[32m";
-            std::cout << _ip.first << ": ";
-            std::cout << "\x1B[35mhttp://";
-            std::cout << _ip.second << ":" << std::to_string(this->port) << "/\n";
+            TF_LOG("Before printing interfaces");
+        
+            std::cout << "\x1B[34mInterfaces:\n";
+            for(auto _ip : NetworkStream::GetIPs())
+            {
+                std::cout << "\x1B[32m";
+                std::cout << _ip.first << ": ";
+                std::cout << "\x1B[35mhttp://";
+                std::cout << _ip.second << ":" << std::to_string(this->GetPort()) << "/\n";
+            }
+            if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
+            std::cout << "\x1B[31mAlmost Ready to Listen\x1B[39m\n";
         }
-        if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
-        std::cout << "\x1B[31mAlmost Ready to Listen\x1B[39m\n";
+        
         TF_LOG("After printing interfaces");
     }
     HttpServer::~HttpServer()
     {
+        auto port = this->GetPort();
         this->server->Close();
-        TF_ConnectToSelf(this->port);
+        TF_ConnectToSelf(port);
         if(this->thrd != nullptr)
         {
             this->thrd->Join();
             delete this->thrd;
         }
-        if(this->owns)
+        if(this->ownsHttp)
             delete http;
+        if(this->ownsTCP)
         delete this->server;
     }
     IHttpServer::~IHttpServer()
@@ -622,6 +652,12 @@ namespace Tesses::Framework::Http
         strm.GetBuffer() = buff;
         SendStream(strm);
     }
+    ServerContext& ServerContext::WithLastModified(Date::DateTime dt)
+    {
+        this->responseHeaders.SetValue("Last-Modified",dt);
+        return *this;
+    }
+
     void ServerContext::SendText(std::string text)
     {
         MemoryStream strm(false);
