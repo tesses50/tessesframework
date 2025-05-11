@@ -89,7 +89,7 @@ namespace Tesses::Framework::Streams {
         PIP_ADAPTER_ADDRESSES addresses = NULL;
         addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
         
-        int retval = GetAdapterAddresses(family, flags, 0, addresses, &size);
+        int retval = GetAdaptersAddresses(family, flags, 0, addresses, &size);
         if(retval != 0) {
             free(addresses);
             return {};
