@@ -14,6 +14,7 @@ src/Http/HttpUtils.cpp
 src/Http/HttpClient.cpp
 src/Http/HttpStream.cpp
 src/Http/ContentDisposition.cpp
+src/Http/WebSocket.cpp
 src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
 src/Streams/FileStream.cpp
@@ -74,6 +75,16 @@ endif()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
 
 function(TESSESFRAMEWORK_LINKDEPS TessesFramework_TARGET)
+target_include_directories(${TessesFramework_TARGET}
+    PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+target_include_directories(${TessesFramework_TARGET}
+    PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 if(WIN32)
 target_link_libraries(${TessesFramework_TARGET} PUBLIC iphlpapi)
 endif()
@@ -100,16 +111,7 @@ target_link_directories(${TessesFramework_TARGET} PUBLIC ${MBEDTLS_DIR}/lib)
 endif()
 target_link_libraries(${TessesFramework_TARGET} PUBLIC mbedtls mbedx509 mbedcrypto)
 endif()
-target_include_directories(${TessesFramework_TARGET}
-    PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
-target_include_directories(${TessesFramework_TARGET}
-    PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
+
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube")
 target_link_libraries(${TessesFramework_TARGET} PUBLIC fat)
 endif()
@@ -203,7 +205,10 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 
         add_executable(printjsondecodedemoji examples/printjsondecodedemoji.cpp)
         target_link_libraries(printjsondecodedemoji PUBLIC tessesframework)
-      
+
+         add_executable(wsecho examples/wsecho.cpp)
+        target_link_libraries(wsecho PUBLIC tessesframework)
+
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)

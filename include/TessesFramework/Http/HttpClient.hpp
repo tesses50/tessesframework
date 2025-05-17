@@ -1,7 +1,9 @@
 #pragma once
 #include "../Streams/Stream.hpp"
 #include "HttpUtils.hpp"
-
+#include "WebSocket.hpp"
+#include "TessesFramework/Filesystem/LocalFS.hpp"
+#include "TessesFramework/Filesystem/VFSFix.hpp"
 namespace Tesses::Framework::Http
 {
     
@@ -64,9 +66,19 @@ namespace Tesses::Framework::Http
             std::string ReadAsString();
             Tesses::Framework::Streams::Stream* ReadAsStream();
             void CopyToStream(Tesses::Framework::Streams::Stream* strm);
-            
+            Tesses::Framework::Streams::Stream* GetInternalStream();
             ~HttpResponse();
     };
 
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm);
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream& strm);
+
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path);
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path);
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFSPath path);
+    std::string DownloadToStringSimple(std::string url);
+    bool WebSocketClientSuccessDefault(HttpDictionary& dict,bool v);
+    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
+    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
     
 }

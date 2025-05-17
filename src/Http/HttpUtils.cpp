@@ -74,9 +74,9 @@ namespace Tesses::Framework::Http {
     {
         if(this->port != 0) return this->port;
 
-        if(this->scheme == "http:")
+        if(this->scheme == "http:" || this->scheme == "ws:")
             return 80;
-        if(this->scheme == "https:")
+        if(this->scheme == "https:" || this->scheme == "wss:")
             return 443;
         if(this->scheme == "sftp:")
             return 22;

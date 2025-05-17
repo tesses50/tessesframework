@@ -10,12 +10,8 @@ int main(int argc, char** argv)
         printf("USAGE: %s <url> <path>\n",argv[0]);
         return 1;
     }
-    FileStream strm(argv[2],"wb");
-
-    HttpRequest req;
-    req.url = argv[1];
-    HttpResponse resp(req);
-    resp.CopyToStream(&strm);
+    std::string path = argv[2];
+    Tesses::Framework::Http::DownloadToFileSimple(argv[1],path);
 
     
     return 0;

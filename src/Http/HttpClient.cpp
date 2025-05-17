@@ -1,10 +1,14 @@
 #include "TessesFramework/Http/HttpClient.hpp"
 #include "TessesFramework/Crypto/ClientTLSStream.hpp"
+#include "TessesFramework/Crypto/MbedHelpers.hpp"
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/TextStreams/StreamWriter.hpp"
 #include "TessesFramework/TextStreams/StreamReader.hpp"
 #include "TessesFramework/Http/HttpStream.hpp"
 #include "TessesFramework/Streams/BufferedStream.hpp"
+#include "TessesFramework/Threading/Mutex.hpp"
+#include "TessesFramework/Threading/Thread.hpp"
+
 #include <iostream>
 #include <string>
 using Stream = Tesses::Framework::Streams::Stream;
@@ -90,7 +94,6 @@ namespace Tesses::Framework::Http
         }
 
         std::string request = method + " " + uri.GetPathAndQuery() + " HTTP/1.1\r\nHost: " + uri.HostPort() + "\r\n";
-
         for(auto headers : requestHeaders.kvp)
         {
             for(auto item : headers.second)
@@ -117,11 +120,11 @@ namespace Tesses::Framework::Http
 
     Stream* HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
     {
-        if(uri.scheme == "http:")
+        if(uri.scheme == "http:" || uri.scheme == "ws:")
         {
             return new NetworkStream(uri.host,uri.GetPort(),false,false,false);
         }
-        else if(uri.scheme == "https:")
+        else if(uri.scheme == "https:" || uri.scheme == "wss:")
         {
             auto netStrm = new NetworkStream(uri.host,uri.GetPort(),false,false,false);
             if(netStrm == nullptr) return netStrm;
@@ -129,6 +132,10 @@ namespace Tesses::Framework::Http
         }
             
         return nullptr;
+    }
+    Tesses::Framework::Streams::Stream* HttpResponse::GetInternalStream()
+    {
+        return this->handleStrm;
     }
     
     HttpResponse::~HttpResponse()
@@ -276,4 +283,370 @@ namespace Tesses::Framework::Http
 
         return new HttpStream(this->handleStrm,false,length,true,version=="HTTP/1.1");
     }
+
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm)
+    {
+        if(strm == nullptr) throw TextException("strm is null");
+        HttpRequest request;
+        request.url = url;
+        request.followRedirects=true;
+        request.method = "GET";
+        HttpResponse response(request);
+        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        response.CopyToStream(strm);
+    }
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream& strm)
+    {
+        DownloadToStreamSimple(url,&strm);
+    }
+
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        if(vfs == nullptr) throw TextException("vfs is null");
+        auto strm = vfs->OpenFile(path,"wb");
+        if(strm == nullptr) throw TextException("strm is null");
+        DownloadToStreamSimple(url,strm);
+        delete strm;
+    }
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        auto strm = vfs.OpenFile(path,"wb");
+        if(strm == nullptr) throw TextException("strm is null");
+        DownloadToStreamSimple(url,strm);
+        delete strm;
+    }
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        DownloadToFileSimple(url,Tesses::Framework::Filesystem::LocalFS,path);
+    }
+    std::string DownloadToStringSimple(std::string url)
+    {
+        HttpRequest request;
+        request.url = url;
+        request.followRedirects=true;
+        request.method = "GET";
+        HttpResponse response(request);
+        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        return response.ReadAsString();
+    }
+    bool WebSocketClientSuccessDefault(HttpDictionary& dict,bool v)
+    {
+        return true;
+    }
+    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    {
+        WebSocketClient(url,requestHeaders, &wsc,cb);
+    }
+
+    class WSClient {
+        public:
+        std::atomic<bool> closed;
+        Threading::Mutex mtx;
+        
+        WebSocketConnection* conn;
+        Stream* strm;
+        void close()
+        {
+            mtx.Lock();
+            this->closed=true;
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0x9;
+            strm->WriteByte(firstByte);
+            strm->WriteByte(0);
+            
+            mtx.Unlock(); 
+
+        }
+        void write_len_bytes(uint64_t len)
+        {
+            if(len < 126)
+            {
+                strm->WriteByte((uint8_t)len | (uint8_t)128U);
+            }
+            else if(len < 65535)
+            {
+                uint8_t b[3];
+                b[0] = 254;
+                b[1] = (uint8_t)(len >> 8);
+                b[2] = (uint8_t)len;
+
+                strm->WriteBlock(b,sizeof(b));
+            }
+            else {
+
+                uint8_t b[9];
+                b[0] = 255;
+
+                b[1] = (uint8_t)(len >> 56);
+                b[2] = (uint8_t)(len >> 48);
+                b[3] = (uint8_t)(len >> 40);
+                b[4] = (uint8_t)(len >> 32);
+                b[5] = (uint8_t)(len >> 24);
+                b[6] = (uint8_t)(len >> 16);
+                b[7] = (uint8_t)(len >> 8);
+                b[8] = (uint8_t)len;
+
+                strm->WriteBlock(b,sizeof(b));
+            }
+        }
+        uint64_t get_long()
+        {
+            uint8_t buff[8];
+            if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
+            
+            uint64_t v = 0;
+            v |= (uint64_t)buff[0] << 56;
+            v |= (uint64_t)buff[1] << 48;
+            v |= (uint64_t)buff[2] << 40;
+            v |= (uint64_t)buff[3] << 32;
+            v |= (uint64_t)buff[4] << 24;
+            v |= (uint64_t)buff[5] << 16;
+            v |= (uint64_t)buff[6] << 8;
+            v |= (uint64_t)buff[7];
+            return v;
+        }
+        uint16_t get_short()
+        {
+            uint8_t buff[2];
+            if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
+            
+            uint16_t v = 0;
+            v |= (uint16_t)buff[0] << 8;
+            v |= (uint16_t)buff[1];
+            return v;
+        }
+        void send_msg(WebSocketMessage* msg)
+        {
+            mtx.Lock();
+            
+            uint8_t opcode = msg->isBinary ? 0x2 : 0x1;
+
+            size_t lengthLastByte = msg->data.size() % 4096;
+            size_t fullPackets = (msg->data.size() - lengthLastByte) / 4096;
+            size_t noPackets = lengthLastByte > 0 ? fullPackets+1 : fullPackets;
+            size_t offset = 0;
+            std::vector<uint8_t> mask;
+            mask.resize(4);
+            for(size_t i = 0; i < noPackets; i++)
+            {
+                bool fin = i == noPackets - 1;
+                uint8_t finField =  fin ?  0b10000000 : 0;
+                uint8_t opcode2 = i == 0 ? opcode : 0;
+                uint8_t firstByte = finField | (opcode2 & 0xF);
+                
+                size_t len = std::min((size_t)4096,msg->data.size()- offset);
+                
+                strm->WriteByte(firstByte);
+                write_len_bytes((uint64_t)len);
+               
+                Crypto::RandomBytes(mask,"Mask it");
+                strm->WriteBlock(mask.data(),mask.size());
+                for(size_t i = offset; i < offset+len; i++)
+                    msg->data[i] ^= mask[i%4];
+                strm->WriteBlock(msg->data.data() + offset,len);
+                for(size_t i = offset; i < offset+len; i++)
+                    msg->data[i] ^= mask[i%4];
+                offset += len;
+            }   
+            mtx.Unlock();
+        }
+        void ping_send(std::vector<uint8_t>& pData)
+        {
+            mtx.Lock();
+            
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0x9;
+            strm->WriteByte(firstByte);
+            write_len_bytes((uint64_t)pData.size());
+            std::vector<uint8_t> mask;
+            mask.resize(4);
+            Crypto::RandomBytes(mask,"Mask it");
+            strm->WriteBlock(mask.data(),mask.size());
+            for(size_t i = 0; i < pData.size(); i++)
+                pData[i] ^= mask[i%4];
+            strm->WriteBlock(pData.data(),pData.size());
+            for(size_t i = 0; i < pData.size(); i++)
+                pData[i] ^= mask[i%4];
+            mtx.Unlock();
+        }
+        void pong_send(std::vector<uint8_t>& pData)
+        {
+            mtx.Lock();
+            
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0xA;
+            strm->WriteByte(firstByte);
+            write_len_bytes((uint64_t)pData.size());
+            strm->WriteBlock(pData.data(),pData.size());
+            mtx.Unlock();
+        }
+        bool read_packet(uint8_t len,std::vector<uint8_t>& data)
+        {
+           
+            uint8_t realLen=len & 127;
+            bool masked=(len & 0b10000000) > 0;
+            uint64_t reallen2 = realLen >= 126 ? realLen > 126 ? get_long() : get_short() : realLen;
+            uint8_t mask[4];
+            if(masked)
+            {
+                if(strm->ReadBlock(mask,sizeof(mask)) != sizeof(mask)) return false;
+            }
+            size_t offset = data.size();
+            data.resize(offset+(size_t)reallen2);
+            if(data.size() < ((uint64_t)offset+reallen2)) return false;
+            if(strm->ReadBlock(data.data()+offset,(size_t)reallen2) != (size_t)reallen2) return false;
+            if(masked)
+            {
+                for(size_t i = 0; i < (size_t)reallen2; i++)
+                {
+                    data[i+offset] ^= mask[i%4];
+                }
+            }
+            return true;
+        }
+        
+        WSClient(Tesses::Framework::Streams::Stream* strm,WebSocketConnection* conn)
+        {
+           this->strm = strm;
+           this->conn = conn;
+           
+        }
+        void Start()
+        {
+            this->closed=false;
+            bool hasMessage =false;
+
+                WebSocketMessage message;
+                message.isBinary=false;
+                message.data={};
+                
+
+                while(!strm->EndOfStream())
+                {
+                
+                    uint8_t frame_start[2];
+                    if(strm->ReadBlock(frame_start,2) != 2) return;
+                    
+                    
+                    
+                    uint8_t opcode = frame_start[0] & 0xF;
+                    bool fin = (frame_start[0] & 0b10000000) > 0;
+                    switch(opcode)
+                    {
+                        case 0x0:
+                            if(!hasMessage) break;
+                            read_packet(frame_start[1], message.data);
+                        break;
+                        case 0x1:
+                        case 0x2:
+                            hasMessage=true;
+                            message.data = {};
+                            message.isBinary = opcode == 0x2;
+                            
+                            read_packet(frame_start[1], message.data);
+                            break;
+                        case 0x8:
+                        if(!this->closed) this->close();
+                        this->conn->OnClose(true);
+                        return;
+                        case 0x9:
+                        {
+                            std::vector<uint8_t> b;
+                            read_packet(frame_start[1],b);
+                            pong_send(b);
+                        }
+                        break;
+                        case 0xA:
+                        {
+                            std::vector<uint8_t> b;
+                            read_packet(frame_start[1],b);
+                        }
+                    }
+                    if(fin && hasMessage)
+                    {
+                        hasMessage=false;
+                        this->conn->OnReceive(message);
+                        message.data={};
+                    }
+                }
+                this->conn->OnClose(false);
+        }
+    };
+
+
+
+    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    {
+        HttpRequest req;
+        req.url = url;
+        req.requestHeaders = requestHeaders;
+        req.followRedirects=true;
+
+        std::string hash = "";
+
+        if(Crypto::HaveCrypto())
+        {
+            std::vector<uint8_t> code;
+            code.resize(16);
+            Crypto::RandomBytes(code,"Tesses::Framework::Http::WebSocketClient");
+            hash = Crypto::Base64_Encode(code);
+        }
+
+        req.requestHeaders.SetValue("Sec-WebSocket-Key", hash);
+        req.requestHeaders.SetValue("Sec-WebSocket-Version","13");
+        req.requestHeaders.SetValue("Upgrade","websocket");
+        req.requestHeaders.SetValue("Connection","Upgrade");
+
+        HttpResponse resp(req);
+
+        std::string accept="0uytbGS5rkQTa6saiHK4AQ==";
+
+        if(resp.statusCode != 101 || !resp.responseHeaders.TryGetFirst("Sec-WebSocket-Accept",accept) || !resp.responseHeaders.AnyEquals("Connection","Upgrade") || !resp.responseHeaders.AnyEquals("Upgrade","websocket"))
+        {
+            cb(resp.responseHeaders,false);
+            return;
+        }
+        
+
+        if(Crypto::HaveCrypto())
+        {
+            std::string txt=hash;
+            hash += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+            if(Crypto::Base64_Encode(Crypto::Sha1::ComputeHash((const uint8_t*)hash.data(),hash.size())) != accept)
+            {
+                cb(resp.responseHeaders,false);
+                return;
+            }
+        }
+        else if(accept != "Swjoe56alHg6mvKmKyiDd3tpNqc=")
+        {
+            cb(resp.responseHeaders,false);
+            return;
+        }
+        if(!cb(resp.responseHeaders,true))
+        {
+            
+            return;
+        }
+        
+        WSClient clt(resp.GetInternalStream(),wsc);
+       
+        Threading::Thread thrd([&clt,wsc]()->void{
+            try {
+            wsc->OnOpen([&clt](WebSocketMessage& msg)->void {
+                clt.send_msg(&msg);
+            },[&clt]()->void {
+                std::vector<uint8_t> p = {(uint8_t)'p',(uint8_t)'i',(uint8_t)'n',(uint8_t)'g'};
+                clt.ping_send(p);
+            },[&clt]()->void {clt.close();});
+            }catch(...) {
+
+            }
+        });
+        
+        
+        clt.Start();
+        thrd.Join();
+    }
+    
 }

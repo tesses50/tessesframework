@@ -2,7 +2,6 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include <iostream>
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
-
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
 
@@ -26,7 +25,6 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <windows.h>
 #undef min
 #pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "Iphlpapi2.lib")
 #else
 extern "C" {
 #include <netinet/in.h>
@@ -468,6 +466,7 @@ namespace Tesses::Framework::Streams {
         this->owns=true;
         this->success=false;
         std::string portStr = std::to_string((uint32_t)port);
+        
         struct addrinfo hint;
         memset(&hint, 0, sizeof(hint));
         #if defined(AF_INET6)

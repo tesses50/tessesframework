@@ -33,6 +33,21 @@ namespace Tesses::Framework::Http
         WebSocketConnection* conn;
         Stream* strm;
         std::atomic_bool hasInit;
+        std::atomic<bool> closed;
+        void close()
+        {
+            mtx.Lock();
+            closed=true;
+            uint8_t finField = 0b10000000 ;
+            uint8_t firstByte= finField | 0x9;
+            strm->WriteByte(firstByte);
+            strm->WriteByte(0);
+           
+            delete strm;
+            this->strm = nullptr;
+            mtx.Unlock(); 
+            this->conn->OnClose(true);
+        }
         void write_len_bytes(uint64_t len)
         {
             if(len < 126)
@@ -95,6 +110,7 @@ namespace Tesses::Framework::Http
         {
             while(!hasInit);
             mtx.Lock();
+          
             uint8_t opcode = msg->isBinary ? 0x2 : 0x1;
 
             size_t lengthLastByte = msg->data.size() % 4096;
@@ -119,7 +135,9 @@ namespace Tesses::Framework::Http
         }
         void ping_send(std::vector<uint8_t>& pData)
         {
+            
             mtx.Lock();
+          
             uint8_t finField = 0b10000000 ;
             uint8_t firstByte= finField | 0x9;
             strm->WriteByte(firstByte);
@@ -130,6 +148,7 @@ namespace Tesses::Framework::Http
         void pong_send(std::vector<uint8_t>& pData)
         {
             mtx.Lock();
+           
             uint8_t finField = 0b10000000 ;
             uint8_t firstByte= finField | 0xA;
             strm->WriteByte(firstByte);
@@ -139,6 +158,7 @@ namespace Tesses::Framework::Http
         }
         bool read_packet(uint8_t len,std::vector<uint8_t>& data)
         {
+           
             uint8_t realLen=len & 127;
             bool masked=(len & 0b10000000) > 0;
             uint64_t reallen2 = realLen >= 126 ? realLen > 126 ? get_long() : get_short() : realLen;
@@ -172,6 +192,7 @@ namespace Tesses::Framework::Http
             }
             void Start()
             {
+                this->closed=false;
                 std::string key;
                 if(ctx->requestHeaders.TryGetFirst("Sec-WebSocket-Key", key) && !key.empty())
                 {
@@ -209,11 +230,11 @@ namespace Tesses::Framework::Http
                 message.data={};
                 hasInit=true;
 
-                while(!strm->EndOfStream())
+                while( !strm->EndOfStream())
                 {
                 
                     uint8_t frame_start[2];
-                    if(strm->ReadBlock(frame_start,2) != 2) return;
+                    if( strm->ReadBlock(frame_start,2) != 2) return;
                     
                     
                     uint8_t opcode = frame_start[0] & 0xF;
@@ -233,6 +254,8 @@ namespace Tesses::Framework::Http
                             read_packet(frame_start[1], message.data);
                             break;
                         case 0x8:
+
+                        if(!this->closed) this->close();
                         this->conn->OnClose(true);
                         return;
                         case 0x9:
@@ -1007,7 +1030,7 @@ namespace Tesses::Framework::Http
     {
 
     }
-    void ServerContext::StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose)
+    void ServerContext::StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose)
     {
         CallbackWebSocketConnection wsc(onOpen,onReceive,onClose);
         StartWebSocketSession(wsc);
@@ -1023,7 +1046,7 @@ namespace Tesses::Framework::Http
             },[&svr]()->void {
                 std::vector<uint8_t> p = {(uint8_t)'p',(uint8_t)'i',(uint8_t)'n',(uint8_t)'g'};
                 svr.ping_send(p);
-            });
+            },[&svr]()->void{svr.close();});
             }catch(...) {
 
             }
@@ -1033,60 +1056,4 @@ namespace Tesses::Framework::Http
         thrd.Join();
     }
 
-    CallbackWebSocketConnection::CallbackWebSocketConnection()
-    {
-
-    }
-    CallbackWebSocketConnection::CallbackWebSocketConnection(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose)
-    {
-        this->onOpen = onOpen;
-        this->onReceive = onReceive;
-        this->onClose = onClose;
-    }
-
-    void CallbackWebSocketConnection::OnOpen(std::function<void(WebSocketMessage&)> sendMessage, std::function<void()> ping)
-    {
-        if(this->onOpen)
-            this->onOpen(sendMessage,ping);
-    }
-    void CallbackWebSocketConnection::OnReceive(WebSocketMessage& message)
-    {
-        if(this->onReceive)
-            this->onReceive(message);
-    }
-    void CallbackWebSocketConnection::OnClose(bool clean)
-    {
-        if(this->onClose)
-            this->onClose(clean);
-    }
-
-
-    WebSocketMessage::WebSocketMessage()
-    {
-        this->isBinary=false;
-        this->data={};
-    }
-    WebSocketMessage::WebSocketMessage(std::vector<uint8_t> data)
-    {
-        this->isBinary = true;
-        this->data = data;
-    }
-    WebSocketMessage::WebSocketMessage(const void* data, size_t len)
-    {
-        this->isBinary=true;
-        this->data={};
-        this->data.insert(this->data.end(),(uint8_t*)data,((uint8_t*)data)+len);
-    }
-    WebSocketMessage::WebSocketMessage(std::string message)
-    {
-        this->isBinary=false;
-        this->data={};
-        this->data.insert(this->data.end(),message.begin(), message.end());
-    }
-    std::string WebSocketMessage::ToString()
-    {
-        std::string str = {};
-        str.insert(str.end(),this->data.begin(),this->data.end());
-        return str;
-    }
 }
