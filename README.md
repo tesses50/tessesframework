@@ -14,6 +14,7 @@ cd build
 cmake -S .. -B .
 make
 sudo make install
+```
 
 ## What libraries have I embeded from other people
 - [HodwardHinnart's date](https://github.com/HowardHinnant/date) (in folder src/HodwardHinnart_date, modified tz.cpp to point to correct header)
