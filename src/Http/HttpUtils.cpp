@@ -2,6 +2,7 @@
 #include "TessesFramework/Filesystem/VFS.hpp"
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
 namespace Tesses::Framework::Http {
     

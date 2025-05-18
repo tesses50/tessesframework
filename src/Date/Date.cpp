@@ -317,7 +317,7 @@ namespace Tesses::Framework::Date
     }
     void DateTime::SetYear(int y)
     {
-        this->year = year;
+        this->year = y;
     }
     void DateTime::SetMonth(int m)
     {
