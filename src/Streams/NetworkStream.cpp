@@ -766,6 +766,13 @@ void NetworkStream::SetNoDelay(bool noDelay)
 {
     
 }
-
+uint16_t NetworkStream::GetPort()
+{
+    return 0;
+}
+uint16_t TcpServer::GetPort()
+{
+    return 0;
+}
 }
 #endif
