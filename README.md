@@ -21,3 +21,6 @@ sudo make install
 
 ## Dependencies
 - [mbedtls](https://github.com/Mbed-TLS/mbedtls)
+
+## Code used from other peoples projects
+- [Multipart server (rewriten in C++ was C# in dejuric/simplehttp)](https://github.com/dajuric/simple-http)
