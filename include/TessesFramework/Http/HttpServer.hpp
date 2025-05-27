@@ -88,6 +88,7 @@ namespace Tesses::Framework::Http
         bool ownsTCP;
         bool ownsHttp;
         bool showIPs;
+        bool showARTL;
     
         public:
             HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer& http, bool showIPs=true);
@@ -96,6 +97,8 @@ namespace Tesses::Framework::Http
             HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer* http, bool ownsHttpServer, bool showIPs=true);
             HttpServer(uint16_t port, IHttpServer& http, bool showIPs=true);
             HttpServer(uint16_t port, IHttpServer* http, bool owns, bool showIPs=true);
+            HttpServer(std::string unixPath, IHttpServer& http);
+            HttpServer(std::string unixPath, IHttpServer* http, bool owns);
             uint16_t GetPort();
             void StartAccepting();
             static void Process(Tesses::Framework::Streams::Stream& strm, IHttpServer& server, std::string ip, uint16_t port, bool encrypted);

@@ -45,10 +45,12 @@ namespace Tesses::Framework::Http
 
             std::string method;
             std::string url;
+            std::string unixSocket;
             HttpDictionary requestHeaders;
             HttpRequestBody* body;
 
             static Tesses::Framework::Streams::Stream* EstablishConnection(Uri uri,bool ignoreSSLErrors,std::string trusted_root_cert_bundle);
+            static Tesses::Framework::Streams::Stream* EstablishUnixPathConnection(std::string unixPath, Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle);
 
             void SendRequest(Tesses::Framework::Streams::Stream* strm);
     };  
@@ -77,8 +79,22 @@ namespace Tesses::Framework::Http
     void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path);
     void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFSPath path);
     std::string DownloadToStringSimple(std::string url);
+    
     bool WebSocketClientSuccessDefault(HttpDictionary& dict,bool v);
     void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
     void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
     
+    
+    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream* strm);
+    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream& strm);
+
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path);
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path);
+    
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFSPath path);
+    std::string DownloadUnixSocketToStringSimple(std::string unixSocket,std::string url);
+
+
+    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
+    void WebSocketUnixSocketClient(std::string unixSocket,std::string url,HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb=WebSocketClientSuccessDefault);
 }

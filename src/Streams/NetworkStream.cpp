@@ -34,6 +34,9 @@ extern "C" {
 #include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
+#if defined(AF_UNIX)
+#include <sys/un.h>
+#endif
 }
 #endif
 #if defined(GEKKO)
@@ -264,6 +267,81 @@ namespace Tesses::Framework::Streams {
         uint32_t addr;
         uint8_t addr_parts[4];
     } my_addr_t;
+    NetworkStream::NetworkStream(std::string unixPath,bool isServer)
+    {
+        this->endOfStream=false;
+        this->owns = true;
+        this->success=false;
+        #if defined(AF_UNIX)
+        this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
+        if(this->sock < 0)
+        {
+            this->success=false;
+            return;
+        }
+        struct sockaddr_un unx;
+        
+        memset(&unx, 0, sizeof(unx));
+        unx.sun_family = AF_UNIX;
+        
+        strncpy(unx.sun_path, unixPath.c_str(),sizeof(unx.sun_path)-1);
+    
+        if(isServer)
+        {
+            unlink(unixPath.c_str());
+            if(NETWORK_BIND(this->sock, (const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
+            {
+                std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
+                this->success = false;
+                return;
+            }
+        }
+        else 
+        {
+            if(NETWORK_CONNECT(this->sock,(const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
+            {
+                this->success=false;
+                return;
+            }
+        }
+        #endif
+    }
+
+    TcpServer::TcpServer(std::string unixPath,int32_t backlog)
+    {
+
+        
+        this->owns=true;
+        this->valid=false;
+        #if defined(AF_UNIX)
+        this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
+        if(this->sock < 0)
+        {
+            this->valid=false;
+            return;
+        }
+        struct sockaddr_un unx;
+        
+        memset(&unx, 0, sizeof(unx));
+        unx.sun_family = AF_UNIX;
+        unlink(unixPath.c_str());
+        strncpy(unx.sun_path, unixPath.c_str(),sizeof(unx.sun_path)-1);
+        if(NETWORK_BIND(this->sock, (const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
+        {
+            std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
+            this->valid = false;
+            return;
+        }
+
+        if(NETWORK_LISTEN(this->sock, backlog) != 0) 
+        {
+            std::cout << "FAILED TO LISTEN FOR SOME REASON" << std::endl;
+            this->valid = false;
+            return;
+        }
+        this->valid = true;
+        #endif
+    }
 
     TcpServer::TcpServer(uint16_t port, int32_t backlog)
     {
@@ -302,7 +380,7 @@ namespace Tesses::Framework::Streams {
         }
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
-            std::cout << "FAILED TO BIND FOR SOME REASON" << std::endl;
+            std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
             this->valid = false;
             return;
         }
@@ -387,6 +465,8 @@ namespace Tesses::Framework::Streams {
         
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
+
+            std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
             this->valid = false;
             return;
         }
@@ -557,6 +637,8 @@ namespace Tesses::Framework::Streams {
         int r = NETWORK_BIND(this->sock, (struct sockaddr*)&addr, sizeof(addr));
         if(r != 0)
         {
+
+            std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
             this->success=false;
             if(this->owns)
                 NETWORK_CLOSE(this->sock);
@@ -684,6 +766,10 @@ TcpServer::TcpServer(std::string ip, uint16_t port, int32_t backlog)
 {
 
 }
+TcpServer::TcpServer(std::string unixPath,int32_t backlog)
+{
+    
+}
 NetworkStream* TcpServer::GetStream(std::string& ip, uint16_t& port)
 {
     return nullptr;
@@ -717,6 +803,10 @@ NetworkStream::NetworkStream(bool ipV6,bool datagram)
 NetworkStream::NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,bool broadcast,bool supportIPv6)
 {
 
+}
+NetworkStream::NetworkStream(std::string unixPath, bool isServer)
+{
+    
 }
 NetworkStream::NetworkStream(int32_t sock, bool owns)
 {

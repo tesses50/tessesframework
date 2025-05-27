@@ -550,6 +550,7 @@ namespace Tesses::Framework::Http
         this->ownsHttp = ownsHttpServer;
         this->showIPs = showIPs;
         this->thrd=nullptr;
+        this->showARTL = showIPs;
     }
    
             
@@ -561,6 +562,15 @@ namespace Tesses::Framework::Http
     {
 
     }
+    HttpServer::HttpServer(std::string unixPath, IHttpServer* http, bool owns) : HttpServer(new TcpServer(unixPath,10),true,http,owns,false)
+    {
+        this->showARTL=true;
+    }
+    HttpServer::HttpServer(std::string unixPath, IHttpServer& http) : HttpServer(unixPath,&http,false)
+    {
+
+    }
+
     uint16_t HttpServer::GetPort()
     {
         if(server != nullptr)
@@ -633,6 +643,11 @@ namespace Tesses::Framework::Http
                 std::cout << "\x1B[35mhttp://";
                 std::cout << _ip.second << ":" << std::to_string(this->GetPort()) << "/\n";
             }
+            
+            
+        }
+        if(this->showARTL)
+        {
             if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
             std::cout << "\x1B[31mAlmost Ready to Listen\x1B[39m\n";
         }

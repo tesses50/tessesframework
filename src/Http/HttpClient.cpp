@@ -117,7 +117,6 @@ namespace Tesses::Framework::Http
             body->Write(strm);
         }
     }
-
     Stream* HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
     {
         if(uri.scheme == "http:" || uri.scheme == "ws:")
@@ -127,7 +126,22 @@ namespace Tesses::Framework::Http
         else if(uri.scheme == "https:" || uri.scheme == "wss:")
         {
             auto netStrm = new NetworkStream(uri.host,uri.GetPort(),false,false,false);
-            if(netStrm == nullptr) return netStrm;
+            if(netStrm == nullptr) return nullptr;
+            return new ClientTLSStream(netStrm, true, ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
+        }
+            
+        return nullptr;
+    }
+    Stream* HttpRequest::EstablishUnixPathConnection(std::string unixPath,Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
+    {
+        if(uri.scheme == "http:" || uri.scheme == "ws:")
+        {
+            return new NetworkStream(unixPath,false);
+        }
+        else if(uri.scheme == "https:" || uri.scheme == "wss:")
+        {
+            auto netStrm = new NetworkStream(unixPath,false);
+            if(netStrm == nullptr) return nullptr;
             return new ClientTLSStream(netStrm, true, ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
         }
             
@@ -182,7 +196,7 @@ namespace Tesses::Framework::Http
         Uri uri;
         while(Uri::TryParse(url, uri))
         {
-            auto strm = HttpRequest::EstablishConnection(uri, req.ignoreSSLErrors,req.trusted_root_cert_bundle);
+            auto strm = req.unixSocket.empty() ?  HttpRequest::EstablishConnection(uri, req.ignoreSSLErrors,req.trusted_root_cert_bundle) : HttpRequest::EstablishUnixPathConnection(req.unixSocket,uri, req.ignoreSSLErrors,req.trusted_root_cert_bundle);
             if(strm == nullptr) return;
             auto reqHeaders = req.requestHeaders;
             
@@ -284,50 +298,84 @@ namespace Tesses::Framework::Http
         return new HttpStream(this->handleStrm,false,length,true,version=="HTTP/1.1");
     }
 
-    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm)
+    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream* strm)
     {
         if(strm == nullptr) throw TextException("strm is null");
         HttpRequest request;
         request.url = url;
+        request.unixSocket = unixSocket;
         request.followRedirects=true;
         request.method = "GET";
         HttpResponse response(request);
         if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         response.CopyToStream(strm);
     }
-    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream& strm)
+    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream& strm)
     {
-        DownloadToStreamSimple(url,&strm);
+        DownloadUnixSocketToStreamSimple(unixSocket,url,&strm);
     }
 
-    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
         if(vfs == nullptr) throw TextException("vfs is null");
         auto strm = vfs->OpenFile(path,"wb");
         if(strm == nullptr) throw TextException("strm is null");
-        DownloadToStreamSimple(url,strm);
+        DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
         delete strm;
     }
-    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
         auto strm = vfs.OpenFile(path,"wb");
         if(strm == nullptr) throw TextException("strm is null");
-        DownloadToStreamSimple(url,strm);
+        DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
         delete strm;
+    }
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        DownloadUnixSocketToFileSimple(unixSocket,url,Tesses::Framework::Filesystem::LocalFS,path);
+    }
+    std::string DownloadUnixSocketToStringSimple(std::string unixSocket,std::string url)
+    {
+        HttpRequest request;
+        request.url = url;
+        request.unixSocket = unixSocket;
+        request.followRedirects=true;
+        request.method = "GET";
+        HttpResponse response(request);
+        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        return response.ReadAsString();
+    }
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm)
+    {
+        DownloadUnixSocketToStreamSimple("",url,strm);
+    }
+    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream& strm)
+    {
+        DownloadUnixSocketToStreamSimple("",url,strm);
+    }
+
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        DownloadUnixSocketToFileSimple("",url,vfs,path);
+    }
+    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
+    {
+        DownloadUnixSocketToFileSimple("",url,vfs,path);
     }
     void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFSPath path)
     {
-        DownloadToFileSimple(url,Tesses::Framework::Filesystem::LocalFS,path);
+        DownloadUnixSocketToFileSimple("",url,path);
     }
     std::string DownloadToStringSimple(std::string url)
     {
-        HttpRequest request;
+         HttpRequest request;
         request.url = url;
         request.followRedirects=true;
         request.method = "GET";
         HttpResponse response(request);
         if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         return response.ReadAsString();
+   
     }
     bool WebSocketClientSuccessDefault(HttpDictionary& dict,bool v)
     {
@@ -335,7 +383,11 @@ namespace Tesses::Framework::Http
     }
     void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb)
     {
-        WebSocketClient(url,requestHeaders, &wsc,cb);
+        WebSocketUnixSocketClient("",url,requestHeaders,wsc,cb);
+    }
+    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    {
+        WebSocketUnixSocketClient(unixSocket,url,requestHeaders, &wsc,cb);
     }
 
     class WSClient {
@@ -574,13 +626,18 @@ namespace Tesses::Framework::Http
     };
 
 
-
     void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    {
+        WebSocketUnixSocketClient("",url,requestHeaders,wsc,cb);
+    }
+   
+    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb)
     {
         HttpRequest req;
         req.url = url;
         req.requestHeaders = requestHeaders;
         req.followRedirects=true;
+        req.unixSocket = unixSocket;
 
         std::string hash = "";
 

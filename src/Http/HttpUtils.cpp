@@ -93,6 +93,7 @@ namespace Tesses::Framework::Http {
         uri.port=0;
         auto firstPart = HttpUtils::SplitString(url,"//",2);
         if(firstPart.size() == 2)
+       
         uri.scheme=firstPart[0];
         else if(firstPart.empty())
         return false;

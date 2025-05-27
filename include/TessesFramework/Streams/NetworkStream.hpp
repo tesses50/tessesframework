@@ -14,6 +14,7 @@ namespace Tesses::Framework::Streams
             TcpServer(int32_t sock,bool owns);
             TcpServer(uint16_t port, int32_t backlog);
             TcpServer(std::string ip, uint16_t port, int32_t backlog);
+            TcpServer(std::string unixPath,int32_t backlog);
             NetworkStream* GetStream(std::string& ip, uint16_t& port);
             uint16_t GetPort();
             ~TcpServer();
@@ -30,6 +31,7 @@ namespace Tesses::Framework::Streams
         bool CanRead();
         bool CanWrite();
         NetworkStream(bool ipV6,bool datagram);
+        NetworkStream(std::string unixPath,bool isServer);
         NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,bool broadcast,bool supportIPv6);
         NetworkStream(int32_t sock, bool owns);
         uint16_t GetPort();
