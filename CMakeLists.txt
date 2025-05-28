@@ -136,6 +136,7 @@ endif()
 if(TESSESFRAMEWORK_ENABLE_SETDATE)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SETDATE)
 endif()
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC _FILE_OFFSET_BITS=64)
 endfunction()
 
 include(GNUInstallDirs)
