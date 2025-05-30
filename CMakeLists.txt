@@ -44,7 +44,7 @@ src/HiddenField.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
+
 option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON)
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
 option(TESSESFRAMEWORK_ENABLE_NETWORKING "Enable Networking" ON)
@@ -59,8 +59,10 @@ option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
 option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" ON)
 if(TESSESFRAMEWORK_FETCHCONTENT)
-
+set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 include(FetchContent)
+else()
+set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 endif()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)

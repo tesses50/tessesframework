@@ -16,7 +16,7 @@ jobs:
       commands: |
         mkdir build
         cd build
-        cmake -S .. -B .
+        cmake -S .. -B . -DTESSESFRAMEWORK_FETCHCONTENT=OFF
         make -j12
         make install DESTDIR=out
     useTTY: true
