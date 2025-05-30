@@ -57,6 +57,11 @@ option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" 
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
+option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" ON)
+if(TESSESFRAMEWORK_FETCHCONTENT)
+
+include(FetchContent)
+endif()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
@@ -67,13 +72,27 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.
 #target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
 bin2h(SOURCE_FILE ${TESSESFRAMEWORK_CERT_BUNDLE_FILE} HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h "\n")
-#else()
-#target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
+else()
+target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
 
 endif()
-endif()
+
+if(TESSESFRAMEWORK_FETCHCONTENT)
+
+FetchContent_Declare(
+    mbedtls
+    GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+)
+set(MBEDTLS_FATAL_WARNINGS OFF)
+set(ENABLE_TESTING OFF)
+set(ENABLE_PROGRAMS OFF)
+set(USE_SHARED_MBEDTLS_LIBRARY ON)
+FetchContent_MakeAvailable(mbedtls)
+else()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
+endif()
 
+endif()
 function(TESSESFRAMEWORK_LINKDEPS TessesFramework_TARGET)
 target_include_directories(${TessesFramework_TARGET}
     PUBLIC
@@ -104,12 +123,14 @@ target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_EMBE
 else()
 target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
 endif()
+if(NOT TESSESFRAMEWORK_FETCHCONTENT)
 if(MBEDTLS_DIR STREQUAL "")
 else()
 target_include_directories(${TessesFramework_TARGET} PUBLIC ${MBEDTLS_DIR}/include)
 target_link_directories(${TessesFramework_TARGET} PUBLIC ${MBEDTLS_DIR}/lib)
 endif()
 target_link_libraries(${TessesFramework_TARGET} PUBLIC mbedtls mbedx509 mbedcrypto)
+endif()
 endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube")
@@ -145,6 +166,10 @@ if(TESSESFRAMEWORK_ENABLE_STATIC)
 
 add_library(tessesframework STATIC ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework)
+if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+target_link_libraries(tessesframework PUBLIC mbedtls_static)
+list(APPEND TessesFrameworkLibs mbedtls_static)
+endif()
 list(APPEND TessesFrameworkLibs tessesframework)
 endif()
 
@@ -153,6 +178,10 @@ if(TESSESFRAMEWORK_ENABLE_SHARED)
 
 add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
+if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+target_link_libraries(tessesframework_shared PUBLIC mbedtls)
+list(APPEND TessesFrameworkLibs mbedtls)
+endif()
 list(APPEND TessesFrameworkLibs tessesframework_shared)
 endif()
 
