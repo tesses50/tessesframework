@@ -167,8 +167,8 @@ if(TESSESFRAMEWORK_ENABLE_STATIC)
 add_library(tessesframework STATIC ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework)
 if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
-target_link_libraries(tessesframework PUBLIC mbedtls_static)
-list(APPEND TessesFrameworkLibs mbedtls_static)
+target_link_libraries(tessesframework PUBLIC mbedtls)
+
 endif()
 list(APPEND TessesFrameworkLibs tessesframework)
 endif()
@@ -180,12 +180,13 @@ add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
 if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
 target_link_libraries(tessesframework_shared PUBLIC mbedtls)
-list(APPEND TessesFrameworkLibs mbedtls)
 endif()
 list(APPEND TessesFrameworkLibs tessesframework_shared)
 endif()
 
-
+if((TESSESFRAMEWORK_ENABLE_STATIC OR TESSESFRAMEWORK_ENABLE_SHARED) AND TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+list(APPEND TessesFrameworkLibs mbedtls)
+endif()
 
 
 if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
