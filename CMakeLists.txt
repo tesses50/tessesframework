@@ -185,7 +185,7 @@ list(APPEND TessesFrameworkLibs tessesframework_shared)
 endif()
 
 if((TESSESFRAMEWORK_ENABLE_STATIC OR TESSESFRAMEWORK_ENABLE_SHARED) AND TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
-list(APPEND TessesFrameworkLibs mbedtls)
+list(APPEND TessesFrameworkLibs mbedtls mbedx509 mbedcrypto)
 endif()
 
 
