@@ -1,6 +1,7 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include <iostream>
+#include <cstring>
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
