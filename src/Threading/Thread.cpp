@@ -56,7 +56,7 @@ namespace Tesses::Framework::Threading
                 joinning=false;
                 hasExited=false;
                 #if defined(GEKKO)
-                    LWP_CreateThread(&thrd, cb, static_cast<void*>(this), nullptr,12000, 98);
+                    LWP_CreateThread(&thrd, this->cb, static_cast<void*>(this), nullptr,12000, 98);
                 #elif defined(__SWITCH__)
                 TF_LOG("Before Thread create");
                 Result    rc = threadCreate(&thrd,this->cb,
@@ -152,10 +152,8 @@ namespace Tesses::Framework::Threading
         HANDLE thrd;
         DWORD thrdId;
       
-        public:
-        #elif defined(GEKKO)
-        lwp_t thrd;
-    
+       
+       
         #elif defined(__SWITCH__) || defined(GEKKO)
             std::shared_ptr<NeedToBeJoinnedThread> thread;
         #else

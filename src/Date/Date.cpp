@@ -10,7 +10,7 @@ namespace Tesses::Framework::Date
 {
     int GetTimeZone()
     {
-        #if defined(__SWITCH__) || defined(_WIN32)
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO)
         return (int)(-_timezone);
 	    #else
         return (int)(-timezone);
@@ -18,7 +18,7 @@ namespace Tesses::Framework::Date
     }
     bool TimeZoneSupportDST()
     {
-        #if defined(__SWITCH__) || defined(_WIN32)
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO)
         return _daylight == 1;
         #else
         return daylight == 1;
