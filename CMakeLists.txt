@@ -188,9 +188,12 @@ endif()
 add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
 if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
+
+else()
+target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto)
 
 endif()
-target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
 list(APPEND TessesFrameworkLibs tessesframework_shared)
 endif()
