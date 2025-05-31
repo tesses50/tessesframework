@@ -381,7 +381,7 @@ namespace Tesses::Framework::Serialization::Json
                     }
                     else
                     {
-                        return std::stoll(tkn.first);
+                        return (int64_t)std::stoll(tkn.first);
                     }
                 }
                     
