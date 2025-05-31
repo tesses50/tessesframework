@@ -177,10 +177,6 @@ endif()
 
 
 if(TESSESFRAMEWORK_ENABLE_SHARED)
-
-add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
-TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
-if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 
@@ -189,6 +185,10 @@ if (APPLE)
 else()
     set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 endif()
+add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
+TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
+if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+
 endif()
 target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
