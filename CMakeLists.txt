@@ -80,15 +80,17 @@ target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FI
 endif()
 
 if(TESSESFRAMEWORK_FETCHCONTENT)
-
+set(MBEDTLS_FATAL_WARNINGS OFF)
+set(ENABLE_TESTING OFF)
+set(ENABLE_PROGRAMS OFF)
+if(TESSESFRAMEWORK_ENABLE_SHARED)
+set(USE_SHARED_MBEDTLS_LIBRARY ON)
+endif()
 FetchContent_Declare(
     mbedtls
     GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
 )
-set(MBEDTLS_FATAL_WARNINGS OFF)
-set(ENABLE_TESTING OFF)
-set(ENABLE_PROGRAMS OFF)
-set(USE_SHARED_MBEDTLS_LIBRARY ON)
+
 FetchContent_MakeAvailable(mbedtls)
 else()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
@@ -254,6 +256,8 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
          add_executable(wsecho examples/wsecho.cpp)
         target_link_libraries(wsecho PUBLIC tessesframework)
 
+         add_executable(runevent examples/runevent.cpp)
+        target_link_libraries(runevent PUBLIC tessesframework)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)

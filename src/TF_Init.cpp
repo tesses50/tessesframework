@@ -36,7 +36,7 @@ static GXRModeObj *rmode = NULL;
 
 namespace Tesses::Framework
 {
-    
+    EventList<uint64_t> OnItteraton;
     #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
     namespace Threading
     {
@@ -71,8 +71,11 @@ namespace Tesses::Framework
     bool initedConsole=false;
     PadState default_pad;        
     #endif
+    uint64_t ittr=0;
     void TF_RunEventLoopItteration()
     {
+        
+        OnItteraton.Invoke(ittr++);
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::LookForFinishedThreads();
         #endif
