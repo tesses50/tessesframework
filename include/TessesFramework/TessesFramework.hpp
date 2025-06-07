@@ -28,3 +28,4 @@
 #include "Mail/Smtp.hpp"
 #include "HiddenField.hpp"
 #include "Serialization/Json.hpp"
+#include "SDL2/FontCache.hpp"

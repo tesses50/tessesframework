@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 #include <functional>
-
+#include "Threading/Mutex.hpp"
     class TextException : public std::exception {
         
         std::string error_message;
@@ -52,18 +52,22 @@ namespace Tesses::Framework
 
     template<typename...TArgs>
     class EventList : public Event<TArgs...> {
+        Threading::Mutex mtx;
         std::vector<std::shared_ptr<Event<TArgs...>>> items;
         public:
             void operator+=(std::shared_ptr<Event<TArgs...>> event)
             {
+                mtx.Lock();
                 for(std::shared_ptr<Event<TArgs...>>& item : this->items)
                 {
                     if(item.get() == event.get()) return;
                 }
                 this->items.push_back(event);
+                mtx.Unlock();
             }
             void operator-=(std::shared_ptr<Event<TArgs...>> event)
             {
+                mtx.Lock();
                 for(auto i = this->items.begin(); i != this->items.end(); i++)
                 {
                     if(i->get() == event.get())
@@ -72,13 +76,16 @@ namespace Tesses::Framework
                         return;
                     }
                 }
+                mtx.Lock();
             }
             void Invoke(TArgs... args)
             {
+                mtx.Lock();
                 for(auto& item : this->items)
                 {
                     item->Invoke(args...);
                 }
+                mtx.Unlock();
             }
     };
 
@@ -89,6 +96,7 @@ namespace Tesses::Framework
     void TF_RunEventLoop();
     void TF_RunEventLoopItteration();
     bool TF_IsRunning();
+    void TF_SetIsRunning(bool _isRunning);
     void TF_Quit();
     bool TF_GetConsoleEventsEnabled();
     void TF_SetConsoleEventsEnabled(bool flag);

@@ -33,6 +33,9 @@ static GXRModeObj *rmode = NULL;
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
 #include "TessesFramework/Threading/Mutex.hpp"
 #endif
+#if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+#include <SDL2/SDL.h>
+#endif
 
 namespace Tesses::Framework
 {
@@ -59,6 +62,11 @@ namespace Tesses::Framework
     static void _sigInt(int c)
     {
         isRunningSig=false;
+        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+        SDL_Event quitEvent;
+        quitEvent.type = SDL_QUIT;
+        SDL_PushEvent(&quitEvent);
+        #endif
     }
     void TF_RunEventLoop()
     {
@@ -108,16 +116,27 @@ namespace Tesses::Framework
         #endif
         
     }
-    
+    void TF_SetIsRunning(bool _isRunning)
+    {
+        isRunning = _isRunning;
+    }
     void TF_Quit()
     {
         isRunning=false;
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::JoinAllThreads();
         #endif
+        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+        SDL_Quit();
+        #endif
     }
     void TF_Init()
     {
+        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+        //SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS,"1");
+        SDL_Init(SDL_INIT_EVERYTHING);
+        #endif
+
         tzset();
         #if defined(_WIN32)
         system(" ");

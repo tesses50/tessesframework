@@ -41,6 +41,7 @@ src/Crypto/MbedHelpers.cpp
 src/TF_Init.cpp
 src/wrapper.cpp
 src/HiddenField.cpp
+src/SDL2/FontCache.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -57,6 +58,7 @@ option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" 
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
+option(TESSESFRAMEWORK_ENABLE_SDL2 "Enable SDL2" OFF)
 option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" OFF)
 if(TESSESFRAMEWORK_FETCHCONTENT)
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
@@ -66,6 +68,14 @@ set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE 
 endif()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+
+if(TESSESFRAMEWORK_ENABLE_SDL2)
+
+
+find_package(SDL2 REQUIRED)
+find_package(SDL2_ttf REQUIRED)
+find_package(SDL2_image REQUIRED)
+endif()
 
 if(TESSESFRAMEWORK_ENABLE_MBED)
 if(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
@@ -89,8 +99,8 @@ endif()
 FetchContent_Declare(
     mbedtls
     GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+    GIT_PROGRESS    TRUE
 )
-
 FetchContent_MakeAvailable(mbedtls)
 else()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
@@ -119,6 +129,10 @@ target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENAB
 endif()
 if(TESSESFRAMEWORK_ENABLE_NETWORKING)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_NETWORKING)
+endif()
+if(TESSESFRAMEWORK_ENABLE_SDL2)
+target_link_libraries(${TessesFramework_TARGET} PUBLIC SDL2::SDL2 SDL2_image::SDL2_image SDL2_ttf::SDL2_ttf)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SDL2)
 endif()
 if(TESSESFRAMEWORK_ENABLE_MBED)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_MBED)
@@ -170,6 +184,7 @@ if(TESSESFRAMEWORK_ENABLE_STATIC)
 
 add_library(tessesframework STATIC ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework)
+
 if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
 target_link_libraries(tessesframework PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
@@ -189,6 +204,7 @@ else()
 endif()
 add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
+
 if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
 target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
@@ -235,6 +251,10 @@ DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
+        if(TESSESFRAMEWORK_ENABLE_SDL2)
+        add_executable(sdl2 examples/sdl2.cpp)
+        target_link_libraries(sdl2 PUBLIC tessesframework)
+        endif()
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)
 
