@@ -75,7 +75,7 @@ namespace Tesses::Framework::Http
             if(this->allowListing)
             {
                 std::string p = HttpUtils::HtmlEncode(ctx.originalPath);
-                std::string html = "<!DOCTYPE html><html><head><title>Index of ";
+                std::string html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Index of ";
                 html.append(p);
                 html.append("</title></head><body><h1>Index of ");
                 html.append(p);

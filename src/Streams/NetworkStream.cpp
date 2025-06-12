@@ -43,7 +43,7 @@ extern "C" {
 #if defined(GEKKO)
 
 extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool use_dhcp, int max_retries);
-#elif !defined(_WIN32) && !defined(__ANDROID__) && !defined(__SWITCH__)
+#elif !defined(_WIN32) && !defined(__ANDROID__) && !defined(__SWITCH__) && !defined(__PS2__)
 #include <ifaddrs.h>
 #endif
 
@@ -117,7 +117,7 @@ namespace Tesses::Framework::Streams {
         free(addresses);
 
 
-        #elif defined(__ANDROID__) || defined(__SWITCH__)
+        #elif defined(__ANDROID__) || defined(__SWITCH__) || defined(__PS2__)
 
         #else
         struct ifaddrs *ifAddrStruct = NULL;
@@ -181,7 +181,12 @@ namespace Tesses::Framework::Streams {
     {    
         memset(addr,0,sizeof(struct sockaddr_storage));
         uint8_t ip[16];
+
+        #if defined(__PS2__)
+        if(inet_aton(str.c_str(),ip) == 1)
+        #else
         if(inet_pton(AF_INET,str.c_str(),ip)==1)
+        #endif
         {
             struct sockaddr_in* inAddr = (struct sockaddr_in*)addr;
             inAddr->sin_family = AF_INET;
@@ -521,25 +526,46 @@ namespace Tesses::Framework::Streams {
     {
         return this->success;
     }
-    NetworkStream::NetworkStream(bool ipV6,bool datagram)
+    NetworkStream::NetworkStream(SocketType type)
     {
         this->endOfStream=false;
         this->owns = true;
         this->success=false;
-        if(ipV6)
+        switch(type)
         {
-            #if defined(AF_INET6)
-            this->sock = NETWORK_SOCKET(AF_INET6, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
-            if(this->sock >= 0) this->success=true;
+            case SocketType::ST_IPv4_TCP:
+                #if defined(AF_INET)
+                    this->sock = NETWORK_SOCKET(AF_INET,SOCK_STREAM, 0);
+           
+                #endif
+                break;
+            case SocketType::ST_IPv4_UDP:
+                #if defined(AF_INET)
+                    this->sock = NETWORK_SOCKET(AF_INET,SOCK_DGRAM, 0);
+           
+                #endif
+            break;
+
+            case SocketType::ST_IPv6_TCP:
+                #if defined(AF_INET6)
+                    this->sock = NETWORK_SOCKET(AF_INET6,SOCK_STREAM, 0);
+           
+                #endif
+                break;
+            case SocketType::ST_IPv6_UDP:
+                #if defined(AF_INET6)
+                    this->sock = NETWORK_SOCKET(AF_INET6,SOCK_DGRAM, 0);
+           
+                #endif
+            break;
+            case SocketType::ST_UNIX:
+            #if defined(AF_UNIX)
+                    this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_DGRAM, 0);
+           
             #endif
+            break;
         }
-        else
-        {
-            #if defined(AF_INET)
-            this->sock = NETWORK_SOCKET(AF_INET, datagram ? SOCK_DGRAM : SOCK_STREAM, 0);
-            if(this->sock >= 0) this->success=true;
-            #endif
-        }
+        if(this->sock >= 0) this->success=true;
     }
     NetworkStream::NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram, bool broadcast, bool supportIPv6)
     {
@@ -672,7 +698,7 @@ namespace Tesses::Framework::Streams {
         ip = StringifyIP((struct sockaddr*)&storage);
         port = getPort((struct sockaddr*)&storage);
         
-        return new NetworkStream(s,true);
+        return new NetworkStream((int32_t)s,(bool)true);
     }
     size_t NetworkStream::Read(uint8_t* buff, size_t sz)
     {
@@ -797,7 +823,7 @@ bool NetworkStream::CanWrite() {
     return false;
 }
     
-NetworkStream::NetworkStream(bool ipV6,bool datagram)
+NetworkStream::NetworkStream(SocketType type)
 {
 
 }

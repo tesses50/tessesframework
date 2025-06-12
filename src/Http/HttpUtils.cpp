@@ -516,6 +516,68 @@ namespace Tesses::Framework::Http {
         }
         return strs;
     }
+    std::string HttpUtils::HtmlDecodeOnlyEntityNumber(std::string v)
+    {
+        std::string buff={};
+        int state = 0;
+        uint64_t n=0;
+        for(auto item : v)
+        {
+            switch(state)
+            {
+                case 0:
+                    if(item == '&') state=1;
+                    else buff.push_back(item);
+                    break;
+                case 1:
+                    if(item == '#') {state = 2; n=0;}
+                    else {state=0; buff.push_back('&'); buff.push_back(item); }
+                    break;
+                case 2:
+                    if(item == ';') {
+                        state = 0;
+                        if(n <= 0x7F)
+                        {
+                            buff.push_back((char)n);
+                        }
+                        else if(n >= 0x80 && n <= 0x7FF)
+                        {
+                            uint8_t high = 0b11000000 | ((uint8_t)(n >> 6) & 0b00011111);
+                            uint8_t low = 0b10000000 | ((uint8_t)(n) & 0b00111111);
+                            buff.push_back((char)high);
+                            buff.push_back((char)low);
+                        }
+                        else if(n >= 0x800 && n <= 0xFFFF)
+                        {
+                            uint8_t high = 0b11100000 | ((uint8_t)(n >> 12) & 0b00001111);
+                            uint8_t low = 0b10000000 | ((uint8_t)(n >> 6) & 0b00111111);
+                            uint8_t lowest = 0b10000000 | ((uint8_t)(n) & 0b00111111);
+                            buff.push_back((char)high);
+                            buff.push_back((char)low);
+                            buff.push_back((char)lowest);
+                        }
+                        else if(n >= 0x010000 && n <= 0x10FFFF)
+                        {
+                            uint8_t highest = 0b11110000 | ((uint8_t)(n >> 18) & 0b00000111);
+                            uint8_t high = 0b10000000 | ((uint8_t)(n >> 12) & 0b00111111);
+                            uint8_t low = 0b10000000 | ((uint8_t)(n >> 6) & 0b00111111);
+                            uint8_t lowest = 0b10000000 | ((uint8_t)(n) & 0b00111111);
+                            buff.push_back((char)highest);
+                            
+                            buff.push_back((char)high);
+                            buff.push_back((char)low);
+                            buff.push_back((char)lowest);
+                        }
+                    }
+                    else if(item >= '0' && item <= '9')
+                    {
+                        n *= 10;
+                        n += item - '0';
+                    }
+            }
+        }
+        return buff;
+    }
     std::string HttpUtils::HtmlEncode(std::string html)
     {
         std::string myHtml = {};

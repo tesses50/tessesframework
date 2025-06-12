@@ -12,6 +12,15 @@ namespace Tesses::Framework::TextStreams {
     {
 
     }
+    bool StreamReader::Rewind()
+    {
+        if(this->strm->CanSeek())
+        {
+            this->strm->Seek((int64_t)0,Tesses::Framework::Streams::SeekOrigin::Begin);
+            return true;
+        }
+        return false;
+    }
     StreamReader::StreamReader(Stream* strm, bool owns) : TextReader()
     {
         this->strm = strm;

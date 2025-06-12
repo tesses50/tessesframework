@@ -1,7 +1,91 @@
 #include "TessesFramework/TextStreams/TextWriter.hpp"
+#include "TessesFramework/Http/HttpUtils.hpp"
 
 namespace Tesses::Framework::TextStreams
 {
+    void TextWriter::Write(int64_t n)
+    {
+        std::string text = std::to_string(n);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::Write(uint64_t n)
+    {
+        std::string text = std::to_string(n);
+        WriteData(text.c_str(),text.size());
+    }
+   
+    void TextWriter::Write(const void* ptr)
+    {
+        std::string text = "0x";
+        uintptr_t ptr2 = (uintptr_t)ptr;
+
+        for(size_t i = 1; i <= sizeof(ptr); i++)
+        {
+            uint8_t v = (uint8_t)(ptr2 >> (int)((sizeof(ptr) - i) * 8));
+            text.push_back(Tesses::Framework::Http::HttpUtils::NibbleToHex(v >> 4));
+            text.push_back(Tesses::Framework::Http::HttpUtils::NibbleToHex(v));
+        }
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::Write(const char* ptr)
+    {
+        WriteData(ptr,strlen(ptr));
+    }
+    void TextWriter::Write(char c)
+    {
+        WriteData(&c,1);
+    }
+    void TextWriter::Write(double d)
+    {
+        std::string text = std::to_string(d);
+        WriteData(text.c_str(),text.size());
+    }
+        
+   
+    void TextWriter::WriteLine(int64_t n)
+    {
+        std::string text = std::to_string(n);
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::WriteLine(uint64_t n)
+    {
+         std::string text = std::to_string(n);
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::WriteLine(const void* ptr)
+    {
+        std::string text = "0x";
+        uintptr_t ptr2 = (uintptr_t)ptr;
+
+        for(size_t i = 1; i <= sizeof(ptr); i++)
+        {
+            uint8_t v = (uint8_t)(ptr2 >> (int)((sizeof(ptr) - i) * 8));
+            text.push_back(Tesses::Framework::Http::HttpUtils::NibbleToHex(v >> 4));
+            text.push_back(Tesses::Framework::Http::HttpUtils::NibbleToHex(v));
+        }
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::WriteLine(const char* ptr)
+    {
+         std::string text = ptr;
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::WriteLine(char c)
+    {
+         std::string text = {c};
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
+    void TextWriter::WriteLine(double d)
+    {
+        std::string text = std::to_string(d);
+        text.append(newline);
+        WriteData(text.c_str(),text.size());
+    }
     TextWriter::TextWriter()
     {
         #if defined(WIN32) || defined(_WIN32)

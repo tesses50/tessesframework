@@ -6,6 +6,7 @@ namespace Tesses::Framework::TextStreams
     class TextReader 
     {
         public:
+            virtual bool Rewind();
             virtual bool ReadBlock(std::string& str,size_t sz)=0;
             int32_t ReadChar();
             std::string ReadLine();

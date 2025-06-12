@@ -14,6 +14,7 @@ namespace Tesses::Framework::TextStreams
             StreamReader(Tesses::Framework::Streams::Stream* strm, bool owns);
             StreamReader(std::filesystem::path filename);
             bool ReadBlock(std::string& str,size_t sz);
+            bool Rewind();
             ~StreamReader();
     };  
 }   

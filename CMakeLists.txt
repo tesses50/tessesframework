@@ -24,10 +24,15 @@ src/Streams/Stream.cpp
 src/Streams/BufferedStream.cpp
 src/Streams/ByteReader.cpp
 src/Streams/ByteWriter.cpp
+src/Streams/PtyStream.cpp
 src/TextStreams/StreamReader.cpp
 src/TextStreams/StreamWriter.cpp
 src/TextStreams/TextReader.cpp
 src/TextStreams/TextWriter.cpp
+src/TextStreams/StdIOReader.cpp
+src/TextStreams/StdIOWriter.cpp
+src/TextStreams/StringReader.cpp
+src/TextStreams/StringWriter.cpp
 src/Threading/Thread.cpp
 src/Threading/Mutex.cpp
 src/Filesystem/VFS.cpp
@@ -42,6 +47,16 @@ src/TF_Init.cpp
 src/wrapper.cpp
 src/HiddenField.cpp
 src/SDL2/FontCache.cpp
+src/SDL2/Stream.cpp
+src/SDL2/GUI.cpp
+src/SDL2/GUIWindow.cpp
+src/SDL2/View.cpp
+src/SDL2/Views/ButtonView.cpp
+src/SDL2/Views/AbsoluteView.cpp
+src/SDL2/Views/LabelView.cpp
+src/SDL2/Views/TextListView.cpp
+src/SDL2/Views/ProgressView.cpp
+src/SDL2/Views/CheckView.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -69,21 +84,31 @@ endif()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
+include(cmake/bin2h.cmake)
 if(TESSESFRAMEWORK_ENABLE_SDL2)
 
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_image REQUIRED)
-endif()
 
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" "#pragma once\n")
+bin2h(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/font/NonMono/TanoheSans-Regular.ttf" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" VARIABLE_NAME TanoheSansRegular APPEND NULL_TERMINATE)
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" "\n")
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/aardvark-fixed-regular.h" "#pragma once\n")
+bin2h(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/font/Mono/aardvark-fixed-regular.ttf" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/aardvark-fixed-regular.h" VARIABLE_NAME AardvarkFixedRegular APPEND NULL_TERMINATE)
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/aardvark-fixed-regular.h" "\n")
+
+
+endif()
 if(TESSESFRAMEWORK_ENABLE_MBED)
 if(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
-include(cmake/bin2h.cmake)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h "#pragma once\n")
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" "#pragma once\n")
 #target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
-bin2h(SOURCE_FILE ${TESSESFRAMEWORK_CERT_BUNDLE_FILE} HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
-file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h "\n")
+bin2h(SOURCE_FILE "${TESSESFRAMEWORK_CERT_BUNDLE_FILE}" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" "\n")
 else()
 target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
 
@@ -164,7 +189,7 @@ target_link_libraries(${TessesFramework_TARGET} PUBLIC ws2_32)
 
 endif()
 
-if(NOT ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube"))
+if(NOT("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows"  OR PLATFORM_PS2 OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube"))
 
 if(TESSESFRAMEWORK_ENABLE_THREADING)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -176,6 +201,10 @@ if(TESSESFRAMEWORK_ENABLE_SETDATE)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SETDATE)
 endif()
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC _FILE_OFFSET_BITS=64)
+
+if(PLATFORM_PS2)
+target_link_libraries(${TessesFramework_TARGET} PUBLIC -ldebug)
+endif()
 endfunction()
 
 include(GNUInstallDirs)
@@ -281,6 +310,14 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)
+if(TESSESFRAMEWORK_ENABLE_SDL2)
+add_executable(tguilayouttester apps/guilayouttester.cpp)
+target_link_libraries(tguilayouttester PUBLIC tessesframework)
+install(TARGETS tguilayouttester DESTINATION bin)
+endif()
+add_executable(tanonydrop apps/tanonydrop.cpp)
+target_link_libraries(tanonydrop PUBLIC tessesframework)
+install(TARGETS tanonydrop DESTINATION bin)
 add_executable(tfetch apps/tfetch.cpp)
 target_link_libraries(tfetch PUBLIC tessesframework)
 install(TARGETS tfetch DESTINATION bin)

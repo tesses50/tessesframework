@@ -2,6 +2,7 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include <atomic>
 #include <csignal>
+#include <iostream>
 #if defined(_WIN32)
 #include <windows.h>
 #undef min
@@ -35,6 +36,9 @@ static GXRModeObj *rmode = NULL;
 #endif
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
+#include "TessesFramework/SDL2/GUI.hpp"
 #endif
 
 namespace Tesses::Framework
@@ -87,6 +91,7 @@ namespace Tesses::Framework
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::LookForFinishedThreads();
         #endif
+
     
         if(!isRunningSig) isRunning=false;
         #if defined(GEKKO)
@@ -115,6 +120,9 @@ namespace Tesses::Framework
         }
         #endif
         
+        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+        Tesses::Framework::SDL2::gui.Update();
+        #endif        
     }
     void TF_SetIsRunning(bool _isRunning)
     {
@@ -135,6 +143,14 @@ namespace Tesses::Framework
         #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
         //SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS,"1");
         SDL_Init(SDL_INIT_EVERYTHING);
+        TTF_Init();
+        int r = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP | IMG_INIT_JXL |IMG_INIT_AVIF;
+        if(IMG_Init(
+            r
+            ) != r)
+            {
+                std::cout << "IMG_Init: " << IMG_GetError() << std::endl;
+            }
         #endif
 
         tzset();

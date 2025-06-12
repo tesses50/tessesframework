@@ -10,7 +10,7 @@ namespace Tesses::Framework::Date
 {
     int GetTimeZone()
     {
-        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO)
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
         return (int)(-_timezone);
 	    #else
         return (int)(-timezone);
@@ -18,7 +18,7 @@ namespace Tesses::Framework::Date
     }
     bool TimeZoneSupportDST()
     {
-        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO)
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
         return _daylight == 1;
         #else
         return daylight == 1;
@@ -56,9 +56,9 @@ namespace Tesses::Framework::Date
         secs /= 60;
         hour = secs % 24;
 
-        day = (int)(uint32_t)ymd.day();
-        month = (int)(uint32_t)ymd.month();
-        year = (int32_t)ymd.year();
+        day = (int)(unsigned)ymd.day();
+        month = (int)(unsigned)ymd.month();
+        year = (int)ymd.year();
     }
     DateTime::DateTime(int64_t epoch)
     {
@@ -141,7 +141,7 @@ namespace Tesses::Framework::Date
     
                 date::year_month_day ymd(epoch);
                 
-                auto month = (uint32_t)ymd.month();
+                auto month = (unsigned)ymd.month();
     
                 if(month > 3 && month < 11)
                 {
@@ -149,7 +149,7 @@ namespace Tesses::Framework::Date
                 }
                 else if(month == 3)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day > 14) isDST=true;
                     else if(day >= 8 && day <= 14)
                     {
@@ -172,7 +172,7 @@ namespace Tesses::Framework::Date
                 }    
                 else if(month == 11)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day >= 1 && day <= 7)
                     {
                         date::year_month_weekday ymw(epoch);
@@ -220,7 +220,7 @@ namespace Tesses::Framework::Date
     
                 date::year_month_day ymd(epoch);
                 
-                auto month = (uint32_t)ymd.month();
+                auto month = (unsigned)ymd.month();
     
                 if(month > 3 && month < 11)
                 {
@@ -228,7 +228,7 @@ namespace Tesses::Framework::Date
                 }
                 else if(month == 3)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day > 14) isDST=true;
                     else if(day >= 8 && day <= 14)
                     {
@@ -251,7 +251,7 @@ namespace Tesses::Framework::Date
                 }    
                 else if(month == 11)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day >= 1 && day <= 7)
                     {
                         date::year_month_weekday ymw(epoch);
@@ -357,7 +357,7 @@ namespace Tesses::Framework::Date
     
                 date::year_month_day ymd(epoch);
                 
-                auto month = (uint32_t)ymd.month();
+                auto month = (unsigned)ymd.month();
     
                 if(month > 3 && month < 11)
                 {
@@ -365,7 +365,7 @@ namespace Tesses::Framework::Date
                 }
                 else if(month == 3)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day > 14) isDST=true;
                     else if(day >= 8 && day <= 14)
                     {
@@ -388,7 +388,7 @@ namespace Tesses::Framework::Date
                 }    
                 else if(month == 11)
                 {
-                    auto day = (uint32_t)ymd.day();
+                    auto day = (unsigned)ymd.day();
                     if(day >= 1 && day <= 7)
                     {
                         date::year_month_weekday ymw(epoch);

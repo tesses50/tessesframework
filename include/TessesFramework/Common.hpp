@@ -87,6 +87,17 @@ namespace Tesses::Framework
                 }
                 mtx.Unlock();
             }
+            void Remove(std::function<bool(std::shared_ptr<Event<TArgs...>>)> cb)
+            {
+                for(auto index = this->items.begin(); index != this->items.end(); index++)
+                {
+                    if(cb(*index)) 
+                    {
+                        this->items.erase(index);
+                        index--;
+                    }
+                }
+            }
     };
 
     extern EventList<uint64_t> OnItteraton;

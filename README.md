@@ -24,3 +24,7 @@ sudo make install
 
 ## Code used from other peoples projects
 - [Multipart parser (rewriten in C++ was C# in dejuric/simplehttp)](https://github.com/dajuric/simple-http)
+
+## Resources used from others
+- [ca-certificate.crt (from ubuntu)](ca-certificate.crt)
+- [TanoheSans-Regular.ttf (license OFL)](font/License-OFL.txt)

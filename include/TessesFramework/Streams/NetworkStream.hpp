@@ -21,6 +21,13 @@ namespace Tesses::Framework::Streams
             bool IsValid();
             void Close();
     };  
+    enum class SocketType {
+        ST_IPv4_TCP,
+        ST_IPv4_UDP,
+        ST_IPv6_TCP,
+        ST_IPv6_UDP,
+        ST_UNIX
+    };
     class NetworkStream : public Stream {
         int32_t sock;
         bool owns;
@@ -30,7 +37,7 @@ namespace Tesses::Framework::Streams
         bool EndOfStream();
         bool CanRead();
         bool CanWrite();
-        NetworkStream(bool ipV6,bool datagram);
+        NetworkStream(SocketType type);
         NetworkStream(std::string unixPath,bool isServer);
         NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,bool broadcast,bool supportIPv6);
         NetworkStream(int32_t sock, bool owns);

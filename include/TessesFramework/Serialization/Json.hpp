@@ -17,19 +17,7 @@ namespace Tesses::Framework::Serialization::Json
 
     class JOItem;
 
-    class JObject {
-        std::map<std::string,JToken> map;
-        public:
-            JObject();
-            JObject(std::initializer_list<JOItem> items);
-            void SetValue(std::string key, JToken item);
-            JToken GetValue(std::string key);
-            void Remove(std::string key);
-            std::map<std::string,JToken>& GetMap();
-            std::map<std::string,JToken>::iterator begin();
-            std::map<std::string,JToken>::iterator end();
-    };
-    class JArray
+      class JArray
     {
         std::vector<JToken> items;
         public:
@@ -46,15 +34,36 @@ namespace Tesses::Framework::Serialization::Json
             std::vector<JToken>::iterator begin();
             std::vector<JToken>::iterator end();
     };
-    class JOItem {
+    
+  
+
+   
+
+    class JObject {
+        std::map<std::string,JToken> map;
         public:
-            JOItem();
-            JOItem(std::string key, JToken value);
-        
-            std::string key;
-            JToken value;
+            JObject();
+            JObject(std::initializer_list<JOItem> items);
+            void SetValue(std::string key, JToken item);
+            template<typename T>
+            bool TryGetValueAsType(std::string key, T& value)
+            {
+                auto obj = GetValue(key);
+                if(std::holds_alternative<T>(obj))
+                {
+                    value = std::get<T>(obj);
+                    return true;
+                }
+                return false;       
+            }
+
+            JToken GetValue(std::string key);
+            void Remove(std::string key);
+            std::map<std::string,JToken>& GetMap();
+            std::map<std::string,JToken>::iterator begin();
+            std::map<std::string,JToken>::iterator end();
     };
-    template<typename T>
+     template<typename T>
     bool TryGetJToken(JToken json, T& item)
     {
         if(std::holds_alternative<T>(json))
@@ -64,6 +73,16 @@ namespace Tesses::Framework::Serialization::Json
         }
         return false;
     }
+    class JOItem {
+        public:
+            JOItem();
+            JOItem(std::string key, JToken value);
+        
+            std::string key;
+            JToken value;
+    };
+    
+    
 
     class Json
     {  

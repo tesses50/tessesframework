@@ -9,19 +9,18 @@
 #include "TessesFramework/Crypto/MbedHelpers.hpp"
 #include "TessesFramework/Threading/Mutex.hpp"
 #include "TessesFramework/Common.hpp"
+#include "TessesFramework/TextStreams/StdIOWriter.hpp"
 
 #include <iostream>
 using FileStream = Tesses::Framework::Streams::FileStream;
 using Stream = Tesses::Framework::Streams::Stream;
 using SeekOrigin = Tesses::Framework::Streams::SeekOrigin;
 using MemoryStream = Tesses::Framework::Streams::MemoryStream;
-using StreamReader = Tesses::Framework::TextStreams::StreamReader;
-using StreamWriter = Tesses::Framework::TextStreams::StreamWriter;
 using TcpServer = Tesses::Framework::Streams::TcpServer;
 using NetworkStream = Tesses::Framework::Streams::NetworkStream;
 using BufferedStream = Tesses::Framework::Streams::BufferedStream;
 
-
+using namespace Tesses::Framework::TextStreams;
 
 namespace Tesses::Framework::Http
 {
@@ -503,6 +502,7 @@ namespace Tesses::Framework::Http
             else
             {
                 auto strm = cb(ct, cd1.filename, cd1.fieldName); 
+                if(strm == nullptr) strm = new Stream();
                 bool retVal = parseUntillBoundaryEnd(&ctx->GetStream(),strm,boundary);
                 delete strm;
                 return retVal;
@@ -635,13 +635,13 @@ namespace Tesses::Framework::Http
         {
             TF_LOG("Before printing interfaces");
         
-            std::cout << "\x1B[34mInterfaces:\n";
+            StdOut() << "\x1B[34mInterfaces:" << NewLine();
             for(auto _ip : NetworkStream::GetIPs())
             {
-                std::cout << "\x1B[32m";
-                std::cout << _ip.first << ": ";
-                std::cout << "\x1B[35mhttp://";
-                std::cout << _ip.second << ":" << std::to_string(this->GetPort()) << "/\n";
+                StdOut() << "\x1B[32m"
+                << _ip.first << ": "
+                << "\x1B[35mhttp://"
+                << _ip.second << ":" << (uint64_t)this->GetPort() << "/" << NewLine();
             }
             
             
@@ -649,7 +649,7 @@ namespace Tesses::Framework::Http
         if(this->showARTL)
         {
             if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
-            std::cout << "\x1B[31mAlmost Ready to Listen\x1B[39m\n";
+            StdOut() << "\x1B[31mAlmost Ready to Listen\x1B[39m" << NewLine();
         }
         
         TF_LOG("After printing interfaces");

@@ -2,6 +2,10 @@
 
 namespace Tesses::Framework::TextStreams
 {
+    bool TextReader::Rewind()
+    {
+        return false;
+    }
     int32_t TextReader::ReadChar()
     {
         std::string txt;
