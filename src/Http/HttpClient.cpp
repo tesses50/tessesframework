@@ -65,7 +65,7 @@ namespace Tesses::Framework::Http
     }
     void StreamHttpRequestBody::Write(Tesses::Framework::Streams::Stream* strm)
     {
-        strm->CopyTo(this->strm);
+        this->strm->CopyTo(strm);
     }
     StreamHttpRequestBody::~StreamHttpRequestBody()
     {

@@ -14,13 +14,25 @@ namespace Tesses::Framework::Threading
         return 1;
         #endif
     }
+    size_t ThreadPool::ThreadCount()
+    {
+        return this->threads.size();
+    }
+    bool ThreadPool::Empty()
+    {
+        bool qie;
+        this->mtx.Lock();
+        qie = this->callbacks.empty();
+        this->mtx.Unlock();
+        return qie;
+    }
     ThreadPool::ThreadPool(size_t threads)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         this->isRunning=true;
         for(size_t i = 0; i < threads; i++)
         {
-            this->threads.push_back(new Thread([this]()->void{
+            this->threads.push_back(new Thread([this,i]()->void{
                 while(true) 
                 {
                     this->mtx.Lock();
@@ -31,22 +43,22 @@ namespace Tesses::Framework::Threading
                         return;
                     }
 
-                    std::function<void()> fn=nullptr;
+                    std::function<void(size_t)> fn=nullptr;
 
-                    if(this->callbacks.empty())
+                    if(!this->callbacks.empty())
                     {
                         fn=this->callbacks.front();
                         this->callbacks.pop();
                     }
                     this->mtx.Unlock();
                     if(fn)
-                        fn();
+                        fn(i);
                 }
             }));
         }
         #endif
     }
-    void ThreadPool::Schedule(std::function<void()> cb)
+    void ThreadPool::Schedule(std::function<void(size_t)> cb)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         this->mtx.Lock();

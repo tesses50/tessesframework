@@ -35,6 +35,14 @@ namespace Tesses::Framework::SDL2::Views
                 this->GetWindow()->MakeActive(this);   
             }
         }
+        if(event.type == SDL_FINGERUP)
+        {
+            auto pos = this->GetCordFromEvent(event);
+            if(pos.first >= myVisibleBounds.x && pos.first < myVisibleBounds.x+myVisibleBounds.w && pos.second >= myVisibleBounds.y && pos.second < myVisibleBounds.y+myVisibleBounds.h)
+            {
+                this->GetWindow()->MakeActive(this);   
+            }
+        }
         return View::OnEvent(event,myBounds,myVisibleBounds);
     }
     void ButtonView::OnDraw(SDL_Renderer* renderer, SDL_Rect& r)

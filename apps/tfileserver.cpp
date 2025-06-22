@@ -9,7 +9,7 @@ using namespace Tesses::Framework::Threading;
 void print_help(const char* name)
 {
     printf("Tesses FileServer\nUSAGE: %s [OPTIONS] <dir>\n",name);
-    printf("OPTIONS:\n-p PORT, --port PORT: Change port from 10000\n-l, --listing: Enable listing\n-s, --spa: Enable SPA mode (send \"/\" body instead of not found)\n-h, --help: This Screen\n");
+    printf("OPTIONS:\n-p PORT, --port PORT: Change port from 9852\n-l, --listing: Enable listing\n-s, --spa: Enable SPA mode (send \"/\" body instead of not found)\n-h, --help: This Screen\n");
     exit(1);
 }
 int main(int argc, char** argv)
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     const char* directory = "wwwroot";
     bool spa=false;
     bool allowListing = false;
-    uint16_t port = 10000L;
+    uint16_t port = 9852L;
     
     for(int i = 1; i < argc; i++)
     {

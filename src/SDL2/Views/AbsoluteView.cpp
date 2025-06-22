@@ -41,7 +41,7 @@ namespace Tesses::Framework::SDL2::Views
                 
                 if(CallOnEvent(item.first.first,event,theirBounds, theirVisibleBounds))
                     handled=true;
-                if(handled && event.type != SDL_MOUSEBUTTONUP && event.type != SDL_MOUSEMOTION)
+                if(handled && event.type != SDL_MOUSEBUTTONUP && event.type != SDL_MOUSEMOTION && event.type != SDL_FINGERUP)
                 {
                     GUISDLEventEventArgs sdle;
                     sdle.event = event; this->SDLEvent.Invoke(this,sdle);

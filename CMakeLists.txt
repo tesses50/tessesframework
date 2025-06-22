@@ -17,6 +17,8 @@ src/Http/ContentDisposition.cpp
 src/Http/WebSocket.cpp
 src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
+src/Serialization/SQLite.cpp
+src/Platform/Environment.cpp
 src/Streams/FileStream.cpp
 src/Streams/MemoryStream.cpp
 src/Streams/NetworkStream.cpp
@@ -35,6 +37,7 @@ src/TextStreams/StringReader.cpp
 src/TextStreams/StringWriter.cpp
 src/Threading/Thread.cpp
 src/Threading/Mutex.cpp
+src/Threading/ThreadPool.cpp
 src/Filesystem/VFS.cpp
 src/Filesystem/LocalFS.cpp
 src/Filesystem/MemoryFilesystem.cpp
@@ -57,6 +60,9 @@ src/SDL2/Views/LabelView.cpp
 src/SDL2/Views/TextListView.cpp
 src/SDL2/Views/ProgressView.cpp
 src/SDL2/Views/CheckView.cpp
+src/SDL2/Views/EditTextView.cpp
+src/SDL2/Views/PictureView.cpp
+
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -65,7 +71,19 @@ option(TESSESFRAMEWORK_EMBED_CERT_BUNDLE "Embed the certificate chain bundle" ON
 option(TESSESFRAMEWORK_ENABLE_MBED "Enable Tesses Framework mbedtls" ON)
 option(TESSESFRAMEWORK_ENABLE_NETWORKING "Enable Networking" ON)
 option(TESSESFRAMEWORK_ENABLE_THREADING "Enable Threading" ON)
-
+option(TESSESFRAMEWORK_ENABLE_SQLITE "Enable sqlite (embedded in source)" ON)
+option(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS "Enable sago platformfolders (embedded in source)" ON)
+if(TESSESFRAMEWORK_ENABLE_SQLITE)
+list(APPEND TESSESFRAMEWORK_SOURCE 
+    src/Serialization/sqlite/sqlite3.c
+    src/Serialization/sqlite/vfs.c
+)
+endif()
+if(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
+list(APPEND TESSESFRAMEWORK_SOURCE
+    src/Platform/sago/platform_folders.cpp
+)
+endif()
 option(TESSESFRAMEWORK_ENABLE_EXAMPLES "Enable Tesses Framework examples" ON)
 option(TESSESFRAMEWORK_ENABLE_APPS "Enable Tesses Framework cli apps" ON)
 option(TESSESFRAMEWORK_INSTALL_DEVELOPMENT "Enable Installing Tesses Framework Development Packages" ON)
@@ -88,10 +106,18 @@ include(cmake/bin2h.cmake)
 if(TESSESFRAMEWORK_ENABLE_SDL2)
 
 
-find_package(SDL2 REQUIRED)
-find_package(SDL2_ttf REQUIRED)
-find_package(SDL2_image REQUIRED)
 
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoSwitch")
+find_package(PkgConfig)
+pkg_search_module(SDL2 REQUIRED sdl2)
+pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
+pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
+else()
+find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
+find_package(SDL2_ttf REQUIRED)
+endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" "#pragma once\n")
 bin2h(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/font/NonMono/TanoheSans-Regular.ttf" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" VARIABLE_NAME TanoheSansRegular APPEND NULL_TERMINATE)
 file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" "\n")
@@ -113,7 +139,6 @@ else()
 target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FILE=${TESSESFRAMEWORK_CERT_BUNDLE_FILE})
 
 endif()
-
 if(TESSESFRAMEWORK_FETCHCONTENT)
 set(MBEDTLS_FATAL_WARNINGS OFF)
 set(ENABLE_TESTING OFF)
@@ -133,6 +158,12 @@ endif()
 
 endif()
 function(TESSESFRAMEWORK_LINKDEPS TessesFramework_TARGET)
+if(TESSESFRAMEWORK_ENABLE_SQLITE)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SQLITE)
+endif()
+if(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
+endif()
 target_include_directories(${TessesFramework_TARGET}
     PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -156,7 +187,19 @@ if(TESSESFRAMEWORK_ENABLE_NETWORKING)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_NETWORKING)
 endif()
 if(TESSESFRAMEWORK_ENABLE_SDL2)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoSwitch")
+target_link_libraries(${TessesFramework_TARGET} PUBLIC  ${SDL2_LIBRARIES})
+target_include_directories(${TessesFramework_TARGET} PUBLIC  ${SDL2_INCLUDE_DIRS})
+target_compile_options(${TessesFramework_TARGET} PUBLIC  ${SDL2_CFLAGS_OTHER})
+target_link_libraries(${TessesFramework_TARGET} PUBLIC  ${SDL2_TTF_LIBRARIES})
+target_include_directories(${TessesFramework_TARGET} PUBLIC  ${SDL2_TTF_INCLUDE_DIRS})
+target_compile_options(${TessesFramework_TARGET} PUBLIC  ${SDL2_TTF_CFLAGS_OTHER})
+target_link_libraries(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_LIBRARIES})
+target_include_directories(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_INCLUDE_DIRS})
+target_compile_options(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_CFLAGS_OTHER})
+else()
 target_link_libraries(${TessesFramework_TARGET} PUBLIC SDL2::SDL2 SDL2_image::SDL2_image SDL2_ttf::SDL2_ttf)
+endif()
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SDL2)
 endif()
 if(TESSESFRAMEWORK_ENABLE_MBED)
@@ -178,6 +221,10 @@ endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube")
 target_link_libraries(${TessesFramework_TARGET} PUBLIC fat)
+
+endif()
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoSwitch" AND TESSESFRAMEWORK_ENABLE_THREADING)
+target_link_libraries(${TessesFramework_TARGET} PUBLIC -lpthread)
 endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii")
 target_link_libraries(${TessesFramework_TARGET} PUBLIC wiisocket)
@@ -281,8 +328,12 @@ endif()
 
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         if(TESSESFRAMEWORK_ENABLE_SDL2)
-        add_executable(sdl2 examples/sdl2.cpp)
-        target_link_libraries(sdl2 PUBLIC tessesframework)
+        if(TESSESFRAMEWORK_ENABLE_SQLITE AND TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
+        add_executable(databaseex examples/databaseex.cpp)
+        target_link_libraries(databaseex PUBLIC tessesframework)
+        endif()
+        add_executable(guikitchensink examples/guikitchensink.cpp)
+        target_link_libraries(guikitchensink PUBLIC tessesframework)
         endif()
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)

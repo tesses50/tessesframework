@@ -137,7 +137,7 @@ namespace Tesses::Framework::Crypto
                                    mbedtls_ssl_cache_get,
                                    mbedtls_ssl_cache_set);
 #endif*/
-        mbedtls_ssl_conf_authmode(&data->conf, verify ? MBEDTLS_SSL_VERIFY_REQUIRED: MBEDTLS_SSL_VERIFY_OPTIONAL);
+        mbedtls_ssl_conf_authmode(&data->conf, verify ? MBEDTLS_SSL_VERIFY_REQUIRED: MBEDTLS_SSL_VERIFY_NONE);
         mbedtls_ssl_conf_ca_chain(&data->conf, &data->cachain, NULL);
 
 

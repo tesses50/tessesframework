@@ -1,8 +1,21 @@
 #include "TessesFramework/Common.hpp"
 #include "TessesFramework/Streams/NetworkStream.hpp"
+#include "TessesFramework/Lazy.hpp"
 #include <atomic>
 #include <csignal>
 #include <iostream>
+
+#if defined(TESSESFRAMEWORK_ENABLE_SQLITE) 
+extern "C" {
+#include "Serialization/sqlite/sqlite3.h"
+}
+#if defined(GEKKO) || defined(__SWITCH__) || defined(__PS2__)
+extern "C" {
+    sqlite3_vfs *sqlite3_demovfs();
+}
+#endif
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #undef min
@@ -140,11 +153,22 @@ namespace Tesses::Framework
     }
     void TF_Init()
     {
+        
+        #if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
+           sqlite3_initialize();
+            #if defined(GEKKO) || defined(__SWITCH__) || defined(__PS2__)
+            sqlite3_vfs_register(sqlite3_demovfs(),1);
+            #endif
+        #endif
         #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
         //SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS,"1");
         SDL_Init(SDL_INIT_EVERYTHING);
         TTF_Init();
-        int r = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP | IMG_INIT_JXL |IMG_INIT_AVIF;
+        int r = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP 
+        #if !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
+        | IMG_INIT_JXL |IMG_INIT_AVIF
+        #endif
+        ;
         if(IMG_Init(
             r
             ) != r)
@@ -152,6 +176,8 @@ namespace Tesses::Framework
                 std::cout << "IMG_Init: " << IMG_GetError() << std::endl;
             }
         #endif
+
+
 
         tzset();
         #if defined(_WIN32)

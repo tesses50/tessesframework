@@ -1,5 +1,5 @@
 #include "TessesFramework/Streams/PtyStream.hpp"
-#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
 #include <pty.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -10,7 +10,7 @@
 namespace Tesses::Framework::Streams {
     PtyStream::PtyStream(WindowSize windowSize,std::string filename, std::vector<std::string> args, std::vector<std::string> env)
     {
-        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
         this->wS = windowSize;
         this->eos=false;
         winsize sz;
@@ -80,7 +80,7 @@ namespace Tesses::Framework::Streams {
     size_t PtyStream::Read(uint8_t* buff, size_t sz)
     {
         if(this->eos) return 0;
-        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
         auto res = read(this->socket, buff,sz);
         
         if(res == -1)
@@ -96,7 +96,7 @@ namespace Tesses::Framework::Streams {
     }
     size_t PtyStream::Write(const uint8_t* buff, size_t sz)
     {
-        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
         auto res = write(this->socket, buff,sz);
         return res;
         #else
@@ -109,7 +109,7 @@ namespace Tesses::Framework::Streams {
     }
     void PtyStream::Resize(WindowSize windowSize)
     {
-        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
         this->wS = windowSize;
         winsize sz;
         sz.ws_col =(unsigned short)windowSize.Columns;
@@ -123,7 +123,7 @@ namespace Tesses::Framework::Streams {
     PtyStream::~PtyStream()
     {
         this->eos=true; 
-        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32)
+        #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__)
         close(this->socket);
        
         kill((pid_t)this->pid,SIGHUP);

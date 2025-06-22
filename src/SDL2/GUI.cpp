@@ -1,6 +1,11 @@
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #include "TessesFramework/SDL2/GUI.hpp"
 #include <iostream>
+#if defined(__SWITCH__)
+extern "C" {
+#include <switch.h>
+}
+#endif
 namespace Tesses::Framework::SDL2 
 {
       GUI gui;
@@ -17,11 +22,12 @@ namespace Tesses::Framework::SDL2
         }
         if(this->windows.empty()) return;
 
+
+       
         
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
-            
             for(auto win : this->windows)
             {
                 if(win == nullptr) continue;
@@ -31,6 +37,14 @@ namespace Tesses::Framework::SDL2
                     case SDL_EventType::SDL_WINDOWEVENT:
                         if(event.window.windowID == id)
                         {
+                            win->Event(event);
+                        }
+                        break;
+                    case SDL_EventType::SDL_FINGERDOWN:
+                    case SDL_EventType::SDL_FINGERUP:
+                        if(event.tfinger.windowID == id)
+                        {
+                            
                             win->Event(event);
                         }
                         break;
@@ -198,6 +212,7 @@ namespace Tesses::Framework::SDL2
     {
         return "SDLEvent";
     }
+    
 
     GUIPalette::GUIPalette(bool isDarkMode, SDL_Color accent,int fontSize)
     {

@@ -1,6 +1,7 @@
 #include "TessesFramework/SDL2/GUI.hpp"
-using namespace Tesses::Framework::Serialization::Json;
+
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
+using namespace Tesses::Framework::Serialization::Json;
 #include "TessesFramework/SDL2/Views/ButtonView.hpp"
 #include "TessesFramework/SDL2/Views/CheckView.hpp"
 #include "TessesFramework/SDL2/Views/LabelView.hpp"
@@ -81,7 +82,17 @@ namespace Tesses::Framework::SDL2
         GUISDLEventEventArgs sdle;
         sdle.event = event;
         this->SDLEvent.Invoke(this,sdle);
-        if(event.type == SDL_MOUSEBUTTONDOWN)
+        if(event.type == SDL_FINGERUP)
+        {
+            auto cord = this->GetCordFromEvent(event);
+            if(cord.first >= myVisibleBounds.x && cord.first < myVisibleBounds.x+myVisibleBounds.w && cord.second >= myVisibleBounds.y && cord.second < myVisibleBounds.y+myVisibleBounds.h) {
+            GUIEventArgs cea2;
+            OnClick(cea2);
+            this->Click.Invoke(this,cea2);
+            return true;
+            }
+        }
+        else if(event.type == SDL_MOUSEBUTTONDOWN)
         {
             if(event.button.x >= myVisibleBounds.x && event.button.x < myVisibleBounds.x+myVisibleBounds.w && event.button.y >= myVisibleBounds.y && event.button.y < myVisibleBounds.y+myVisibleBounds.h)
             {
@@ -95,7 +106,7 @@ namespace Tesses::Framework::SDL2
                 this->MouseDown.Invoke(this,cea);
             }
         }
-        if(event.type == SDL_MOUSEBUTTONUP)
+        else if(event.type == SDL_MOUSEBUTTONUP)
         {
             if(this->GetViewFlag(VIEWFLAG_MOUSEDOWN_STATE))
             {
@@ -109,7 +120,7 @@ namespace Tesses::Framework::SDL2
                 this->MouseUp.Invoke(this,cea);
                 GUIEventArgs cea2;
                 OnClick(cea2);
-                this->Click.Invoke(this,cea);
+                this->Click.Invoke(this,cea2);
                 return true;
             }
             
@@ -162,7 +173,32 @@ namespace Tesses::Framework::SDL2
         }
         return nullptr;
     }
+    std::pair<int,int> View::PreferedMinSize()
+    {
+        return std::pair<int,int>(-1,-1);
+    }
 
+    std::pair<int,int> View::GetCordFromEvent(SDL_Event& event)
+    {
+        switch(event.type)
+        {
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+                return std::pair<int,int>(event.button.x,event.button.y);
+                break;
+            case SDL_FINGERUP:
+            case SDL_FINGERDOWN:
+            {   
+                GUIWindow* win = this->GetWindow(); 
+                int w,h;
+                SDL_GetWindowSize(win->window,&w,&h);
+                return std::pair<int,int>(w*event.tfinger.x,h*event.tfinger.y);
+            }
+                break;
+        }
+        return std::pair<int,int>(-1,-1);
+
+    }
 
     View::~View()
     {

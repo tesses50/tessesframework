@@ -7,7 +7,16 @@
 #include "TessesFramework/SDL2/Views/ProgressView.hpp"
 #include "TessesFramework/SDL2/Views/TextListView.hpp"
 #include "TessesFramework/SDL2/Views/AbsoluteView.hpp"
+#include "TessesFramework/SDL2/Views/EditTextView.hpp"
+#include "TessesFramework/SDL2/Views/PictureView.hpp"
 #include "TessesFramework/SDL2/ParseColor.hpp"
+
+#if defined(__SWITCH__)
+extern "C" {
+#include <switch.h>
+}
+#endif
+
 namespace Tesses::Framework::SDL2 
 {
     void GUIWindow::MakeActive(View* view)
@@ -119,6 +128,7 @@ namespace Tesses::Framework::SDL2
         SDL_Rect r={.x=0,.y=0,.w=w,.h=h};
         OnEvent(event,r,r);
     }
+   
     void GUIWindow::OnDraw(SDL_Renderer* renderer, SDL_Rect& r)
     {
         SDL_SetRenderDrawColor(renderer,this->palette.background.r,this->palette.background.g,this->palette.background.b,this->palette.background.a);
@@ -144,9 +154,56 @@ namespace Tesses::Framework::SDL2
     }
     GUIWindow::GUIWindow(std::string title, int w, int h, Uint32 flags, const GUIPalette& palette) : ContainerView(title)
     {
+        TF_LOG("About to create window");
+
+        #if defined(__SWITCH__)
+        auto nxwin = nwindowGetDefault();
+        w = (int)nxwin->default_width;
+        h = (int)nxwin->default_height;
+        flags = 0;
+        std::string onSwitch = "On switch: " + std::to_string(w) + "x" + std::to_string(h);
+        TF_LOG(onSwitch);
+      
+        #endif
+        
         this->window = SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,w,h,flags);
+        std::string sdl_window_is_null = "SDL_Window is";
+
+        if(this->window != nullptr)
+            sdl_window_is_null.append(" not");
+        
+        sdl_window_is_null.append(" null");
+
+        if(this->window == nullptr)
+        {
+            sdl_window_is_null.append(" reason ");
+            sdl_window_is_null.append(SDL_GetError());
+        }
+        
+        TF_LOG(sdl_window_is_null);
+        /*#if defined(__SWITCH__) || defined(__PS2__) || defined(GEKKO)
+
+        this->renderer = SDL_CreateRenderer(this->window,-1,SDL_RENDERER_SOFTWARE);
+        #else*/
+        TF_LOG("About to create renderer");
         this->renderer = SDL_CreateRenderer(this->window,-1,SDL_RENDERER_ACCELERATED);
+        sdl_window_is_null = "SDL_Renderer is";
+
+        if(this->renderer!= nullptr)
+            sdl_window_is_null.append(" not");
+        
+        sdl_window_is_null.append(" null");
+
+        if(this->renderer == nullptr)
+        {
+            sdl_window_is_null.append(" reason ");
+            sdl_window_is_null.append(SDL_GetError());
+        }
+        
+        TF_LOG(sdl_window_is_null);
+        //#endif
         SDL_SetRenderDrawBlendMode(renderer,SDL_BlendMode::SDL_BLENDMODE_BLEND);
+        TF_LOG("Renderer blend mode set");
         this->child=nullptr;
         this->parent=nullptr;
         this->ownsChild=false;
@@ -246,6 +303,16 @@ namespace Tesses::Framework::SDL2
             }
         }
     }
+    SDL_Window* GUIWindow::GetSDLWindow()
+    {
+        return this->window;
+    }
+    SDL_Renderer* GUIWindow::GetSDLRenderer()
+    {
+        return this->renderer;
+    }
+
+    
 
     View* GUIWindow::CreateViewFromJson(Tesses::Framework::Serialization::Json::JObject json)
     {
@@ -348,6 +415,22 @@ namespace Tesses::Framework::SDL2
                     }
                 }
                 return av;
+            }
+            else if(type == "EditTextView")
+            {
+                auto etv = new Views::EditTextView();
+                etv->SetId(id);
+                etv->SetText(text);
+                std::string hint;
+                json.TryGetValueAsType("Hint",hint);
+                etv->SetHint(hint);
+                return etv;
+            }
+            else if(type == "PictureView")
+            {
+                auto pv = new Views::PictureView();
+                pv->SetId(id);
+                return pv;
             }
             else {
                 GUIJsonViewNotFoundEventArgs e;

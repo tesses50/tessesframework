@@ -11,13 +11,15 @@ namespace Tesses::Framework::Threading
 class ThreadPool 
 {
     std::vector<Thread*> threads;
-    std::queue<std::function<void()>> callbacks;
+    std::queue<std::function<void(size_t)>> callbacks;
     Mutex mtx;
     volatile bool isRunning;
     public:
         static size_t GetNumberOfCores();
         ThreadPool(size_t threads);
-        void Schedule(std::function<void()> cb);
+        size_t ThreadCount();
+        bool Empty();
+        void Schedule(std::function<void(size_t)> cb);
         ~ThreadPool();
 };
 }

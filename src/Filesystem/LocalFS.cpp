@@ -169,7 +169,7 @@ namespace Tesses::Framework::Filesystem
             {
                 auto firstPartPath = p.path.front();
 
-                if(!firstPartPath.empty() && firstPartPath.back() == '/') p.relative=false;
+                if(!firstPartPath.empty() && firstPartPath.back() == ':') p.relative=false;
             }
         }
         return p;

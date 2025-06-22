@@ -87,6 +87,18 @@ namespace Tesses::Framework::SDL2::Views
                 }
             }
         }
+        if(event.type == SDL_FINGERUP)
+        {
+            auto pos = this->GetCordFromEvent(event);
+            if(pos.first >= visibleBounds.x && pos.first < visibleBounds.x+visibleBounds.w && pos.second >= visibleBounds.y && pos.second < visibleBounds.y+visibleBounds.h)
+            {
+                this->GetWindow()->MakeActive(this);   
+                this->SetViewFlag(VIEWFLAG_CHECKED,!this->GetViewFlag(VIEWFLAG_CHECKED));
+                GUIEventArgs e;
+                this->OnCheckChanged(e);
+                this->CheckChanged.Invoke(this,e);   
+            }
+        }
         if(event.type == SDL_MOUSEBUTTONUP)
         {
             if(event.button.x >= visibleBounds.x && event.button.x < visibleBounds.x+visibleBounds.w && event.button.y >= visibleBounds.y && event.button.y < visibleBounds.y+visibleBounds.h)

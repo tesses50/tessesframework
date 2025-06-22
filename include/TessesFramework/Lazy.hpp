@@ -38,6 +38,7 @@ template<typename T>
                 else
                 {
                     this->value = this->init();
+                    this->hasInit=true;
                     mtx.Unlock();
                     return this->value;
                 }

@@ -61,6 +61,7 @@ namespace Tesses::Framework::SDL2
     constexpr uint64_t VIEWFLAG_TABSTOP=(uint64_t)1<<3;
     constexpr uint64_t VIEWFLAG_INTERCEPT_TAB=(uint64_t)1<<4;
     constexpr uint64_t VIEWFLAG_CHECKED=(uint64_t)1<<5;
+    constexpr uint64_t VIEWFLAG_TOUCHED=(uint64_t)1<<6;
     class GUIPopup;
     class GUIWindow;
     class ContainerView;
@@ -96,6 +97,8 @@ namespace Tesses::Framework::SDL2
 
             ContainerView* parent;
 
+            
+
         public:
             bool GetViewFlag(uint64_t flag)
             {
@@ -124,6 +127,11 @@ namespace Tesses::Framework::SDL2
             virtual std::string GetId();
             virtual View* FindViewById(std::string id);
             friend class ContainerView;
+
+            virtual std::pair<int,int> PreferedMinSize();
+
+            std::pair<int,int> GetCordFromEvent(SDL_Event& event);
+            
     };
     class ContainerView : public View {
         public:
@@ -210,10 +218,14 @@ namespace Tesses::Framework::SDL2
 
             friend class GUI;
             friend class GUIPopup;
+            friend class View;
             
             void SetText(std::string text);
 
             void SetView(Tesses::Framework::Serialization::Json::JToken json);
+
+            SDL_Window* GetSDLWindow();
+            SDL_Renderer* GetSDLRenderer();
 
             View* CreateViewFromJson(Tesses::Framework::Serialization::Json::JObject json);
     };  

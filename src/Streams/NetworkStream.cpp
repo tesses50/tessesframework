@@ -35,7 +35,7 @@ extern "C" {
 #include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
-#if defined(AF_UNIX)
+#if defined(AF_UNIX) && !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
 #include <sys/un.h>
 #endif
 }
@@ -278,7 +278,7 @@ namespace Tesses::Framework::Streams {
         this->endOfStream=false;
         this->owns = true;
         this->success=false;
-        #if defined(AF_UNIX)
+        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__)
         this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
         if(this->sock < 0)
         {
@@ -319,7 +319,8 @@ namespace Tesses::Framework::Streams {
         
         this->owns=true;
         this->valid=false;
-        #if defined(AF_UNIX)
+        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__)
+
         this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
         if(this->sock < 0)
         {

@@ -32,6 +32,8 @@
 #include "Mail/Smtp.hpp"
 #include "HiddenField.hpp"
 #include "Serialization/Json.hpp"
+#include "Serialization/SQLite.hpp"
+#include "Platform/Environment.hpp"
 #include "SDL2/FontCache.hpp"
 #include "SDL2/Stream.hpp"
 #include "SDL2/GUI.hpp"

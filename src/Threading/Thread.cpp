@@ -7,9 +7,8 @@
 #if defined(__SWITCH__)
 extern "C" {
 #include <switch.h>
-#include <switch/kernel/thread.h>
+#include <pthread.h>
 }
-using NxThread = Thread;
 #endif
 namespace Tesses::Framework::Threading
 {
@@ -21,12 +20,8 @@ namespace Tesses::Framework::Threading
     Mutex needed_to_be_joined_mtx;
     class NeedToBeJoinnedThread {
         
-        #if defined(GEKKO)
         static void* cb(void* data)
-        #elif defined(__SWITCH__)
-        static void cb(void* data)
-        #endif
-        {
+         {
             
             auto ntbjt = static_cast<NeedToBeJoinnedThread*>(data);
           
@@ -37,14 +32,12 @@ namespace Tesses::Framework::Threading
             TF_LOG("Finished calling thread func");
             ntbjt->hasExited=true;
 
-            #if defined(GEKKO)
-                return NULL;
-            #endif
+            return NULL;
         }
         std::function<void()> _cb;
         std::atomic<bool> hasInvoked=false;
         #if defined(__SWITCH__)
-        NxThread thrd;
+        pthread_t thrd;
         #elif defined(GEKKO)
         lwp_t thrd;
         #endif
@@ -58,29 +51,8 @@ namespace Tesses::Framework::Threading
                 #if defined(GEKKO)
                     LWP_CreateThread(&thrd, this->cb, static_cast<void*>(this), nullptr,12000, 98);
                 #elif defined(__SWITCH__)
-                TF_LOG("Before Thread create");
-                Result    rc = threadCreate(&thrd,this->cb,
-                      static_cast<void*>(this), NULL, 0x100000,
-                      0x20 , 2);
-                if (R_FAILED(rc))
-                {
-                    this->hasExited=true;
-                    this->joinned=true;
-                    TF_LOG("Failed to create Thread");
-                    return;
-                }
-
-                TF_LOG("After Thread create, before starting");
-                rc = threadStart(&thrd);
-                if (R_FAILED(rc))
-                {
-                   TF_LOG("Failed to start thread");
-                    threadClose(&thrd);
-                    this->hasExited=true;
-                    this->joinned=true;
-                    return;
-                }
-                TF_LOG("Starting");
+                pthread_create(&thrd,NULL,this->cb,static_cast<void*>(this));
+                
                 #endif
             }
             std::atomic<bool> joinned;
@@ -102,8 +74,7 @@ namespace Tesses::Framework::Threading
         }
         joinning=true;
         #if defined(__SWITCH__)
-        threadWaitForExit(&this->thrd);
-        threadClose(&this->thrd);
+        pthread_join(this->thrd,NULL);
         #elif defined(GEKKO)
         void* res;
         LWP_JoinThread(this->thrd,&res);
