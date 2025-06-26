@@ -132,6 +132,14 @@ namespace Tesses::Framework
 
         }
         #endif
+
+        #if defined(_WIN32)
+        MSG winMSG;
+        if (PeekMessage(&winMSG, NULL, WM_QUIT, WM_QUIT, 1))
+        {
+            isRunning = false;
+        }
+        #endif
         
         #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
         Tesses::Framework::SDL2::gui.Update();
@@ -182,6 +190,8 @@ namespace Tesses::Framework
         tzset();
         #if defined(_WIN32)
         system(" ");
+        signal(SIGINT, _sigInt);
+        signal(SIGTERM, _sigInt);
         #endif
         
         isRunning=true;
@@ -214,6 +224,7 @@ if (iResult != 0) {
         #else
         signal(SIGPIPE,SIG_IGN);
         signal(SIGINT,_sigInt);
+        signal(SIGTERM, _sigInt);
         #endif
  
     }

@@ -208,6 +208,7 @@ namespace Tesses::Framework::Filesystem
     }
     VFSPath VFSPath::MakeAbsolute(VFSPath curDir)
     {
+        if (!this->relative) return *this;
         VFSPath p2 = curDir / *this;
         return p2.CollapseRelativeParents();
     }

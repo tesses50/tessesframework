@@ -1,6 +1,7 @@
 #include "TessesFramework/Platform/Process.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Platform/Environment.hpp"
+#include <iostream>
 
 
 #if defined(_WIN32)
@@ -8,7 +9,7 @@ extern "C" {
 #include <windows.h>
 }
 #include "TessesFramework/Filesystem/VFSFix.hpp"
-#include 'TessesFramework/Text/StringConverter.hpp'
+#include "TessesFramework/Text/StringConverter.hpp"
 using namespace Tesses::Framework::Text::StringConverter;
 static void escape_windows_args(std::string& str, std::vector<std::string> args)
 {
@@ -38,7 +39,6 @@ static void escape_windows_args(std::string& str, std::vector<std::string> args)
 
 #else
 #include <unistd.h>
-#include <signal.h>
 #include <sys/wait.h>
 
 
@@ -48,16 +48,30 @@ static void escape_windows_args(std::string& str, std::vector<std::string> args)
 
 namespace Tesses::Framework::Platform {
 
-    class ProcessData {
+    class ProcessData : public HiddenFieldData {
         public:
             //TODO: Implement for WIN32
             #if defined(_WIN32)
-            STARTUPINFO si;
+            STARTUPINFOW si;
             PROCESS_INFORMATION pi;
 
             HANDLE stdin_strm;
             HANDLE stdout_strm;
             HANDLE stderr_strm;
+
+             static int __stdcall KillGraceFully(HWND hndle, LPARAM arg)
+            {
+                auto pd=static_cast<ProcessData*>((void*)arg);
+                DWORD curProc;
+                GetWindowThreadProcessId(hndle, &curProc);
+                if (curProc == pd->pi.dwProcessId)
+                {
+                    PostMessage(hndle, WM_CLOSE, 0, 0);
+
+                    return true;
+                }
+                return false;
+            }
             
 
             #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
@@ -67,6 +81,8 @@ namespace Tesses::Framework::Platform {
             int stderr_strm;
             pid_t pid;
             #endif
+            
+            
             ProcessData() {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
@@ -90,7 +106,7 @@ namespace Tesses::Framework::Platform {
         HANDLE strm;
         bool writing;
         bool eos;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         #else
         int strm;
         
@@ -105,7 +121,7 @@ namespace Tesses::Framework::Platform {
                 this->writing = writing;
                 this->eos = false;
             }
-            #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
             #else
             ProcessStream(int strm, bool writing)
             {
@@ -119,7 +135,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return this->strm == NULL || eos;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return true;
                 #else
                 return this->strm < 0 || eos;
@@ -130,7 +146,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return !writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return false;
                 #else
                 return !writing && this->strm > -1;
@@ -142,7 +158,7 @@ namespace Tesses::Framework::Platform {
                 #if defined(_WIN32)
 
                 return writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return false;
                 #else
                 return writing && this->strm > -1;
@@ -161,8 +177,8 @@ namespace Tesses::Framework::Platform {
                 if (dataR == 0) {
                     this->eos = true;
                 }
-                return (size_t)dataW;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                return (size_t)dataR;
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return 0;
                 #else
                 if(this->strm < 0 || this->eos && writing) return 0;
@@ -184,7 +200,7 @@ namespace Tesses::Framework::Platform {
                     return 0;
                 
                 return (size_t)dataW;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return 0;
                 #else
                 if(this->strm < 0 || !writing) return 0;
@@ -213,6 +229,31 @@ namespace Tesses::Framework::Platform {
         this->includeThisEnv = includeThisEnv;
         this->hidden.AllocField<ProcessData>();
     }
+    bool Process::HasExited()
+    {
+        if (this->exited) return true;
+        ProcessData* p = this->hidden.GetField<ProcessData*>();
+
+        #if defined(_WIN32)
+        if (WaitForSingleObject(p->pi.hProcess, 0) == WAIT_OBJECT_0)
+        {
+            DWORD ec = 0;
+            GetExitCodeProcess(p->pi.hProcess,&ec);
+            this->exitCode = (int)ec;
+            this->exited = true;
+            return true;
+        }
+        #else       
+        int r;
+        if (waitpid(this->hidden.GetField<ProcessData*>()->pid, &r, WNOHANG) != -1)
+        {
+            this->exited = true;
+            this->exitCode = r;
+            return r;
+        }
+        #endif
+        return false;
+    }
     Process::Process(std::string name, std::vector<std::string> args, std::vector<std::string> env,bool includeThisEnv) : Process(name,args,std::vector<std::pair<std::string,std::string>>(),includeThisEnv)
     {
         this->env.resize(env.size());
@@ -232,11 +273,35 @@ namespace Tesses::Framework::Platform {
             }
         }
     }
+    void Process::CloseStdInNow()
+    {
+        ProcessData* p = this->hidden.GetField<ProcessData*>();
+        
+        #if defined(_WIN32)
+        if (p->stdin_strm != NULL)
+        {
+            CloseHandle(p->stdin_strm);
+            p->stdin_strm = NULL;
+        }
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        
+        #else
+        if (p->stdin_strm > -1)
+        {
+            close(p->stdin_strm);
+            p->stdin_strm = -1;
+        }
+        #endif
+
+    }
     Process::~Process()
     {
+        
         ProcessData* p = this->hidden.GetField<ProcessData*>();
        
         #if defined(_WIN32)
+        if(!this->exited)
+        Kill(SIGTERM);
         if (p->stdin_strm != NULL)
             CloseHandle(p->stdin_strm);
 
@@ -245,9 +310,25 @@ namespace Tesses::Framework::Platform {
 
         if (p->stderr_strm != NULL)
             CloseHandle(p->stderr_strm);
+        
 
         CloseHandle(p->pi.hProcess);
         CloseHandle(p->pi.hThread);
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+
+        #else
+        if (!this->exited)
+        {
+            Kill(SIGTERM);
+            WaitForExit();
+        }
+        
+        if (p->stdin_strm != -1)
+            close(p->stdin_strm);
+        if (p->stdout_strm != -1)
+            close(p->stdout_strm);
+        if (p->stderr_strm != -1)
+            close(p->stderr_strm);
         #endif  
     }
 
@@ -258,7 +339,7 @@ namespace Tesses::Framework::Platform {
         ProcessData* p = 
             this->hidden.GetField<ProcessData*>();
         std::vector<std::pair<std::string,std::string>> envs;
-
+        
         if(this->includeThisEnv)
             Environment::GetEnvironmentVariables(envs);
         
@@ -269,6 +350,7 @@ namespace Tesses::Framework::Platform {
             {
                 if(item.first == itemNew.first)
                 {
+                    
                     item.second = itemNew.second;
                     has=true;
                     break;
@@ -278,6 +360,11 @@ namespace Tesses::Framework::Platform {
         }
 
         #if defined(_WIN32)
+
+
+        ZeroMemory(&p->si, sizeof(p->si));
+        p->si.cb = sizeof(p->si);
+        ZeroMemory(&p->pi, sizeof(p->pi));
         std::u16string u16_name;
         std::u16string u16_args;
         std::string args;
@@ -306,66 +393,89 @@ namespace Tesses::Framework::Platform {
         attr.nLength = sizeof(attr);
         attr.lpSecurityDescriptor = NULL;
         attr.bInheritHandle = true;
-        p->si->hStdInput = NULL;
-        p->si->hStdOutput = NULL;
+        p->si.hStdInput = NULL;
+        p->si.hStdOutput = NULL;
 
-        p->si->hStdError = NULL;
+        p->si.hStdError = NULL;
 
         p->stdin_strm = NULL;
         p->stdout_strm = NULL;
         p->stderr_strm = NULL;
+        if (this->redirectStdIn || this->redirectStdOut || this->redirectStdErr)
+        {
+            p->si.dwFlags |= STARTF_USESTDHANDLES;
+            if (!this->redirectStdIn)
+            {
+                p->si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+            }
+            if (!this->redirectStdOut)
+            {
+                
+                p->si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+            }
+            if (!this->redirectStdOut)
+            {
+                p->si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+            }
+        }
 
         if (this->redirectStdIn)
         {
-            if (!CreatePipe(&p->si->hStdInput, &p->stdin_strm, &attr,0)) return false;
+            if (!CreatePipe(&p->si.hStdInput, &p->stdin_strm, &attr,0)) return false;
+
+            SetHandleInformation(p->stdin_strm, HANDLE_FLAG_INHERIT, 0);
         }
 
         if (this->redirectStdOut)
         {
-            if (!CreatePipe(&p->stdout_strm, &p->si->hStdOutput, &attr, 0))
+            if (!CreatePipe(&p->stdout_strm, &p->si.hStdOutput, &attr, 0))
             {
                 if (this->redirectStdIn)
                 {
                     CloseHandle(p->stdin_strm);
-                    CloseHandle(p->si->hStdInput);
+                    CloseHandle(p->si.hStdInput);
                 }
                 return false;
             }
+
+            SetHandleInformation(p->stdout_strm, HANDLE_FLAG_INHERIT, 0);
         }
         if (this->redirectStdErr)
         {
-            if (!CreatePipe(&p->stderr_strm, &p->si->hStdError, &attr, 0))
+            if (!CreatePipe(&p->stderr_strm, &p->si.hStdError, &attr, 0))
             {
                 if (this->redirectStdIn)
                 {
                     CloseHandle(p->stdin_strm);
-                    CloseHandle(p->si->hStdInput);
+                    CloseHandle(p->si.hStdInput);
                 }
                 if (this->redirectStdOut)
                 {
                     CloseHandle(p->stdout_strm);
-                    CloseHandle(p->si->hStdOutput);
+                    CloseHandle(p->si.hStdOutput);
                 }
                 return false;
             }
+
+            SetHandleInformation(p->stderr_strm, HANDLE_FLAG_INHERIT, 0);
         }
         
-        if (!CreateProcessW(u16_name.c_str(), u16_args.data(), NULL, NULL, (this->redirectStdIn || this->redirectStdOut || this->redirectStdErr), CREATE_UNICODE_ENVIRONMENT, (LPCWSTR)env.c_str(), workDir.empty() ? (LPCWSTR)NULL : (LPCWSTR)workDir.c_str(), &(p->si), &(p->pi)))
+        if (!CreateProcessW((LPCWSTR)u16_name.c_str(), (LPWSTR)u16_args.data(), NULL, NULL, (this->redirectStdIn || this->redirectStdOut || this->redirectStdErr), CREATE_UNICODE_ENVIRONMENT, (LPVOID)env.c_str(), workDir.empty() ? (LPCWSTR)NULL : (LPCWSTR)workDir.c_str(), &(p->si), &(p->pi)))
         {
             if (this->redirectStdIn)
             {
                 CloseHandle(p->stdin_strm);
-                CloseHandle(p->si->hStdInput);
+                CloseHandle(p->si.hStdInput);
             }
             if (this->redirectStdOut)
             {
                 CloseHandle(p->stdout_strm);
-                CloseHandle(p->si->hStdOutput);
+                CloseHandle(p->si.hStdOutput);
             }
             if (this->redirectStdErr)
             {
                 CloseHandle(p->stderr_strm);
-                CloseHandle(p->si->hStdError);
+                CloseHandle(p->si.hStdError);
             }
             return false;
         }
@@ -386,8 +496,8 @@ CreateProcessW(
     _Out_ LPPROCESS_INFORMATION lpProcessInformation
     );
     */
-        return false;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        return true;
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return false;
         #else
 
@@ -460,6 +570,7 @@ CreateProcessW(
             std::vector<std::string> env2;
             env2.resize(envs.size());
 
+
             for(size_t i = 0; i < envs.size(); i++)
             {
                 env2[i] = envs[i].first + "=" + envs[i].second;
@@ -468,13 +579,13 @@ CreateProcessW(
             char** argv = new char*[args.size()+1];
             argv[args.size()]=NULL;
             char** envp = new char*[env2.size()+1];
-            envp[env.size()]=NULL;
+            envp[env2.size()]=NULL;
 
             for(size_t i = 0; i < args.size();i++)
             {
                 argv[i] = (char*)args[i].c_str();
             }
-            for(size_t i = 0; i < env.size();i++)
+            for(size_t i = 0; i < env2.size();i++)
             {
                 envp[i] = (char*)env2[i].c_str();
             }
@@ -512,10 +623,31 @@ CreateProcessW(
         #endif
     }
 
+    
+
     void Process::Kill(int signal)
     {
         #if defined(_WIN32)
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        if (signal != SIGKILL && signal != SIGTERM) std::cout << "WARN: We terminated the process" << std::endl;
+
+        if (signal == SIGTERM)
+        {
+            auto win = this->hidden.GetField<ProcessData*>();
+            if (EnumWindows(ProcessData::KillGraceFully, (LPARAM)(void*)win))
+            {
+                if (WaitForSingleObject(win->pi.hProcess, 60000) != WAIT_OBJECT_0)
+                {
+                    PostThreadMessage(win->pi.dwThreadId, WM_QUIT, 0, 0);
+                }
+            }
+            else {
+                PostThreadMessage(win->pi.dwThreadId, WM_QUIT, 0, 0);
+            }
+        }
+        else
+        TerminateProcess(this->hidden.GetField<ProcessData*>()->pi.hProcess,-1);
+        
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         #else
         kill(this->hidden.GetField<ProcessData*>()->pid,signal);
         #endif
@@ -523,22 +655,34 @@ CreateProcessW(
 
     int Process::WaitForExit()
     {
+        if (this->exited) return this->exitCode;
         #if defined(_WIN32)
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
-        reutnr -1;
+        auto p = this->hidden.GetField<ProcessData*>();
+        WaitForSingleObject(p->pi.hProcess, INFINITE);
+        DWORD ret=0;
+        GetExitCodeProcess(p->pi.hThread, &ret);
+        this->exitCode = (int)ret;
+        this->exited = true;
+        return (int)ret;
+
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        return -1;
         #else
         int r;
-        if(waitpid(this->hidden.GetField<ProcessData*>()->pid,&r,0) != -1)
+        if (waitpid(this->hidden.GetField<ProcessData*>()->pid, &r, 0) != -1)
+        {
+            this->exited = true;
+            this->exitCode = r;
             return r;
+        }
         return -1;
         #endif
     }
 
     Tesses::Framework::Streams::Stream* Process::GetStdinStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        if (this->exited) return nullptr;
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdin_strm,true);
@@ -546,9 +690,9 @@ CreateProcessW(
     }
     Tesses::Framework::Streams::Stream* Process::GetStdoutStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+
+        if (this->exited) return nullptr;
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdout_strm,false);
@@ -556,9 +700,9 @@ CreateProcessW(
     }
     Tesses::Framework::Streams::Stream* Process::GetStderrStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+
+        if (this->exited) return nullptr;
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stderr_strm,false);

@@ -1,12 +1,19 @@
+#pragma once
 #include <vector>
 #include <string>
 #include "TessesFramework/Streams/Stream.hpp"
 #include "TessesFramework/HiddenField.hpp"
+#include <signal.h>
+#if defined(_WIN32)
+#define SIGKILL 9
+#endif
 
 namespace Tesses::Framework::Platform {
 class Process {
     private:
         HiddenField hidden;
+        bool exited = false;
+        int exitCode=0;
     public:
         std::string name;
         std::vector<std::string> args;
@@ -16,6 +23,8 @@ class Process {
         bool redirectStdIn=false;
         bool redirectStdOut=false;
         bool redirectStdErr=false;
+        bool HasExited();
+
 
         void CloseStdInNow();
         //YOU ARE RESPONSABLE FOR FREEING THIS STREAM OBJECT

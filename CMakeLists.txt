@@ -19,6 +19,7 @@ src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
 src/Serialization/SQLite.cpp
 src/Platform/Environment.cpp
+src/Platform/Process.cpp
 src/Streams/FileStream.cpp
 src/Streams/MemoryStream.cpp
 src/Streams/NetworkStream.cpp
@@ -394,6 +395,9 @@ install(TARGETS tjsonunpretty DESTINATION bin)
 add_executable(ttime apps/ttime.cpp)
 target_link_libraries(ttime PUBLIC tessesframework)
 install(TARGETS ttime DESTINATION bin)
+add_executable(tshell apps/tshell.cpp)
+target_link_libraries(tshell PUBLIC tessesframework)
+install(TARGETS tshell DESTINATION bin)
 endif()
 
 include(InstallRequiredSystemLibraries)

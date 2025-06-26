@@ -7,6 +7,7 @@
 #include <windows.h>
 #include "TessesFramework/Filesystem/VFSFix.hpp"
 #include "TessesFramework/Text/StringConverter.hpp"
+
 using namespace Tesses::Framework::Text::StringConverter;
 #endif
  #if !defined(_WIN32)
@@ -120,8 +121,9 @@ namespace Tesses::Framework::Platform::Environment
     VFSPath GetRealExecutablePath(VFSPath realPath)
     {
         using namespace Tesses::Framework::Http;
+
         
-        if(!realPath.relative) return realPath.MakeAbsolute();
+        if(!realPath.relative) return realPath;
         if(LocalFS.FileExists(realPath)) return realPath.MakeAbsolute();
         const char* path = std::getenv("PATH");
         #if defined(_WIN32)
@@ -216,9 +218,9 @@ namespace Tesses::Framework::Platform::Environment
             }   
             FreeEnvironmentStringsW(environ0);
         #else
-            for(char** envthing = environ; envthing != NULL; envthing++)
+            for(char** envthing = environ; *envthing != NULL; envthing++)
             {
-                
+                //if(*envthing == NULL) break;
                 auto items = Http::HttpUtils::SplitString(*envthing,"=",2);
                 if(items.size() == 2)
                 {

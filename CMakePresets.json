@@ -41,7 +41,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
-                "TESSESFRAMEWORK_FETCHCONTENT": true
+                "TESSESFRAMEWORK_ENABLE_MBED":  false,
+                "TESSESFRAMEWORK_FETCHCONTENT": false
             },
             "condition": {
                 "type": "equals",
