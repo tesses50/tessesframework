@@ -216,9 +216,9 @@ namespace Tesses::Framework::Platform::Environment
             }   
             FreeEnvironmentStringsW(environ0);
         #else
-            for(char** envthing = environ; envthing != NULL; envthing++)
+            for(char** envthing = environ; *envthing != NULL; envthing++)
             {
-                
+                //if(*envthing == NULL) break;
                 auto items = Http::HttpUtils::SplitString(*envthing,"=",2);
                 if(items.size() == 2)
                 {

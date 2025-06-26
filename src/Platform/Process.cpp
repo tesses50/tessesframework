@@ -1,7 +1,7 @@
 #include "TessesFramework/Platform/Process.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Platform/Environment.hpp"
-
+#include <iostream>
 
 #if defined(_WIN32)
 extern "C" {
@@ -48,7 +48,7 @@ static void escape_windows_args(std::string& str, std::vector<std::string> args)
 
 namespace Tesses::Framework::Platform {
 
-    class ProcessData {
+    class ProcessData : public HiddenFieldData {
         public:
             //TODO: Implement for WIN32
             #if defined(_WIN32)
@@ -90,7 +90,7 @@ namespace Tesses::Framework::Platform {
         HANDLE strm;
         bool writing;
         bool eos;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         #else
         int strm;
         
@@ -105,7 +105,7 @@ namespace Tesses::Framework::Platform {
                 this->writing = writing;
                 this->eos = false;
             }
-            #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
             #else
             ProcessStream(int strm, bool writing)
             {
@@ -119,7 +119,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return this->strm == NULL || eos;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return true;
                 #else
                 return this->strm < 0 || eos;
@@ -130,7 +130,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return !writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return false;
                 #else
                 return !writing && this->strm > -1;
@@ -142,7 +142,7 @@ namespace Tesses::Framework::Platform {
                 #if defined(_WIN32)
 
                 return writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return false;
                 #else
                 return writing && this->strm > -1;
@@ -162,7 +162,7 @@ namespace Tesses::Framework::Platform {
                     this->eos = true;
                 }
                 return (size_t)dataW;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return 0;
                 #else
                 if(this->strm < 0 || this->eos && writing) return 0;
@@ -184,7 +184,7 @@ namespace Tesses::Framework::Platform {
                     return 0;
                 
                 return (size_t)dataW;
-                #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
                 return 0;
                 #else
                 if(this->strm < 0 || !writing) return 0;
@@ -232,6 +232,21 @@ namespace Tesses::Framework::Platform {
             }
         }
     }
+    void Process::CloseStdInNow()
+    {
+        ProcessData* p = this->hidden.GetField<ProcessData*>();
+        
+        #if defined(_WIN32)
+        if (p->stdin_strm != NULL)
+            CloseHandle(p->stdin_strm);
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        
+        #else
+        if(p->stdin_strm > -1)
+        close(p->stdin_strm);
+        #endif
+
+    }
     Process::~Process()
     {
         ProcessData* p = this->hidden.GetField<ProcessData*>();
@@ -258,7 +273,7 @@ namespace Tesses::Framework::Platform {
         ProcessData* p = 
             this->hidden.GetField<ProcessData*>();
         std::vector<std::pair<std::string,std::string>> envs;
-
+        
         if(this->includeThisEnv)
             Environment::GetEnvironmentVariables(envs);
         
@@ -269,6 +284,7 @@ namespace Tesses::Framework::Platform {
             {
                 if(item.first == itemNew.first)
                 {
+                    
                     item.second = itemNew.second;
                     has=true;
                     break;
@@ -387,7 +403,7 @@ CreateProcessW(
     );
     */
         return false;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return false;
         #else
 
@@ -460,6 +476,7 @@ CreateProcessW(
             std::vector<std::string> env2;
             env2.resize(envs.size());
 
+
             for(size_t i = 0; i < envs.size(); i++)
             {
                 env2[i] = envs[i].first + "=" + envs[i].second;
@@ -468,13 +485,13 @@ CreateProcessW(
             char** argv = new char*[args.size()+1];
             argv[args.size()]=NULL;
             char** envp = new char*[env2.size()+1];
-            envp[env.size()]=NULL;
+            envp[env2.size()]=NULL;
 
             for(size_t i = 0; i < args.size();i++)
             {
                 argv[i] = (char*)args[i].c_str();
             }
-            for(size_t i = 0; i < env.size();i++)
+            for(size_t i = 0; i < env2.size();i++)
             {
                 envp[i] = (char*)env2[i].c_str();
             }
@@ -515,7 +532,7 @@ CreateProcessW(
     void Process::Kill(int signal)
     {
         #if defined(_WIN32)
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         #else
         kill(this->hidden.GetField<ProcessData*>()->pid,signal);
         #endif
@@ -524,8 +541,10 @@ CreateProcessW(
     int Process::WaitForExit()
     {
         #if defined(_WIN32)
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
-        reutnr -1;
+        auto p = this->hidden.GetField<ProcessData*>();
+        //WaitForSingleObject(this->p)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        return -1;
         #else
         int r;
         if(waitpid(this->hidden.GetField<ProcessData*>()->pid,&r,0) != -1)
@@ -536,9 +555,7 @@ CreateProcessW(
 
     Tesses::Framework::Streams::Stream* Process::GetStdinStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdin_strm,true);
@@ -546,9 +563,7 @@ CreateProcessW(
     }
     Tesses::Framework::Streams::Stream* Process::GetStdoutStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdout_strm,false);
@@ -556,9 +571,7 @@ CreateProcessW(
     }
     Tesses::Framework::Streams::Stream* Process::GetStderrStream()
     {
-        #if defined(_WIN32)
-        return nullptr;
-        #elif defined(GEKKO) || defined(__PS2__) defined(__SWITCH__)
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stderr_strm,false);
