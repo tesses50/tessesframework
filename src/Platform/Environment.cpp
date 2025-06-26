@@ -5,6 +5,9 @@
 #endif
 #if defined(_WIN32)
 #include <windows.h>
+#include "TessesFramework/Filesystem/VFSFix.hpp"
+#include "TessesFramework/Text/StringConverter.hpp"
+using namespace Tesses::Framework::Text::StringConverter;
 #endif
  #if !defined(_WIN32)
         extern char** environ;
@@ -128,12 +131,13 @@ namespace Tesses::Framework::Platform::Environment
         auto pathParts = HttpUtils::SplitString(path,";");
         for(auto item : pathParts)
         {
+
+            auto newPath = LocalFS.SystemToVFSPath(item) / realPath;
             for(auto item2 : pext)
             {
                 auto newPathExt = newPath + item2;
                 if(LocalFS.FileExists(newPathExt)) return newPathExt;
             }
-            auto newPath = LocalFS.SystemToVFSPath(item) / realPath;
             if(LocalFS.FileExists(newPath)) return newPath;
         }
         return realPath;
@@ -158,20 +162,32 @@ namespace Tesses::Framework::Platform::Environment
     }
     void SetVariable(std::string name, std::optional<std::string> var)
     {
-        if(var)
-            #if defined(_WIN32)
-                SetEnvironmentVariable(name.c_str(),var->c_str());
-            #else
+        if (var)
+        #if defined(_WIN32)
+        {
+            std::u16string nameu16 = {};
+
+            std::u16string varu16 = {};
+
+            UTF16::FromUTF8(nameu16, name);
+            UTF16::FromUTF8(varu16, var.value());
+            SetEnvironmentVariableW((LPCWSTR)nameu16.c_str(),(LPCWSTR)varu16.c_str());
+        }
+        #else
                 setenv(name.c_str(), var->c_str(),1);
-            #endif
-            else
-            #if defined(_WIN32)
-            {
-                SetEnvironmentVariable(name.c_str(),NULL);
-            }
-            #else
-            unsetenv(name.c_str());
-            #endif
+        #endif
+        else
+        #if defined(_WIN32)
+        {
+            std::u16string nameu16 = {};
+
+            UTF16::FromUTF8(nameu16, name);
+
+            SetEnvironmentVariableW((LPCWSTR)nameu16.c_str(),NULL);
+        }
+        #else
+        unsetenv(name.c_str());
+        #endif
         
     }
 
@@ -179,11 +195,14 @@ namespace Tesses::Framework::Platform::Environment
     void GetEnvironmentVariables(std::vector<std::pair<std::string,std::string>>& env)
     {
         #if defined(_WIN32)
-            char *environ0 = GetEnvironmentStrings();
-            char* envthing = environ0;
+            auto environ0 = GetEnvironmentStringsW();
+            auto envthing = environ0;
             while(*envthing)
             {
-                auto items = Http::HttpUtils::SplitString(envthing,"=",2);
+                std::u16string str = (const char16_t*)envthing;
+                std::string stru8;
+                UTF8::FromUTF16(stru8, str);
+                auto items = Http::HttpUtils::SplitString(stru8, "=", 2);
                 if(items.size() == 2)
                 {
                     
@@ -193,9 +212,9 @@ namespace Tesses::Framework::Platform::Environment
                 {
                     env.push_back(std::pair<std::string,std::string>(items[0],""));
                 }
-                envthing += strlen(envthing)+1;
+                envthing += str.size() + 1;
             }   
-            FreeEnvironmentStrings(environ0);
+            FreeEnvironmentStringsW(environ0);
         #else
             for(char** envthing = environ; envthing != NULL; envthing++)
             {

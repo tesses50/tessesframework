@@ -6,6 +6,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
 
+
 #if defined(GEKKO)
 
 #define ss_family sin_family
@@ -24,9 +25,11 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <winsock2.h>
 #include <iphlpapi.h>
 #include <windows.h>
+#include <afunix.h>
 #undef min
 #pragma comment(lib, "ws2_32.lib")
 #else
+
 extern "C" {
 #include <netinet/in.h>
 #include <netinet/tcp.h>

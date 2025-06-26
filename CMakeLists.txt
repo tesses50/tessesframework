@@ -27,6 +27,7 @@ src/Streams/BufferedStream.cpp
 src/Streams/ByteReader.cpp
 src/Streams/ByteWriter.cpp
 src/Streams/PtyStream.cpp
+src/Text/StringConverter.cpp
 src/TextStreams/StreamReader.cpp
 src/TextStreams/StreamWriter.cpp
 src/TextStreams/TextReader.cpp
@@ -93,11 +94,16 @@ option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
 option(TESSESFRAMEWORK_ENABLE_SDL2 "Enable SDL2" OFF)
 option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" OFF)
+option(TESSESFRAMEWORK_VENDERCERTCHAIN "Use the ca-certificates.crt in project rather than system" ON)
 if(TESSESFRAMEWORK_FETCHCONTENT)
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 include(FetchContent)
 else()
+if(TESSESFRAMEWORK_VENDERCERTCHAIN)
+set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
+else()
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
+endif()
 endif()
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -148,8 +154,8 @@ set(USE_SHARED_MBEDTLS_LIBRARY ON)
 endif()
 FetchContent_Declare(
     mbedtls
-    GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
-    GIT_PROGRESS    TRUE
+    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.3.1.tar.bz2
+    
 )
 FetchContent_MakeAvailable(mbedtls)
 else()
@@ -281,14 +287,15 @@ endif()
 add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
 
-if(TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
+if(TESSESFRAMEWORK_ENABLE_MBED)
+if(TESSESFRAMEWORK_FETCHCONTENT)
 target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
 else()
 target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto)
 
 endif()
-
+endif()
 list(APPEND TessesFrameworkLibs tessesframework_shared)
 endif()
 

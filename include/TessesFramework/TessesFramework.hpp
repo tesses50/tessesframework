@@ -18,6 +18,7 @@
 #include "TextStreams/StdIOWriter.hpp"
 #include "TextStreams/StringReader.hpp"
 #include "TextStreams/StringWriter.hpp"
+#include "Text/StringConverter.hpp"
 #include "Threading/Thread.hpp"
 #include "Threading/Mutex.hpp"
 #include "Threading/ThreadPool.hpp"

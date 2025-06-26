@@ -114,7 +114,7 @@ namespace Tesses::Framework::Streams {
         strm.Flush();
 
         #if defined(_WIN32)
-        delete buffer;
+        delete[] buffer;
         #endif
     }
     Stream::~Stream()
