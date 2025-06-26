@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cstdint>
 namespace Tesses::Framework::Text::StringConverter {
 	class UTF8 {
 	public:
