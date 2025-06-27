@@ -372,7 +372,7 @@ namespace Tesses::Framework::Platform {
         UTF16::FromUTF8(u16_args, args);
         std::u16string env = {};
         
-        for (auto envItem : this->env)
+        for (auto envItem : envs)
         {
             auto partOld = envItem.first + "=" + envItem.second;
             std::u16string part = {};
