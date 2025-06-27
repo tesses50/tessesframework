@@ -3,7 +3,6 @@
 #include "TessesFramework/Platform/Environment.hpp"
 #include <iostream>
 
-
 #if defined(_WIN32)
 extern "C" {
 #include <windows.h>

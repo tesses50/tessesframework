@@ -117,7 +117,7 @@ int main(int argc,char** argv)
             auto path = Environment::GetRealExecutablePath(args[0]);
             Platform::Process p(path.ToString(),args);
             if (p.Start())
-                p.WaitForExit();
+            p.WaitForExit();
             else
                 std::cout << "Failed To Run Process: " << path.ToString() << std::endl;
         }
