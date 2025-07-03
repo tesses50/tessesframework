@@ -1,13 +1,16 @@
 Tesses Framework
 ================
 
+## If you are on onedev
+We are switching to [gitea](https://git.tesseslanguage.com/tesses50/tesses-framework)
+
 ## To Install
 - Install [mbedtls](https://github.com/Mbed-TLS/mbedtls) (use sudo apt install libmbedtls-dev on debian) for TessesFramework
 - Follow the commands bellow
 
 ## Run these commands to install tesses-framework
 ```bash
-git clone https://onedev.site.tesses.net/tesses-framework
+git clone https://git.tesseslanguage.com/tesses-framework
 cd tesses-framework
 mkdir build 
 cd build

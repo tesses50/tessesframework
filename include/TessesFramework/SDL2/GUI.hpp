@@ -12,15 +12,16 @@ namespace Tesses::Framework::SDL2
     class GUIPalette {
         public:
             GUIPalette();
-            GUIPalette(bool isDarkMode, SDL_Color accent,int fontSize=24);
-            GUIPalette(SDL_Color accent, SDL_Color background, SDL_Color border_color, SDL_Color border_hover, SDL_Color border_active, SDL_Color border_hover_active, int fontSize=24);
+            GUIPalette(bool isDarkMode, SDL_Color accent,int fontSize=24,int borderSize=2);
+            GUIPalette(SDL_Color accent, SDL_Color background, SDL_Color borderColor, SDL_Color borderHover, SDL_Color borderActive, SDL_Color borderHoverActive, int fontSize=24,int borderSize=2);
             SDL_Color accent; //color is used for font when not over accent background
             SDL_Color background;
-            SDL_Color border_color; //color is used for font when over accent background
-            SDL_Color border_hover;
-            SDL_Color border_active;
-            SDL_Color border_hover_active;
+            SDL_Color borderColor; //color is used for font when over accent background
+            SDL_Color borderHover;
+            SDL_Color borderActive;
+            SDL_Color borderHoverActive;
             int fontSize;
+            int borderSize;
 
             SDL_Color& GetBorderColor(bool isHovering, bool isActive, bool isMouseDown);
     };
@@ -32,6 +33,12 @@ namespace Tesses::Framework::SDL2
             virtual ~GUIEventArgs();
     };
     class View;
+    class GUIWindowClosingEventArgs : public GUIEventArgs
+    {
+        public:
+            bool cancel;
+            std::string Type();
+    };
     class GUIMouseButtonEventArgs : public GUIEventArgs
     {
         public:
@@ -62,6 +69,22 @@ namespace Tesses::Framework::SDL2
     constexpr uint64_t VIEWFLAG_INTERCEPT_TAB=(uint64_t)1<<4;
     constexpr uint64_t VIEWFLAG_CHECKED=(uint64_t)1<<5;
     constexpr uint64_t VIEWFLAG_TOUCHED=(uint64_t)1<<6;
+    constexpr uint64_t VIEWFLAG_HOVER_B1STATE=(uint64_t)1<<7; //for scrollbar buttons
+    constexpr uint64_t VIEWFLAG_HOVER_B2STATE=(uint64_t)1<<8; //for scrollbar buttons
+    constexpr uint64_t VIEWFLAG_MOUSEDOWN_B1STATE=(uint64_t)1<<9; //for scrollbar buttons
+    constexpr uint64_t VIEWFLAG_MOUSEDOWN_B2STATE=(uint64_t)1<<10; //for scrollbar buttons
+
+    constexpr int GUI_EXPAND = -1;
+    constexpr int GUI_MIN = 0;
+    
+
+    constexpr int GUI_EXPAND_N(int n)
+    {
+        if(n < 0) return n;
+        return -n;
+    }
+
+    
     class GUIPopup;
     class GUIWindow;
     class ContainerView;
@@ -161,25 +184,71 @@ namespace Tesses::Framework::SDL2
         Done
     };
     class GUIPopup : public ContainerView {
-        View* child;
-        bool ownsChild;
         protected:
-            void OnDraw(SDL_Renderer* renderer, SDL_Rect& myRect);
-            bool OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds);
-        public: 
+            bool closed=true;
+            virtual View* GetView()=0;
 
-            size_t ViewCount();
-            View* GetViewAt(size_t index);
+            virtual void OnDraw(SDL_Renderer* renderer, SDL_Rect& myRect);
+            virtual bool OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds);
+        public: 
             GUIPopup();
             GUIPopup(SDL_Rect bounds);
             GUIPopup(int x, int y,int w, int h);
             SDL_Rect bounds;
-            
-            void SetView(View* view, bool owns=true);
-            ~GUIPopup();
+            bool closeIfClickOutside=true;
+    
+            virtual void Close();
+            virtual bool IsClosed();
+            virtual ~GUIPopup();
+
+            size_t ViewCount();
+            View* GetViewAt(size_t index);
+
+            bool IsActive();
             
             friend class GUIWindow;
     };
+    class GUIContainerPopup : public GUIPopup
+    {
+        View* child;
+        bool ownsChild;
+        protected:
+            View* GetView();
+        public:
+            GUIContainerPopup();
+            GUIContainerPopup(SDL_Rect bounds);
+            GUIContainerPopup(int x, int y,int w, int h);
+
+            void SetView(View* view, bool owns=true);
+            
+            ~GUIContainerPopup();
+    };
+    class GUIDialog : public GUIPopup {
+        protected:
+            virtual void OnDraw(SDL_Renderer* renderer, SDL_Rect& myRect);
+            virtual bool OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds);
+        public:
+            GUIDialog();
+            GUIDialog(SDL_Rect bounds);
+            GUIDialog(int x,int y, int w, int h);
+            virtual ~GUIDialog();
+    };
+    class GUIContainerDialog : public GUIDialog 
+    {
+        View* v;
+        bool owns=false;
+        protected:
+            View* GetView();
+        public:
+            GUIContainerDialog();
+            GUIContainerDialog(SDL_Rect bounds);
+            GUIContainerDialog(int x, int y,int w, int h);
+            void SetView(View* view, bool owns=true);
+            size_t ViewCount();
+            View* GetViewAt(size_t index);
+            ~GUIContainerDialog();
+    };
+
     class GUIWindow : public ContainerView
     {
         std::vector<GUIPopup*> popups;
@@ -198,6 +267,7 @@ namespace Tesses::Framework::SDL2
             
         public:
             EventList<View*,GUIJsonViewNotFoundEventArgs&> JsonViewNotFound;
+            EventList<View*,GUIWindowClosingEventArgs&> Closing;
             size_t ViewCount();
             View* GetViewAt(size_t index);
             FontCache* normal_font;
@@ -228,6 +298,7 @@ namespace Tesses::Framework::SDL2
             SDL_Renderer* GetSDLRenderer();
 
             View* CreateViewFromJson(Tesses::Framework::Serialization::Json::JObject json);
+            operator bool();
     };  
 
     
@@ -235,6 +306,7 @@ namespace Tesses::Framework::SDL2
         std::vector<GUIWindow*> windows;
         public:
         void Update();
+        void CloseWindows();
         friend class GUIWindow;
     };
     extern GUI gui;

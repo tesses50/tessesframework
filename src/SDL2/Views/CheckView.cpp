@@ -21,7 +21,7 @@ namespace Tesses::Framework::SDL2::Views
 
         //we only need the y
 
-        int x = r.x+checkSz+8;
+        int x = r.x+checkSz+(win->palette.borderSize*2);
         int y = r.y+((r.h/2)-(textH/2));
 
         win->normal_font->Render(renderer,x,y,text,win->palette.accent);
@@ -34,15 +34,15 @@ namespace Tesses::Framework::SDL2::Views
        
             //x=0,y=0.5, x=0.5, y=1
 
-            int x1=checkBoxRect.x+4;
-            int y1=checkBoxRect.y+4+((checkSz-8)/2);
-            int x2=checkBoxRect.x+4+((checkSz-8)/2);
-            int y2=checkBoxRect.y+4+(checkSz-8);
+            int x1=checkBoxRect.x+win->palette.borderSize;
+            int y1=checkBoxRect.y+win->palette.borderSize+((checkSz-(win->palette.borderSize*2))/2);
+            int x2=checkBoxRect.x+win->palette.borderSize+((checkSz-(win->palette.borderSize*2))/2);
+            int y2=checkBoxRect.y+win->palette.borderSize+(checkSz-(win->palette.borderSize*8));
 
-            int x3=checkBoxRect.x+4+(checkSz-8);
-            int y3=checkBoxRect.y+4;
+            int x3=checkBoxRect.x+win->palette.borderSize+(checkSz-(win->palette.borderSize*2));
+            int y3=checkBoxRect.y+win->palette.borderSize;
 
-            for(int i = 0; i < 4; i++)
+            for(int i = 0; i < win->palette.borderSize; i++)
             {
                 SDL_RenderDrawLine(renderer,x1,y1-i,x2,y2-i);
                 SDL_RenderDrawLine(renderer,x2-i,y2,x3-i,y3);

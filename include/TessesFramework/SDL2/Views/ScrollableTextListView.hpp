@@ -4,15 +4,18 @@
 
 namespace Tesses::Framework::SDL2::Views
 {
-    class ButtonView : public View {
+    class ScrollableTextListView : public View {
+        
         protected:
             virtual void OnDraw(SDL_Renderer* renderer, SDL_Rect& r);
             virtual bool OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds);
-        
         public:
-            ButtonView();
-            ButtonView(std::string text);
-            virtual std::pair<int,int> PreferedMinSize();
+            ScrollableTextListView();
+            size_t firstIndex;
+            int selected;
+            std::vector<std::string> items;
+            
+            EventList<View*,GUIEventArgs&> ValueChanged;
     };
 }
 #endif

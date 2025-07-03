@@ -11,6 +11,22 @@ namespace Tesses::Framework::SDL2::Views
     {
         
     }
+    std::pair<int,int> ButtonView::PreferedMinSize()
+    {
+        int w=-2;
+        int h=-2;
+        
+        auto win = GetWindow();
+        if(win != nullptr)
+        {
+            win->normal_font->CalculateSize(text,w,h);
+
+            w += win->palette.borderSize*3;
+
+            h += win->palette.borderSize*3;
+        }
+        return std::pair<int,int>(w,h);
+    }
     bool ButtonView::OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& myVisibleBounds)
     {
         if(this->GetViewFlag(VIEWFLAG_ISACTIVE))
@@ -69,7 +85,7 @@ namespace Tesses::Framework::SDL2::Views
         SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
 
         SDL_Rect r2={.x=r.x,.y=r.y,.w=r.w,.h=r.h};
-        for(size_t i=0;i < 4; i++)
+        for(size_t i=0;i < win->palette.borderSize; i++)
         {
             SDL_RenderDrawRect(renderer,&r2);
             r2.x++;

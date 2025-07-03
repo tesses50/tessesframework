@@ -9,6 +9,12 @@
 #include "TessesFramework/SDL2/Views/AbsoluteView.hpp"
 #include "TessesFramework/SDL2/Views/EditTextView.hpp"
 #include "TessesFramework/SDL2/Views/PictureView.hpp"
+#include "TessesFramework/SDL2/Views/ScrollableTextListView.hpp"
+#include "TessesFramework/SDL2/Views/HScrollView.hpp"
+#include "TessesFramework/SDL2/Views/VScrollView.hpp"
+#include "TessesFramework/SDL2/Views/HStackView.hpp"
+#include "TessesFramework/SDL2/Views/VStackView.hpp"
+#include "TessesFramework/SDL2/Views/DropDownView.hpp"
 #include "TessesFramework/SDL2/ParseColor.hpp"
 
 #if defined(__SWITCH__)
@@ -19,11 +25,23 @@ extern "C" {
 
 namespace Tesses::Framework::SDL2 
 {
+    GUIWindow::operator bool()
+    {
+        if(this == nullptr) return false;
+        for(auto item : gui.windows)
+            if(item == this) return true;
+        return false;
+    }
     void GUIWindow::MakeActive(View* view)
     {
         if(!view->GetViewFlag(VIEWFLAG_TABSTOP)) return;
         if(view->GetViewFlag(VIEWFLAG_ISACTIVE)) return;
+        if(this->popups.empty())
         DeactivateAll(this);
+        else 
+        {
+            DeactivateAll(this->popups.back());
+        }
         view->SetViewFlag(VIEWFLAG_ISACTIVE,true);
     }
     void GUIWindow::DeactivateAll(View* view)
@@ -123,6 +141,7 @@ namespace Tesses::Framework::SDL2
     }
     void GUIWindow::Event(SDL_Event& event)
     {
+        
         int w,h;
         SDL_GetWindowSize(window,&w,&h);
         SDL_Rect r={.x=0,.y=0,.w=w,.h=h};
@@ -135,6 +154,8 @@ namespace Tesses::Framework::SDL2
         SDL_RenderClear(renderer);
         if(this->child != nullptr)
             this->child->OnDraw(renderer,r);
+        for(auto popup : this->popups)
+            popup->OnDraw(renderer,popup->bounds);
         SDL_RenderPresent(renderer);
     }
     bool GUIWindow::OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& myVisibleBounds)
@@ -145,11 +166,75 @@ namespace Tesses::Framework::SDL2
             GUISDLEventEventArgs sdle;
             sdle.event = event;
             this->SDLEvent.Invoke(this,sdle);
-            TabNext();
+            if(this->popups.empty())
+                TabNext();
+            else 
+            {
+                TabNextResult nr=TabNextResult::KeepGoing;
+                TabNext(this->popups.back(),nr);
+                if(nr != TabNextResult::Done)
+                {
+                    nr = TabNextResult::TabNext;
+                    TabNext(this->popups.back(),nr);
+                }
+            }
             return true;
         }
-        if(this->child != nullptr) {  GUISDLEventEventArgs sdle;
-        sdle.event = event; this->SDLEvent.Invoke(this,sdle); return this->child->OnEvent(event,myBounds,myVisibleBounds);}
+        if(this->child != nullptr) {  
+            GUISDLEventEventArgs sdle;
+            sdle.event = event; this->SDLEvent.Invoke(this,sdle);
+            retry:
+            if(this->popups.empty())
+            return this->child->OnEvent(event,myBounds,myVisibleBounds);
+            else {
+                if(event.type == SDL_MOUSEBUTTONDOWN)
+                {
+                    auto popup = this->popups.back();
+                    if(event.button.x >= popup->bounds.x && event.button.x < popup->bounds.x+popup->bounds.w && event.button.y >= popup->bounds.y && event.button.y < popup->bounds.y+popup->bounds.h)
+                    {
+                        return popup->OnEvent(event,popup->bounds,popup->bounds);
+                    }
+                    else if(popup->closeIfClickOutside) {
+                        popup->closed=true;
+                        this->popups.pop_back();
+                        goto retry;
+                    }
+                    return false;
+                }
+                else {
+                    auto popup = this->popups.back();
+                    return popup->OnEvent(event,popup->bounds,popup->bounds);
+                    
+                }
+            }
+        }
+        retry2:
+        if(!this->popups.empty())
+        {
+            
+            if(event.type == SDL_MOUSEBUTTONDOWN)
+            {
+                auto popup = this->popups.back();
+                if(event.button.x >= popup->bounds.x && event.button.x < popup->bounds.x+popup->bounds.w && event.button.y >= popup->bounds.y && event.button.y < popup->bounds.y+popup->bounds.h)
+                {
+                    return popup->OnEvent(event,popup->bounds,popup->bounds);
+                }
+                else if(popup->closeIfClickOutside)
+                {
+                    popup->closed=true;
+                    this->popups.pop_back();
+                    goto retry2;
+                }
+                return false;
+            }
+            else 
+            {
+                auto popup = this->popups.back();
+                return popup->OnEvent(event,popup->bounds,popup->bounds);
+                
+            }
+            
+        }
         return View::OnEvent(event,myBounds,myVisibleBounds);
     }
     GUIWindow::GUIWindow(std::string title, int w, int h, Uint32 flags, const GUIPalette& palette) : ContainerView(title)
@@ -245,6 +330,36 @@ namespace Tesses::Framework::SDL2
             }
         }
     }
+
+    void GUIWindow::ShowPopup(GUIPopup* popup)
+    {
+        popup->closed=false;
+        bool has = false;
+        for(auto item : this->popups)
+            if(item == popup) { has=true; break;}
+        if(!has)
+            this->popups.push_back(popup);
+
+        
+        
+        AssignChildParentToThis(popup);
+
+        auto v = popup->GetView();
+        if(v != nullptr) this->MakeActive(v);
+
+        while(!popup->IsClosed() && TF_IsRunning())
+        {
+            TF_RunEventLoopItteration();
+        }
+        if(!this->popups.empty() && this->popups.back() == popup) 
+            this->popups.pop_back();
+        popup->closed=true;
+    }
+    void GUIWindow::ShowPopup(GUIPopup& popup)
+    {
+        ShowPopup(&popup);
+    }
+
     void GUIWindow::SetView(Tesses::Framework::Serialization::Json::JToken item)
     {
         Tesses::Framework::Serialization::Json::JObject dict;
@@ -288,13 +403,13 @@ namespace Tesses::Framework::SDL2
                 if(pal0.TryGetValueAsType("Background",_str))
                     TryParseSDLColor(_str,pal.background);
                 if(pal0.TryGetValueAsType("Border",_str))
-                    TryParseSDLColor(_str,pal.border_color);
+                    TryParseSDLColor(_str,pal.borderColor);
                 if(pal0.TryGetValueAsType("BorderActive",_str))
-                    TryParseSDLColor(_str,pal.border_active);
+                    TryParseSDLColor(_str,pal.borderActive);
                 if(pal0.TryGetValueAsType("BorderHover",_str))
-                    TryParseSDLColor(_str,pal.border_hover);
+                    TryParseSDLColor(_str,pal.borderHover);
                 if(pal0.TryGetValueAsType("BorderHoverActive",_str))
-                    TryParseSDLColor(_str,pal.border_hover_active);
+                    TryParseSDLColor(_str,pal.borderHoverActive);
                 this->SetPalette(pal);
             }
             if(dict.TryGetValueAsType("Title",title) || dict.TryGetValueAsType("Text",title))
@@ -312,7 +427,18 @@ namespace Tesses::Framework::SDL2
         return this->renderer;
     }
 
-    
+    static int szStr2size(std::string sz)
+    {
+        if(sz.empty()) return GUI_MIN;
+        if(sz == "min") return GUI_MIN;
+        if(sz == "*") return GUI_EXPAND;
+        if(sz[0] == '*') {
+            return GUI_EXPAND_N(std::stoi(sz.substr(1)));
+        }
+        else {
+            return std::stoi(sz);
+        }
+    }
 
     View* GUIWindow::CreateViewFromJson(Tesses::Framework::Serialization::Json::JObject json)
     {
@@ -382,6 +508,33 @@ namespace Tesses::Framework::SDL2
                 tlv->selected = (int)index;
                 return tlv;
             }
+            else if(type == "ScrollableTextListView")
+            {
+                std::vector<std::string> items;
+                Tesses::Framework::Serialization::Json::JArray arr;
+                if(json.TryGetValueAsType("Items",arr))
+                {
+                    std::string str;
+                    for(auto item : arr)
+                    {
+                        if(Tesses::Framework::Serialization::Json::TryGetJToken(item,str)) items.push_back(str);
+                    }
+                }
+                int64_t index=-1;
+                int64_t first=0;
+                json.TryGetValueAsType("SelectedIndex",index);
+                json.TryGetValueAsType("FirstIndex",first);
+
+                auto tlv = new Views::ScrollableTextListView();
+
+                tlv->SetViewFlag(VIEWFLAG_ISACTIVE,active);
+                tlv->SetId(id);
+                tlv->items = items;
+                tlv->firstIndex = (size_t)first;
+                tlv->selected = (int)index;
+                return tlv;
+            }
+           
             else if(type == "AbsoluteView")
             {
                 auto av = new Views::AbsoluteView();
@@ -431,6 +584,119 @@ namespace Tesses::Framework::SDL2
                 auto pv = new Views::PictureView();
                 pv->SetId(id);
                 return pv;
+            }
+            else if(type == "DropDownView")
+            {
+                std::vector<std::string> items;
+                Tesses::Framework::Serialization::Json::JArray arr;
+                if(json.TryGetValueAsType("Items",arr))
+                {
+                    std::string str;
+                    for(auto item : arr)
+                    {
+                        if(Tesses::Framework::Serialization::Json::TryGetJToken(item,str)) items.push_back(str);
+                    }
+                }
+                int64_t index=-1;
+                int64_t first=0;
+                json.TryGetValueAsType("SelectedIndex",index);
+
+                auto tlv = new Views::DropDownView();
+
+                tlv->SetViewFlag(VIEWFLAG_ISACTIVE,active);
+                tlv->SetId(id);
+                tlv->GetItems() = items;
+                
+                tlv->SetIndex((int)index);
+                return tlv;
+            }
+            else if(type == "VScrollView")
+            {
+                int64_t value=0;
+                int64_t min = 0;
+                int64_t max = 10;
+                json.TryGetValueAsType("Value",value);
+
+                json.TryGetValueAsType("Min",min);
+
+                json.TryGetValueAsType("Max",max);
+                auto vscroll=new Views::VScrollView();
+                vscroll->value = (uint64_t)value;
+                vscroll->min = (uint64_t)min;
+                vscroll->max = (uint64_t)max;
+                vscroll->SetId(id);
+                return vscroll;
+            }
+            else if(type == "HScrollView")
+            {
+                int64_t value=0;
+                int64_t min = 0;
+                int64_t max = 10;
+                json.TryGetValueAsType("Value",value);
+
+                json.TryGetValueAsType("Min",min);
+
+                json.TryGetValueAsType("Max",max);
+                auto hscroll=new Views::VScrollView();
+                hscroll->value = (uint64_t)value;
+                hscroll->min = (uint64_t)min;
+                hscroll->max = (uint64_t)max;
+                hscroll->SetId(id);
+                return hscroll;
+            }
+            else if(type == "VStackView")
+            {
+                auto sv = new Views::VStackView();
+                sv->SetId(id);
+                Tesses::Framework::Serialization::Json::JArray arr;
+                if(json.TryGetValueAsType("Items",arr))
+                {
+                    for(auto item : arr)
+                    {
+                        Tesses::Framework::Serialization::Json::JObject dict;
+                        if(Tesses::Framework::Serialization::Json::TryGetJToken(item,dict))
+                        {
+                            std::string n="min";
+
+                            dict.TryGetValueAsType("Size",n);
+
+
+                            auto myO = CreateViewFromJson(dict);
+                            if(myO != nullptr)
+                            {
+                                sv->Add(szStr2size(n),myO);
+                            }
+                        }
+                    }
+                }
+                return sv;
+            }
+            else if(type == "HStackView")
+            {
+                auto sv = new Views::HStackView();
+                sv->SetId(id);
+                Tesses::Framework::Serialization::Json::JArray arr;
+                if(json.TryGetValueAsType("Items",arr))
+                {
+                    for(auto item : arr)
+                    {
+                        Tesses::Framework::Serialization::Json::JObject dict;
+                        if(Tesses::Framework::Serialization::Json::TryGetJToken(item,dict))
+                        {
+                            std::string n="min";
+
+                            dict.TryGetValueAsType("Size",n);
+
+
+                            auto myO = CreateViewFromJson(dict);
+                            if(myO != nullptr)
+                            {
+                                sv->Add(szStr2size(n),myO);
+                            }
+                        }
+                    }
+                }
+                return sv;
             }
             else {
                 GUIJsonViewNotFoundEventArgs e;

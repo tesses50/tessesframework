@@ -98,8 +98,8 @@ namespace Tesses::Framework::SDL2
             {
                 GUIMouseButtonEventArgs cea;
                 cea.button = (int)event.button.button;
-                cea.x = event.button.x - myVisibleBounds.x;
-                cea.y = event.button.y - myVisibleBounds.y;
+                cea.x = event.button.x - myBounds.x;
+                cea.y = event.button.y - myBounds.y;
                 cea.which = event.button.which;
                 this->SetViewFlag(VIEWFLAG_MOUSEDOWN_STATE,true);
                 OnMouseDown(cea);
@@ -112,8 +112,8 @@ namespace Tesses::Framework::SDL2
             {
                 GUIMouseButtonEventArgs cea;
                 cea.button = (int)event.button.button;
-                cea.x = event.button.x - myVisibleBounds.x;
-                cea.y = event.button.y - myVisibleBounds.y;
+                cea.x = event.button.x - myBounds.x;
+                cea.y = event.button.y - myBounds.y;
                 cea.which = event.button.which;
                 this->SetViewFlag(VIEWFLAG_MOUSEDOWN_STATE,false);
                 OnMouseUp(cea);

@@ -12,8 +12,8 @@ namespace Tesses::Framework::SDL2::Views
     bool TextListView::OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds)
     {
         auto win = this->GetWindow();
-        auto item_height = win->normal_font->MaxHeight()+8;
-        auto no_items = (myBounds.h-8) / item_height;
+        auto item_height = win->normal_font->MaxHeight()+(win->palette.borderSize*2);
+        auto no_items = (myBounds.h-(win->palette.borderSize*2)) / item_height;
         
         if(this->items.size() > no_items)
         {
@@ -65,10 +65,10 @@ namespace Tesses::Framework::SDL2::Views
                 }
             }
         }
-        if(event.type == SDL_MOUSEBUTTONUP && event.button.x >= (visibleBounds.x+4) && event.button.x < (visibleBounds.x+visibleBounds.w)-8 && event.button.y >= (visibleBounds.y+4) && event.button.y < (visibleBounds.y+visibleBounds.h)-8)
+        if(event.type == SDL_MOUSEBUTTONUP && event.button.x >= (visibleBounds.x+win->palette.borderSize) && event.button.x < (visibleBounds.x+visibleBounds.w)-(win->palette.borderSize*2) && event.button.y >= (visibleBounds.y+win->palette.borderSize) && event.button.y < (visibleBounds.y+visibleBounds.h)-(win->palette.borderSize*2))
         {
             win->MakeActive(this);
-            auto myRealY=event.button.y - (myBounds.y+4);
+            auto myRealY=event.button.y - (myBounds.y+win->palette.borderSize);
             auto yThing = myRealY / item_height;
 
             if(yThing < no_items)
@@ -84,8 +84,8 @@ namespace Tesses::Framework::SDL2::Views
     void TextListView::OnDraw(SDL_Renderer* renderer,SDL_Rect& rect)
     {
         auto win = this->GetWindow();
-        auto item_height = win->normal_font->MaxHeight()+8;
-        auto no_items = (rect.h-8) / item_height;
+        auto item_height = win->normal_font->MaxHeight()+(win->palette.borderSize*2);
+        auto no_items = (rect.h-(win->palette.borderSize*2)) / item_height;
         auto isHovering = this->GetViewFlag(VIEWFLAG_HOVER_STATE);
         auto isActive = this->GetViewFlag(VIEWFLAG_ISACTIVE);
         auto isMouseDown = this->GetViewFlag(VIEWFLAG_MOUSEDOWN_STATE);
@@ -112,7 +112,7 @@ namespace Tesses::Framework::SDL2::Views
         }
 
         SDL_Rect r2={.x=rect.x,.y=rect.y,.w=rect.w,.h=rect.h};
-        for(size_t i=0;i < 4; i++)
+        for(size_t i=0;i < win->palette.borderSize; i++)
         {
             SDL_RenderDrawRect(renderer,&r2);
             r2.x++;
@@ -127,12 +127,12 @@ namespace Tesses::Framework::SDL2::Views
             if(realI == this->selected)
             {
                SDL_SetRenderDrawColor(renderer,win->palette.accent.r,win->palette.accent.g,win->palette.accent.b,win->palette.accent.a);
-                SDL_Rect r2={.x=rect.x+4,.y=rect.y+4+(item_height*i),.w=rect.w-8,.h=item_height};
+                SDL_Rect r2={.x=rect.x+win->palette.borderSize,.y=rect.y+win->palette.borderSize+(item_height*i),.w=rect.w-(win->palette.borderSize*2),.h=item_height};
                 SDL_RenderFillRect(renderer,&r2);
-                win->normal_font->Render(renderer,rect.x+12,(rect.y+12)+(item_height*i),this->items[realI],color);                
+                win->normal_font->Render(renderer,rect.x+(win->palette.borderSize*3),(rect.y+(win->palette.borderSize*3))+(item_height*i),this->items[realI],color);                
             }
             else {
-                win->normal_font->Render(renderer,rect.x+12,(rect.y+12)+(item_height*i),this->items[realI],win->palette.accent);
+                win->normal_font->Render(renderer,rect.x+(win->palette.borderSize*3),(rect.y+(win->palette.borderSize*3))+(item_height*i),this->items[realI],win->palette.accent);
             }
         }
     }

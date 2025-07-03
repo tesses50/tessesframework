@@ -55,13 +55,13 @@ namespace Tesses::Framework::SDL2::Views
     }
     std::pair<int,int> EditTextView::PreferedMinSize()
     {
-        int x=-2;
-        int y=-2;
+        int x=-1;
+        int y=-1;
         auto win = this->GetWindow();
         if(win != nullptr)
         {   
             x=-1; 
-            y=win->monospaced_font->MaxHeight()+16; 
+            y=win->monospaced_font->MaxHeight()+(win->palette.borderSize*4); 
         
         }
 
@@ -297,13 +297,13 @@ namespace Tesses::Framework::SDL2::Views
         int textW=win->monospaced_font->MaxWidth()+2;
         int textH=win->monospaced_font->MaxHeight();
 
-        int noChars = (r.w-16) / textW;
+        int noChars = (r.w-(win->palette.borderSize*4)) / textW;
         
 
         int x=0;
-        int y=(r.h/2)-((textH+16)/2);
-        x+=r.x+8;
-        y+=r.y+8;
+        int y=(r.h/2)-((textH+(win->palette.borderSize*4))/2);
+        x+=r.x+(win->palette.borderSize*2);
+        y+=r.y+(win->palette.borderSize*2);
 
         auto isHovering = this->GetViewFlag(VIEWFLAG_HOVER_STATE);
         auto isActive = this->GetViewFlag(VIEWFLAG_ISACTIVE);
@@ -367,8 +367,8 @@ namespace Tesses::Framework::SDL2::Views
 
         SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
 
-        SDL_Rect r2={.x=r.x,.y=y-4,.w=r.w,.h=textH+16};
-        for(size_t i=0;i < 4; i++)
+        SDL_Rect r2={.x=r.x,.y=y-(win->palette.borderSize*2),.w=r.w,.h=textH+16};
+        for(size_t i=0;i < win->palette.borderSize; i++)
         {
             SDL_RenderDrawRect(renderer,&r2);
             r2.x++;

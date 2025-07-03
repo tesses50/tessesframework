@@ -4,6 +4,7 @@
 #include <atomic>
 #include <csignal>
 #include <iostream>
+#include <queue>
 
 #if defined(TESSESFRAMEWORK_ENABLE_SQLITE) 
 extern "C" {
@@ -67,6 +68,25 @@ namespace Tesses::Framework
     volatile static bool isRunningSig=true;
     volatile static std::atomic<bool> isRunning;
     volatile static std::atomic<bool> gaming_console_events=true;
+    
+    #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    Threading::Mutex invokings_mtx;
+
+    std::queue<std::function<void()>> invokings;
+    #endif
+    
+
+    void TF_Invoke(std::function<void()> cb)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        invokings_mtx.Lock();
+        invokings.push(cb);
+        invokings_mtx.Unlock();
+        #else
+        cb();
+        #endif
+    }
+
     void TF_ConnectToSelf(uint16_t port)
     {
         Tesses::Framework::Streams::NetworkStream ns("127.0.0.1",port,false,false,false);
@@ -103,8 +123,19 @@ namespace Tesses::Framework
         OnItteraton.Invoke(ittr++);
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::LookForFinishedThreads();
+        
         #endif
-
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        invokings_mtx.Lock();
+        auto invokes = invokings;
+        invokings_mtx.Unlock();
+        while(!invokes.empty())
+        {
+            invokes.front()();
+            invokes.pop();
+            
+        }
+        #endif
     
         if(!isRunningSig) isRunning=false;
         #if defined(GEKKO)
@@ -157,6 +188,8 @@ namespace Tesses::Framework
         #endif
         #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
         SDL_Quit();
+        Tesses::Framework::SDL2::gui.CloseWindows();
+        
         #endif
     }
     void TF_Init()

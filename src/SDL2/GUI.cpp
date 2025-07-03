@@ -9,6 +9,12 @@ extern "C" {
 namespace Tesses::Framework::SDL2 
 {
       GUI gui;
+    void GUI::CloseWindows()
+    {
+        auto wins=this->windows;
+        for(auto win : wins) delete win;
+        this->windows.clear();
+    }
     void GUI::Update()
     {
         if(this->windows.empty()) return;
@@ -28,7 +34,8 @@ namespace Tesses::Framework::SDL2
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
-            for(auto win : this->windows)
+            auto windows = this->windows;
+            for(auto& win : windows)
             {
                 if(win == nullptr) continue;
                 auto id = SDL_GetWindowID(win->window);
@@ -37,6 +44,18 @@ namespace Tesses::Framework::SDL2
                     case SDL_EventType::SDL_WINDOWEVENT:
                         if(event.window.windowID == id)
                         {
+                            if(event.window.event == SDL_WINDOWEVENT_CLOSE)
+                            {
+                                GUIWindowClosingEventArgs e;
+                                e.cancel=false;
+                                win->Closing.Invoke(win,e);
+                                if(!e.cancel)
+                                {
+                                    delete win;
+                                    continue;
+                                }
+                            }
+                            else
                             win->Event(event);
                         }
                         break;
@@ -168,28 +187,31 @@ namespace Tesses::Framework::SDL2
     GUIPalette::GUIPalette()
     {
         this->fontSize=24;
+        this->borderSize = 2;
     }
     SDL_Color& GUIPalette::GetBorderColor(bool isHovering, bool isActive, bool isMouseDown)
     {
         bool isHovering2=isHovering ^ isMouseDown;
         if(isHovering2 && isActive)
-            return this->border_hover_active;
+            return this->borderHoverActive;
         if(isHovering2)
-            return this->border_hover;
+            return this->borderHover;
         if(isActive)
-            return this->border_active;
-        return this->border_color;
+            return this->borderActive;
+        return this->borderColor;
     }
 
-    GUIPalette::GUIPalette(SDL_Color accent, SDL_Color background, SDL_Color border_color, SDL_Color border_hover, SDL_Color border_active, SDL_Color border_hover_active, int fontSize)
+    GUIPalette::GUIPalette(SDL_Color accent, SDL_Color background, SDL_Color border_color, SDL_Color border_hover, SDL_Color border_active, SDL_Color border_hover_active, int fontSize,int borderSize)
     {
+        
         this->accent=accent;
         this->background = background;
-        this->border_color=border_color;
-        this->border_hover = border_hover;
-        this->border_active = border_active;
-        this->border_hover_active=border_hover_active;
+        this->borderColor=border_color;
+        this->borderHover = border_hover;
+        this->borderActive = border_active;
+        this->borderHoverActive=border_hover_active;
         this->fontSize = fontSize;
+        this->borderSize = borderSize;
     }
 
     std::string GUIEventArgs::Type()
@@ -212,33 +234,38 @@ namespace Tesses::Framework::SDL2
     {
         return "SDLEvent";
     }
+    std::string GUIWindowClosingEventArgs::Type()
+    {
+        return "WindowClosing";
+    }
     
 
-    GUIPalette::GUIPalette(bool isDarkMode, SDL_Color accent,int fontSize)
+    GUIPalette::GUIPalette(bool isDarkMode, SDL_Color accent,int fontSize,int borderSize)
     {
         this->accent = accent;
         this->fontSize = fontSize;
+        this->borderSize = borderSize;
 
         if(isDarkMode)
         {
             this->background = {.r = 42,.g=42,.b=42,.a=255};
-            this->border_color = {.r=0,.g=0,.b=0,.a=255};
-            this->border_hover = {.r=92,.g=92,.b=92,.a=255};
+            this->borderColor = {.r=0,.g=0,.b=0,.a=255};
+            this->borderHover = {.r=92,.g=92,.b=92,.a=255};
             
-            this->border_active = {.r=200,.g=200,.b=200,.a=255};
-            this->border_hover_active = {.r=(uint8_t)(255-accent.r),.g=(uint8_t)(255-accent.g),.b=(uint8_t)(255-accent.b),.a=255};
+            this->borderActive = {.r=200,.g=200,.b=200,.a=255};
+            this->borderHoverActive = {.r=(uint8_t)(255-accent.r),.g=(uint8_t)(255-accent.g),.b=(uint8_t)(255-accent.b),.a=255};
         
         }
         else
         {
             this->background = {.r=239,.g=239,.b=239,.a=255};
-            this->border_color = {.r=0,.g=0,.b=0,.a=255};
+            this->borderColor = {.r=0,.g=0,.b=0,.a=255};
             
-            this->border_active = {.r=92,.g=92,.b=92,.a=255};
+            this->borderActive = {.r=92,.g=92,.b=92,.a=255};
             
-            this->border_hover = {.r=200,.g=200,.b=200,.a=255};
+            this->borderHover = {.r=200,.g=200,.b=200,.a=255};
             
-            this->border_hover_active = {.r=(uint8_t)(255-accent.r),.g=(uint8_t)(255-accent.g),.b=(uint8_t)(255-accent.b),.a=255};
+            this->borderHoverActive = {.r=(uint8_t)(255-accent.r),.g=(uint8_t)(255-accent.g),.b=(uint8_t)(255-accent.b),.a=255};
         }
     }
             

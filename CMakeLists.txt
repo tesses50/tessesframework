@@ -55,16 +55,22 @@ src/SDL2/FontCache.cpp
 src/SDL2/Stream.cpp
 src/SDL2/GUI.cpp
 src/SDL2/GUIWindow.cpp
+src/SDL2/GUIPopup.cpp
 src/SDL2/View.cpp
 src/SDL2/Views/ButtonView.cpp
 src/SDL2/Views/AbsoluteView.cpp
 src/SDL2/Views/LabelView.cpp
 src/SDL2/Views/TextListView.cpp
+src/SDL2/Views/ScrollableTextListView.cpp
 src/SDL2/Views/ProgressView.cpp
 src/SDL2/Views/CheckView.cpp
 src/SDL2/Views/EditTextView.cpp
 src/SDL2/Views/PictureView.cpp
-
+src/SDL2/Views/VScrollView.cpp
+src/SDL2/Views/HScrollView.cpp
+src/SDL2/Views/VStackView.cpp
+src/SDL2/Views/HStackView.cpp
+src/SDL2/Views/DropDownView.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 

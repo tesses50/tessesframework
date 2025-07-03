@@ -18,10 +18,10 @@ namespace Tesses::Framework::SDL2::Views
         auto win = this->GetWindow();
 
 
-        SDL_SetRenderDrawColor(renderer,win->palette.border_color.r,win->palette.border_color.g,win->palette.border_color.b,win->palette.border_color.a);
+        SDL_SetRenderDrawColor(renderer,win->palette.borderColor.r,win->palette.borderColor.g,win->palette.borderColor.b,win->palette.borderColor.a);
 
         SDL_Rect r2={.x=rect.x,.y=rect.y,.w=rect.w,.h=rect.h};
-        for(size_t i=0;i < 4; i++)
+        for(size_t i=0;i < win->palette.borderSize; i++)
         {
             SDL_RenderDrawRect(renderer,&r2);
             r2.x++;
@@ -30,8 +30,8 @@ namespace Tesses::Framework::SDL2::Views
             r2.h-=2;
         }
         
-        auto res = (int)((rect.w-8)*(this->value/100.0));
-        r2={.x=rect.x+4,.y=rect.y+4,.w=res,.h=rect.h-8};    
+        auto res = (int)((rect.w-(win->palette.borderSize*2))*(this->value/100.0));
+        r2={.x=rect.x+win->palette.borderSize,.y=rect.y+win->palette.borderSize,.w=res,.h=rect.h-8};    
         SDL_SetRenderDrawColor(renderer,win->palette.accent.r,win->palette.accent.g,win->palette.accent.b,win->palette.accent.a);
         SDL_RenderFillRect(renderer,&r2);
     }
