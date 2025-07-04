@@ -1,6 +1,9 @@
 #include "TessesFramework/Date/Date.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "../HowardHinnant_date/date.h"
+#if defined(__FreeBSD__)
+#include <sys/time.h>
+#endif
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -10,16 +13,28 @@ namespace Tesses::Framework::Date
 {
     int GetTimeZone()
     {
-        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__) || defined(__FreeBSD__)
+        
+
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
         return (int)(-_timezone);
+        #elif defined(__FreeBSD__)
+        struct timeval tv;
+        struct timezone tz;
+        gettimeofday(&tv,&tz);
+        return -(tz.tz_minuteswest/60)
 	    #else
         return (int)(-timezone);
 	    #endif
     }
     bool TimeZoneSupportDST()
     {
-        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__) || defined(__FreeBSD__)
+        #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
         return _daylight == 1;
+        #elif defined(__FreeBSD__)
+        struct timeval tv;
+        struct timezone tz;
+        gettimeofday(&tv,&tz);
+        return tz.tz_dsttime!=0;
         #else
         return daylight == 1;
         #endif
