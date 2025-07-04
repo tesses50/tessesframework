@@ -21,7 +21,7 @@ namespace Tesses::Framework::Date
         struct timeval tv;
         struct timezone tz;
         gettimeofday(&tv,&tz);
-        return -(tz.tz_minuteswest/60);
+        return (tz.tz_minuteswest/60);
 	    #else
         return (int)(-timezone);
 	    #endif

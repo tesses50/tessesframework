@@ -700,7 +700,7 @@ namespace Tesses::Framework::SDL2
             }
             else {
                 GUIJsonViewNotFoundEventArgs e;
-                e.destView == nullptr;
+                e.destView = nullptr;
                 e.jsonObject = json;
                 e.typeString = type;
                 

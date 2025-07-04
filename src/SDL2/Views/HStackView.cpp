@@ -159,7 +159,7 @@ namespace Tesses::Framework::SDL2::Views
             }   
 
 
-            numberOfCells == 0 ? 0 : freeWidth/ numberOfCells;
+            cellSize = numberOfCells == 0 ? 0 : freeWidth/ numberOfCells;
             int x = 0;
 
             
