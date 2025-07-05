@@ -1,4 +1,4 @@
-
+#if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #include "TessesFramework/SDL2/Views/DropDownView.hpp"
 
 namespace Tesses::Framework::SDL2::Views {
@@ -66,7 +66,7 @@ namespace Tesses::Framework::SDL2::Views {
                 win->ShowPopup(pu);
             }
         }
-        else if(event.type == SDL_KEYDOWN)
+        else if(event.type == SDL_KEYDOWN && this->GetViewFlag(VIEWFLAG_ISACTIVE))
         {
             switch(event.key.keysym.sym)
             {
@@ -94,7 +94,7 @@ namespace Tesses::Framework::SDL2::Views {
     }
     DropDownView::DropDownView() : View("--PLEASE SELECT ONE--")
     {
-        
+        this->hasSet=false;
         
     }
     std::vector<std::string>& DropDownView::GetItems()
@@ -111,3 +111,4 @@ namespace Tesses::Framework::SDL2::Views {
     }
     
 }
+#endif
