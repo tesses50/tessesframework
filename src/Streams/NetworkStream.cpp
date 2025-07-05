@@ -314,6 +314,7 @@ namespace Tesses::Framework::Streams {
                 return;
             }
         }
+        this->success = true;
         #endif
     }
 
