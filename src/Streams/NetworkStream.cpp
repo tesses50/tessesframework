@@ -300,7 +300,7 @@ namespace Tesses::Framework::Streams {
             unlink(unixPath.c_str());
             if(NETWORK_BIND(this->sock, (const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
             {
-                std::cout << "FAILED TO BIND: " << strerror(errno) << std::endl;
+                std::cerr << "FAILED TO BIND: " << strerror(errno) << std::endl;
                 this->success = false;
                 return;
             }
@@ -309,6 +309,7 @@ namespace Tesses::Framework::Streams {
         {
             if(NETWORK_CONNECT(this->sock,(const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
             {
+                std::cerr << "FAILED TO CONNECT: " << strerror(errno) << std::endl;
                 this->success=false;
                 return;
             }

@@ -127,7 +127,7 @@ namespace Tesses::Framework::Http
         {
             auto netStrm = new NetworkStream(uri.host,uri.GetPort(),false,false,false);
             if(netStrm == nullptr) return nullptr;
-            return new ClientTLSStream(netStrm, true, ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
+            return new ClientTLSStream(netStrm, true, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
         }
             
         return nullptr;
@@ -142,7 +142,7 @@ namespace Tesses::Framework::Http
         {
             auto netStrm = new NetworkStream(unixPath,false);
             if(netStrm == nullptr) return nullptr;
-            return new ClientTLSStream(netStrm, true, ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
+            return new ClientTLSStream(netStrm, true, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
         }
             
         return nullptr;
