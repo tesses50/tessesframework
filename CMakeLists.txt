@@ -120,16 +120,68 @@ if(TESSESFRAMEWORK_ENABLE_SDL2)
 
 
 
-
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoSwitch")
 find_package(PkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
 pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
 else()
+if(TESSESFRAMEWORK_FETCHCONTENT)
+function(sdl2_fix TessesFramework_TARGET)
+target_include_directories(${TessesFramework_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl_image-src/include")
+target_include_directories(${TessesFramework_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl_ttf-src")
+endfunction()
+
+FetchContent_Declare(
+  SDL
+  URL            https://downloads.tesses.net/cache/libraries/source/SDL2-2.30.11.tar.gz
+)
+
+FetchContent_Declare(
+  SDL_IMAGE
+  URL            https://downloads.tesses.net/cache/libraries/source/SDL2_image-2.8.4.tar.gz
+)
+FetchContent_Declare(
+    FREETYPE
+    URL https://downloads.tesses.net/cache/libraries/source/freetype-2.13.3.tar.gz
+)
+FetchContent_Declare(
+    SDL_TTF
+    URL https://downloads.tesses.net/cache/libraries/source/SDL2_ttf-2.24.0.tar.gz
+)
+set(SDL2_DISABLE_UNINSTALL ON CACHE BOOL "" FORCE)
+set(SDL_TEST_ENABLED_BY_DEFAULT OFF)
+
+# SDL main is only needed for desktop apps (more specifically Windows)
+  set(SDL2_DISABLE_SDL2MAIN ON CACHE BOOL "" FORCE)
+
+set(SDL_CMAKE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
+set(SDL2IMAGE_DEBUG_POSTFIX "" CACHE STRING "" FORCE)
+if(NOT TESSESFRAMEWORK_ENABLE_SHARED)
+#set(SDL_SHARED OFF)
+set(BUILD_SHARED_LIBS OFF)
+
+endif()
+set(SDL2TTF_VENDORED ON)
+set(SDL2IMAGE_VENDORED ON)
+FetchContent_MakeAvailable(SDL SDL_IMAGE SDL_TTF)
+
+# Making sure libraries don't generate symlinks
+if(TESSESFRAMEWORK_ENABLE_SHARED)
+set_property(TARGET SDL2 PROPERTY VERSION)
+set_property(TARGET SDL2 PROPERTY SOVERSION)
+set_property(TARGET SDL2_image PROPERTY VERSION)
+set_property(TARGET SDL2_image PROPERTY SOVERSION)
+
+set_property(TARGET SDL2_ttf PROPERTY VERSION)
+set_property(TARGET SDL2_ttf PROPERTY SOVERSION)
+endif()
+else()
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
+find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+endif()
 endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" "#pragma once\n")
 bin2h(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/font/NonMono/TanoheSans-Regular.ttf" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/TanoheSans-Regular.h" VARIABLE_NAME TanoheSansRegular APPEND NULL_TERMINATE)
@@ -153,17 +205,18 @@ target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FI
 
 endif()
 if(TESSESFRAMEWORK_FETCHCONTENT)
+
+FetchContent_Declare(
+    mbedtls
+    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.4.tar.bz2
+    
+)
 set(MBEDTLS_FATAL_WARNINGS OFF)
 set(ENABLE_TESTING OFF)
 set(ENABLE_PROGRAMS OFF)
 if(TESSESFRAMEWORK_ENABLE_SHARED)
 set(USE_SHARED_MBEDTLS_LIBRARY ON)
 endif()
-FetchContent_Declare(
-    mbedtls
-    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.3.1.tar.bz2
-    
-)
 FetchContent_MakeAvailable(mbedtls)
 else()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
@@ -199,6 +252,9 @@ endif()
 if(TESSESFRAMEWORK_ENABLE_NETWORKING)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_NETWORKING)
 endif()
+if(TESSESFRAMEWORK_FETCHCONTENT)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_FETCHCONTENT)
+endif()
 if(TESSESFRAMEWORK_ENABLE_SDL2)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoGameCube" OR "${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoSwitch")
 target_link_libraries(${TessesFramework_TARGET} PUBLIC  ${SDL2_LIBRARIES})
@@ -211,7 +267,17 @@ target_link_libraries(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_LIBRARIES})
 target_include_directories(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_INCLUDE_DIRS})
 target_compile_options(${TessesFramework_TARGET} PUBLIC  ${SDL2_IMAGE_CFLAGS_OTHER})
 else()
+if(TESSESFRAMEWORK_FETCHCONTENT)
+if(NOT TESSESFRAMEWORK_ENABLE_SHARED)
+
+target_link_libraries(${TessesFramework_TARGET} PUBLIC SDL2-static SDL2_image SDL2_ttf)
+else()
+target_link_libraries(${TessesFramework_TARGET} PUBLIC SDL2 SDL2_image SDL2_ttf)
+endif()
+sdl2_fix(${TessesFramework_TARGET})
+else()
 target_link_libraries(${TessesFramework_TARGET} PUBLIC SDL2::SDL2 SDL2_image::SDL2_image SDL2_ttf::SDL2_ttf)
+endif()
 endif()
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_SDL2)
 endif()
@@ -310,6 +376,15 @@ if((TESSESFRAMEWORK_ENABLE_STATIC OR TESSESFRAMEWORK_ENABLE_SHARED) AND TESSESFR
 list(APPEND TessesFrameworkLibs mbedtls mbedx509 mbedcrypto everest p256m)
 endif()
 
+if((TESSESFRAMEWORK_ENABLE_STATIC OR TESSESFRAMEWORK_ENABLE_SHARED) AND TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_SDL2)
+if(NOT TESSESFRAMEWORK_ENABLE_SHARED)
+
+list(APPEND TessesFrameworkLibs SDL2-static SDL2_image SDL2_ttf)
+else()
+list(APPEND TessesFrameworkLibs SDL2 SDL2_image SDL2_ttf)
+endif()
+endif()
+
 
 if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
 install(TARGETS ${TessesFrameworkLibs} 
@@ -345,9 +420,25 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
         if(TESSESFRAMEWORK_ENABLE_SQLITE AND TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
         add_executable(databaseex examples/databaseex.cpp)
         target_link_libraries(databaseex PUBLIC tessesframework)
+        #if(TARGET SDL2::SDL2main)
+
+        #target_link_libraries(databaseex PRIVATE SDL2::SDL2main)
+        #endif()
+        #if(TARGET SDL2main)
+
+        #target_link_libraries(databaseex PRIVATE SDL2main)
+        #endif()
         endif()
         add_executable(guikitchensink examples/guikitchensink.cpp)
         target_link_libraries(guikitchensink PUBLIC tessesframework)
+  #      if(TARGET SDL2::SDL2main)
+
+   #     target_link_libraries(guikitchensink PRIVATE SDL2::SDL2main)
+    #    endif()
+     #   if(TARGET SDL2main)
+
+      #  target_link_libraries(guikitchensink PRIVATE SDL2main)
+       # endif()
         endif()
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)
@@ -378,6 +469,14 @@ if(TESSESFRAMEWORK_ENABLE_APPS)
 if(TESSESFRAMEWORK_ENABLE_SDL2)
 add_executable(tguilayouttester apps/guilayouttester.cpp)
 target_link_libraries(tguilayouttester PUBLIC tessesframework)
+#if(TARGET SDL2::SDL2main)
+
+ #       target_link_libraries(tguilayouttester PRIVATE SDL2::SDL2main)
+  #      endif()
+   #     if(TARGET SDL2main)
+
+#        target_link_libraries(tguilayouttester PRIVATE SDL2main)
+ #       endif()
 install(TARGETS tguilayouttester DESTINATION bin)
 endif()
 add_executable(tanonydrop apps/tanonydrop.cpp)

@@ -1,7 +1,6 @@
 
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 
-#define SDL_MAIN_HANDLED
 #include "TessesFramework/Platform/Environment.hpp"
 #include "TessesFramework/Serialization/SQLite.hpp"
 #include "TessesFramework/SDL2/GUI.hpp"

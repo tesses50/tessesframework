@@ -1,7 +1,6 @@
 
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 
-#define SDL_MAIN_HANDLED
 #include "TessesFramework/Streams/MemoryStream.hpp"
 #include "TessesFramework/Http/HttpClient.hpp"
 #include "TessesFramework/SDL2/Stream.hpp"
@@ -20,7 +19,8 @@
 #include "TessesFramework/SDL2/Views/VStackView.hpp"
 #include "TessesFramework/SDL2/Views/HStackView.hpp"
 #include "TessesFramework/SDL2/Views/DropDownView.hpp"
-#include <SDL2/SDL_image.h>
+#include "TessesFramework/SDL2/SDL_Headers.hpp"
+
 #include <iostream>
 using namespace Tesses::Framework;
 using namespace Tesses::Framework::SDL2;
@@ -128,10 +128,8 @@ int main(int argc,char** argv)
         }
     );
 
-    Views::PictureView img;
-    LoadImage(img);
-    
-    abs.Add({.x=460,.y=32,.w=640,.h=480},&img,false);
+    //Views::PictureView img;
+    //LoadImage(img);
 
     abs.Add({.x=1280-42,.y=2,.w=32,.h=720-20},&vscroll,false);
 

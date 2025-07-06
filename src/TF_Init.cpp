@@ -50,8 +50,13 @@ static GXRModeObj *rmode = NULL;
 #endif
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#if defined(TESSESFRAMEWORK_FETCHCONTENT)
+#include <SDL_ttf.h>
+#include <SDL_image.h>
+#else
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+#endif
 #include "TessesFramework/SDL2/GUI.hpp"
 #endif
 

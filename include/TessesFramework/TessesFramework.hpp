@@ -37,6 +37,4 @@
 #include "Platform/Environment.hpp"
 #include "Platform/Process.hpp"
 #include "Text/StringConverter.hpp"
-#include "SDL2/FontCache.hpp"
-#include "SDL2/Stream.hpp"
-#include "SDL2/GUI.hpp"
+#include "SDL2/SDL_Headers.hpp"

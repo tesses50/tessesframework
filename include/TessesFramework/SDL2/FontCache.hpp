@@ -2,8 +2,7 @@
 
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #include <array>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include "SDL_Headers.hpp"
 #include <string>
 #include <vector>
 namespace Tesses::Framework::SDL2

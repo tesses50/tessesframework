@@ -1,6 +1,6 @@
 #pragma once
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-#include <SDL2/SDL.h>
+#include "SDL_Headers.hpp"
 #include "FontCache.hpp"
 #include "../Filesystem/VFSFix.hpp"
 #include "../Filesystem/VFS.hpp"
