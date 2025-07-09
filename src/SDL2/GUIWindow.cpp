@@ -15,6 +15,7 @@
 #include "TessesFramework/SDL2/Views/HStackView.hpp"
 #include "TessesFramework/SDL2/Views/VStackView.hpp"
 #include "TessesFramework/SDL2/Views/DropDownView.hpp"
+#include "TessesFramework/SDL2/Views/TabView.hpp"
 #include "TessesFramework/SDL2/ParseColor.hpp"
 
 #if defined(__SWITCH__)
@@ -697,6 +698,49 @@ namespace Tesses::Framework::SDL2
                     }
                 }
                 return sv;
+            }
+            else if(type == "TabView")
+            {
+                //Item.TabLabel
+                auto tv = new Views::TabView();
+                tv->SetId(id);
+                int64_t firstTab=0;
+                int64_t curTab=0;
+                bool tabsVisible=true;
+
+                json.TryGetValueAsType("SelectedTab",curTab);
+
+                json.TryGetValueAsType("FirstTab",firstTab);
+                json.TryGetValueAsType("TabsVisible", tabsVisible);
+
+                tv->firstTab = (int64_t)firstTab;
+                tv->selectedTab = (int64_t)curTab;
+                tv->tabsVisible=tabsVisible;
+
+
+                Tesses::Framework::Serialization::Json::JArray arr;
+
+                if(json.TryGetValueAsType("Items",arr))
+                {
+                    for(auto item : arr)
+                    {
+                        Tesses::Framework::Serialization::Json::JObject dict;
+                        if(Tesses::Framework::Serialization::Json::TryGetJToken(item,dict))
+                        {
+                            std::string n="";
+
+                            dict.TryGetValueAsType("TabText",n);
+
+
+                            auto myO = CreateViewFromJson(dict);
+                            if(myO != nullptr)
+                            {
+                                tv->AddTab(n,myO,true);
+                            }
+                        }
+                    }
+                }
+                return tv;
             }
             else {
                 GUIJsonViewNotFoundEventArgs e;
