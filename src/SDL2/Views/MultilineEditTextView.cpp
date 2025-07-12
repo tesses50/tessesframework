@@ -4,6 +4,18 @@
 
 namespace Tesses::Framework::SDL2::Views
 {
+    static int numberWidth(size_t n)
+    {
+        if(n == 0) return 1;
+        size_t digits = 0;
+        while(n != 0)
+        {
+            n /= 10;
+            digits++;
+        }
+        return digits;
+    }
+
     void MultilineEditTextView::OnDraw(SDL_Renderer* renderer, SDL_Rect& r)
     {
         //1   |
@@ -11,17 +23,42 @@ namespace Tesses::Framework::SDL2::Views
         // 9   |
         //10   |
 
+        auto win = this->GetWindow();
+        auto w = win->monospaced_font->MaxWidth();
+        auto h = win->monospaced_font->MaxHeight();
+        auto digitsTotal = numberWidth(this->lines.size());
         
+        auto numLines = (r.h - (win->palette.borderSize*4)) / h;
 
-        
+        if(numLines+this->topLeft.y > this->lines.size()) numLines = this->lines.size() - this->topLeft.y;
+
+        for(size_t i = 0; i < numLines; i++)
+        {
+            win->monospaced_font->Render(renderer, r.x+(win->palette.borderSize*2),r.y+(h*i), Http::HttpUtils::LeftPad(std::to_string(i+this->topLeft.y+1),digitsTotal,' '),win->palette.accent);
+            win->monospaced_font->Render(renderer,r.x+(win->palette.borderSize*2)+(w*(digitsTotal+5)),r.y+(h*i),this->lines[i+this->topLeft.y],win->palette.accent,this->topLeft.x);
+        }
+
     }
     bool MultilineEditTextView::OnEvent(SDL_Event& event, SDL_Rect& myBounds, SDL_Rect& visibleBounds)
     {
-
+        if(event.type == SDL_TEXTINPUT)
+        {
+            TypeText(event.text.text);
+        }
+        else if(event.type == SDL_KEYDOWN)
+        {
+            switch(event.key.keysym.sym)
+            {
+                case SDLK_RETURN:
+                    TypeText("\n");
+                    break;
+            }
+        }
+        return false;
     }
     MultilineEditTextView::MultilineEditTextView() :MultilineEditTextView(std::string()) 
     {
-
+       
     }
     MultilineEditTextView::MultilineEditTextView(std::string hint) : View()
     {
@@ -72,7 +109,7 @@ namespace Tesses::Framework::SDL2::Views
 
         SDL_Point cursorBegin = this->cursorPos;
         SDL_Point cursorEnd = this->cursorEnd;
-        if(cursorBegin.y > cursorEnd.y || ((cursorBegin.y == cursorEnd.y) && (cursorBegin.x > cursorEnd.x)))
+        if((cursorBegin.y > cursorEnd.y || ((cursorBegin.y == cursorEnd.y) && (cursorBegin.x > cursorEnd.x))) && this->cursorEnd.x != -1 && this->cursorEnd.y != -1)
         {
             cursorBegin.y ^= cursorEnd.y;
             cursorEnd.y ^= cursorBegin.y;
@@ -97,7 +134,7 @@ namespace Tesses::Framework::SDL2::Views
         this->cursorPos = cursorBegin+text.size();
         this->cursorEnd = std::string::npos;*/
 
-        if(cursorEnd.y != -1 && cursorEnd.x != -1)
+        if(this->cursorEnd.y != -1 && this->cursorEnd.x != -1)
         {
             int line = cursorBegin.y;
             for(int y = cursorBegin.y; y <= cursorEnd.y && y < lines.size(); y++)
@@ -137,32 +174,49 @@ namespace Tesses::Framework::SDL2::Views
         
         
         
-        auto mylines = Http::HttpUtils::SplitString(text,"\n");
+        auto mylines = text == "\n" ? std::vector<std::string>({"",""}) : Http::HttpUtils::SplitString(text,"\n");
 
         if(!mylines.empty())
         {
+            int setXTo = 0;
+            if(mylines.size()==1)
+            {
+                setXTo=mylines[0].size()+cursorBegin.x;
+            }
+            else {
+                setXTo=mylines.back().size();
+            }
             if(cursorBegin.y < this->lines.size())
             {
+                
                 
                 if(cursorBegin.x > 0)
                 {
                     mylines[0] = this->lines[cursorBegin.y].substr(0,cursorBegin.x) + mylines[0];
                 }
-
                 if(cursorBegin.x < this->lines[cursorBegin.y].size())
                 {
                     mylines.back() += this->lines[cursorBegin.y].substr(cursorBegin.x);
                 }
+                
+                
 
                 this->lines.erase(this->lines.begin()+cursorBegin.y);
             }
-
             
 
+            bool first=true;
             for(auto& item : mylines)
             {
+                if(!first)
+                {
+                    cursorBegin.y++;
+                }
                 this->lines.insert(this->lines.begin()+cursorBegin.y,{item});
+                first=false;
             }
+            cursorBegin.x = setXTo;
+            
 
         }
 

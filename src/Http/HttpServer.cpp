@@ -678,6 +678,7 @@ namespace Tesses::Framework::Http
         this->statusCode = OK;
         this->strm = strm;
         this->sent = false;
+        this->queryParams.SetCaseSensitive(true);
         this->responseHeaders.AddValue("Server","TessesFrameworkWebServer");
     }
     Stream& ServerContext::GetStream()

@@ -64,6 +64,7 @@ src/SDL2/Views/TextListView.cpp
 src/SDL2/Views/ScrollableTextListView.cpp
 src/SDL2/Views/ProgressView.cpp
 src/SDL2/Views/CheckView.cpp
+src/SDL2/Views/MultilineEditTextView.cpp
 src/SDL2/Views/EditTextView.cpp
 src/SDL2/Views/PictureView.cpp
 src/SDL2/Views/VScrollView.cpp

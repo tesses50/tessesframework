@@ -137,6 +137,10 @@ namespace Tesses::Framework::Http {
         
         return true;
     }
+    Uri::Uri()
+    {
+        this->query.SetCaseSensitive(true);
+    }
     std::string Uri::GetPathAndQuery()
     {
         return this->path + this->GetQuery();
@@ -740,6 +744,28 @@ namespace Tesses::Framework::Http {
                 return "";
         }
     }
+    CaseInsensitiveLess::CaseInsensitiveLess(const CaseInsensitiveLess& str)
+    {
+        this->caseSensitive = str.caseSensitive;
+        this->offset = this;
+    }
+    CaseInsensitiveLess::CaseInsensitiveLess()
+    {
+        this->caseSensitive=false;
+        this->offset = this;
+    }
+    void HttpDictionary::SetCaseSensitive(bool isCaseSensitive)
+    {
+        this->kvp.key_comp().offset->caseSensitive=isCaseSensitive;
+    }
+    HttpDictionary::HttpDictionary(bool isCaseSensitive)
+    {
+        this->SetCaseSensitive(isCaseSensitive);
+    }
+    HttpDictionary::HttpDictionary() : HttpDictionary(false)
+    {
+
+    }
     
     bool HttpDictionary::AnyEquals(std::string key, std::string value)
     {
@@ -858,6 +884,7 @@ namespace Tesses::Framework::Http {
         return true;
     }
      bool CaseInsensitiveLess::operator() (const std::string& s1, const std::string& s2) const {
+        if(this->caseSensitive) return s1 == s2;
         return  HttpUtils::ToLower(s1) < HttpUtils::ToLower(s2);
         
     }

@@ -87,13 +87,16 @@ void FontCache::CalculateSize(std::string text, int& x,int& y)
     }
     if(myX > x) x = myX;
 }
-void FontCache::Render(SDL_Renderer* renderer,int x,int y, std::string text,const SDL_Color& color)
+void FontCache::Render(SDL_Renderer* renderer,int x,int y, std::string text,const SDL_Color& color, size_t begin, size_t end)
 {
     int myX = x;
     int maxH =  MaxHeight();
-    for(auto c : text)
+    if(begin >= text.size()) return;
+    if(end > text.size()) end = text.size();
+
+    for(size_t i = begin; i < end; i++)
     {
-        switch(c)
+        switch(text[i])
         {
             case '\n':
             {
@@ -112,7 +115,7 @@ void FontCache::Render(SDL_Renderer* renderer,int x,int y, std::string text,cons
             break;
             default:
             {
-                auto tex = GetCharOfColor(c,color);
+                auto tex = GetCharOfColor(text[i],color);
                 int wi;
                 int he;
                 SDL_QueryTexture(tex,NULL,NULL,&wi,&he);

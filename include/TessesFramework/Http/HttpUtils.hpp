@@ -71,11 +71,19 @@ namespace Tesses::Framework::Http
 } StatusCode;
 
 struct CaseInsensitiveLess {
+    CaseInsensitiveLess(const CaseInsensitiveLess& str);
+    CaseInsensitiveLess();
+    CaseInsensitiveLess* offset;
+    bool caseSensitive;
      bool operator() (const std::string& s1, const std::string& s2) const;
 };
+    
     class HttpDictionary {
         public:
+            HttpDictionary();
+            HttpDictionary(bool caseSensitive);
             std::map<std::string,std::vector<std::string>,CaseInsensitiveLess> kvp;
+            void SetCaseSensitive(bool isCaseSensitive);
             void Clear();
             void Clear(std::string key, bool kvpExistsAfter);
             void SetValue(std::string key, std::string value);
@@ -116,6 +124,7 @@ struct CaseInsensitiveLess {
 
     class Uri {
         public:
+            Uri();
             std::string GetQuery();
             std::string GetPathAndQuery();
             uint16_t GetPort();

@@ -24,7 +24,7 @@ class FontCache
         int MaxHeight();
         int PointSize();
         void CalculateSize(std::string text, int& x,int& y);
-        void Render(SDL_Renderer* renderer,int x,int y, std::string text, const SDL_Color& color);
+        void Render(SDL_Renderer* renderer,int x,int y, std::string text, const SDL_Color& color,size_t begin=0,size_t end=std::string::npos);
         ~FontCache();
 };
 }

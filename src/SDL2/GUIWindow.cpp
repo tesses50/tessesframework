@@ -8,6 +8,7 @@
 #include "TessesFramework/SDL2/Views/TextListView.hpp"
 #include "TessesFramework/SDL2/Views/AbsoluteView.hpp"
 #include "TessesFramework/SDL2/Views/EditTextView.hpp"
+#include "TessesFramework/SDL2/Views/MultilineEditTextView.hpp"
 #include "TessesFramework/SDL2/Views/PictureView.hpp"
 #include "TessesFramework/SDL2/Views/ScrollableTextListView.hpp"
 #include "TessesFramework/SDL2/Views/HScrollView.hpp"
@@ -580,6 +581,17 @@ namespace Tesses::Framework::SDL2
                 etv->SetHint(hint);
                 return etv;
             }
+            else if(type == "MultilineEditTextView")
+            {
+                auto etv = new Views::MultilineEditTextView();
+                etv->SetId(id);
+                etv->SetText(text);
+                std::string hint;
+                json.TryGetValueAsType("Hint",hint);
+                etv->SetHint(hint);
+                return etv;
+            }
+            
             else if(type == "PictureView")
             {
                 auto pv = new Views::PictureView();
