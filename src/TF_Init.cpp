@@ -215,12 +215,10 @@ namespace Tesses::Framework
         | IMG_INIT_JXL |IMG_INIT_AVIF
         #endif
         ;
-        if(IMG_Init(
+        IMG_Init(
             r
-            ) != r)
-            {
-                std::cout << "IMG_Init: " << IMG_GetError() << std::endl;
-            }
+            );
+          
         #endif
 
 
