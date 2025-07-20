@@ -1,5 +1,4 @@
 #pragma once
-#include "../TessesFrameworkFeatures.h"
 #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
