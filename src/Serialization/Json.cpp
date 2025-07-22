@@ -203,7 +203,7 @@ namespace Tesses::Framework::Serialization::Json
                                                 }
                                                 if((v & 0xFC00) != 0xDC00) 
                                                 {
-                                                    throw TextException("Not a lower utf-16 surrogate pair.");
+                                                    throw std::runtime_error("Not a lower utf-16 surrogate pair.");
                                                 }
                                                 
 
@@ -214,7 +214,7 @@ namespace Tesses::Framework::Serialization::Json
                                             else
                                             {
                                                
-                                                throw TextException("Could not read lower utf-16 surrogate pair.");
+                                                throw std::runtime_error("Could not read lower utf-16 surrogate pair.");
                                             }
                                             if(v2 <= 0x7F)
                                             {
@@ -297,7 +297,7 @@ namespace Tesses::Framework::Serialization::Json
         size_t tokenIndex=0;
 
         std::function<std::pair<std::string,bool>()> pop_token=[&tokens,&tokenIndex]()->std::pair<std::string,bool> {
-            if(tokenIndex >= tokens.size()) throw TextException("Json tokens out of bounds.");
+            if(tokenIndex >= tokens.size()) throw std::runtime_error("Json tokens out of bounds.");
             return tokens[tokenIndex++];
         };
 
@@ -324,7 +324,7 @@ namespace Tesses::Framework::Serialization::Json
                             tkn = pop_token();
                             if(tkn.second || tkn.first != ":") 
                             {
-                                throw TextException("Invalid JSON key value seperator.");
+                                throw std::runtime_error("Invalid JSON key value seperator.");
                             }
                                 
                             auto value = read_token();
@@ -341,7 +341,7 @@ namespace Tesses::Framework::Serialization::Json
                         else
                         {
                             
-                            throw TextException("Invalid JSON object.");
+                            throw std::runtime_error("Invalid JSON object.");
                         }
                     }
                     return obj;

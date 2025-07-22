@@ -17,13 +17,13 @@ namespace Tesses::Framework::Streams
     uint8_t ByteReader::ReadU8()
     {
         auto r = this->strm->ReadByte();
-        if(r < 0) throw TextException("End of file");
+        if(r < 0) throw std::runtime_error("End of file");
         return (uint8_t)r;
     }
     uint16_t ByteReader::ReadU16BE()
     {
         uint8_t data[2];
-        if(this->strm->ReadBlock(data,2) != 2) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,2) != 2) throw std::runtime_error("End of file");
         uint16_t n = 0;
         n |= (uint16_t)data[0] << 8;
         n |= (uint16_t)data[1];
@@ -33,7 +33,7 @@ namespace Tesses::Framework::Streams
     uint16_t ByteReader::ReadU16LE()
     {
         uint8_t data[2];
-        if(this->strm->ReadBlock(data,2) != 2) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,2) != 2) throw std::runtime_error("End of file");
         uint16_t n = 0;
         n |= (uint16_t)data[0];
         n |= (uint16_t)data[1] << 8;
@@ -45,7 +45,7 @@ namespace Tesses::Framework::Streams
     {
 
         uint8_t data[4];
-        if(this->strm->ReadBlock(data,4) != 4) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,4) != 4) throw std::runtime_error("End of file");
         uint32_t n = 0;
         n |= (uint32_t)data[0] << 24;
         n |= (uint32_t)data[1] << 16;
@@ -57,7 +57,7 @@ namespace Tesses::Framework::Streams
     uint32_t ByteReader::ReadU32LE()
     {
         uint8_t data[4];
-        if(this->strm->ReadBlock(data,4) != 4) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,4) != 4) throw std::runtime_error("End of file");
         uint32_t n = 0;
         n |= (uint32_t)data[0];
         n |= (uint32_t)data[1] << 8;
@@ -68,7 +68,7 @@ namespace Tesses::Framework::Streams
     uint64_t ByteReader::ReadU64BE()
     {
         uint8_t data[8];
-        if(this->strm->ReadBlock(data,8) != 8) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,8) != 8) throw std::runtime_error("End of file");
         uint64_t n = 0;
         n |= (uint64_t)data[0] << 56;
         n |= (uint64_t)data[1] << 48;
@@ -84,7 +84,7 @@ namespace Tesses::Framework::Streams
     uint64_t ByteReader::ReadU64LE()
     {
         uint8_t data[8];
-        if(this->strm->ReadBlock(data,8) != 8) throw TextException("End of file");
+        if(this->strm->ReadBlock(data,8) != 8) throw std::runtime_error("End of file");
         uint64_t n = 0;
         n |= (uint64_t)data[0];
         n |= (uint64_t)data[1] << 8;

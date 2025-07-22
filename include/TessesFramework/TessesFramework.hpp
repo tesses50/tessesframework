@@ -37,4 +37,3 @@
 #include "Platform/Environment.hpp"
 #include "Platform/Process.hpp"
 #include "Text/StringConverter.hpp"
-#include "SDL2/SDL_Headers.hpp"

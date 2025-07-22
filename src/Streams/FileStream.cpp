@@ -50,12 +50,12 @@ namespace Tesses::Framework::Streams
     }
     size_t FileStream::Read(uint8_t* buff, size_t sz)
     {
-        if(!CanRead()) throw TextException("Cannot read from stream");
+        if(!CanRead()) throw std::runtime_error("Cannot read from stream");
         return fread(buff,1, sz, this->f);
     }
     size_t FileStream::Write(const uint8_t* buff, size_t sz)
     {
-        if(!CanWrite()) throw TextException("Cannot write to stream");
+        if(!CanWrite()) throw std::runtime_error("Cannot write to stream");
         return fwrite(buff,1, sz, f);
     }
     bool FileStream::CanRead()

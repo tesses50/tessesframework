@@ -27,7 +27,7 @@ namespace Tesses::Framework::Serialization {
         if(rc)
         {
             std::string error = sqlite3_errmsg(sqlite);
-            throw TextException(error);
+            throw std::runtime_error(error);
         }
         this->data = static_cast<void*>(sqlite);
         #endif
@@ -54,7 +54,9 @@ namespace Tesses::Framework::Serialization {
     std::vector<std::vector<std::pair<std::string,std::optional<std::string>>>> SQLiteDatabase::Exec(std::string statement)
     {
         std::vector<std::vector<std::pair<std::string,std::optional<std::string>>>> items;
+        
         Exec(statement,items);
+       
         return items;
     }
     void SQLiteDatabase::Exec(std::string statement,std::vector<std::vector<std::pair<std::string,std::optional<std::string>>>>& items)
@@ -67,7 +69,7 @@ namespace Tesses::Framework::Serialization {
         {
             std::string errstr = err == nullptr ? "" : err;
             sqlite3_free(err);
-            throw TextException(errstr);
+            throw std::runtime_error(errstr);
         }
         #endif
     }

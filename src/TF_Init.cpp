@@ -45,23 +45,10 @@ static GXRModeObj *rmode = NULL;
 
 #endif
 
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
-#include "TessesFramework/Threading/Mutex.hpp"
-#endif
-#if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-#include <SDL2/SDL.h>
-#if defined(TESSESFRAMEWORK_FETCHCONTENT)
-#include <SDL_ttf.h>
-#include <SDL_image.h>
-#else
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
-#endif
-#include "TessesFramework/SDL2/GUI.hpp"
-#endif
 
 namespace Tesses::Framework
 {
+   
     EventList<uint64_t> OnItteraton;
     #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
     namespace Threading
@@ -104,11 +91,6 @@ namespace Tesses::Framework
     static void _sigInt(int c)
     {
         isRunningSig=false;
-        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-        SDL_Event quitEvent;
-        quitEvent.type = SDL_QUIT;
-        SDL_PushEvent(&quitEvent);
-        #endif
     }
     void TF_RunEventLoop()
     {
@@ -177,9 +159,7 @@ namespace Tesses::Framework
         }
         #endif
         
-        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-        Tesses::Framework::SDL2::gui.Update();
-        #endif        
+
     }
     void TF_SetIsRunning(bool _isRunning)
     {
@@ -191,11 +171,7 @@ namespace Tesses::Framework
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::JoinAllThreads();
         #endif
-        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-        SDL_Quit();
-        Tesses::Framework::SDL2::gui.CloseWindows();
-        
-        #endif
+
     }
     void TF_Init()
     {
@@ -205,20 +181,6 @@ namespace Tesses::Framework
             #if defined(GEKKO) || defined(__SWITCH__) || defined(__PS2__)
             sqlite3_vfs_register(sqlite3_demovfs(),1);
             #endif
-        #endif
-        #if defined(TESSESFRAMEWORK_ENABLE_SDL2)
-        //SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS,"1");
-        SDL_Init(SDL_INIT_EVERYTHING);
-        TTF_Init();
-        int r = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP 
-        #if !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
-        | IMG_INIT_JXL |IMG_INIT_AVIF
-        #endif
-        ;
-        IMG_Init(
-            r
-            );
-          
         #endif
 
 

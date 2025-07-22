@@ -730,8 +730,8 @@ namespace Tesses::Framework::Http
     void ServerContext::SendStream(Stream& strm)
     {
         if(sent) return;
-        if(!strm.CanRead()) throw TextException("Cannot read from stream");
-        if(strm.EndOfStream()) throw TextException("End of stream");
+        if(!strm.CanRead()) throw std::runtime_error("Cannot read from stream");
+        if(strm.EndOfStream()) throw std::runtime_error("End of stream");
         if(strm.CanSeek())
         {
             int64_t len=strm.GetLength();
@@ -1013,13 +1013,24 @@ namespace Tesses::Framework::Http
                     ctx.SendNotFound();
                 }
             } 
+
             catch(std::exception& ex)
             {
                 ctx.SendException(ex);
             }
+            catch(std::string& ex)
+            {
+                std::runtime_error re(ex);
+                ctx.SendException(re);
+            }
+            catch(const char* ex)
+            {
+                std::runtime_error re(ex);
+                ctx.SendException(re);
+            }
             catch(...)
             {
-                TextException ex("An unknown error occurred");
+                std::runtime_error ex("An unknown error occurred");
                 ctx.SendException(ex);   
             }
 

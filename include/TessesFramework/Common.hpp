@@ -9,24 +9,7 @@
 #include <vector>
 #include <functional>
 #include "Threading/Mutex.hpp"
-    class TextException : public std::exception {
-        
-        std::string error_message;
-        public:
-           
-            TextException(std::string ex)
-            {
-                error_message = "TextException: ";
-                error_message.append(ex);
-            }
-
-           
-            
-        const char * what() const noexcept override
-        {
-            return error_message.c_str();
-        }
-    };
+   
 namespace Tesses::Framework
 {
         template<typename...TArgs>

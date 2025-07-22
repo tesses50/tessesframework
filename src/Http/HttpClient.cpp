@@ -300,14 +300,14 @@ namespace Tesses::Framework::Http
 
     void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream* strm)
     {
-        if(strm == nullptr) throw TextException("strm is null");
+        if(strm == nullptr) throw std::runtime_error("strm is null");
         HttpRequest request;
         request.url = url;
         request.unixSocket = unixSocket;
         request.followRedirects=true;
         request.method = "GET";
         HttpResponse response(request);
-        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        if(response.statusCode < 200 || response.statusCode > 299) throw std::runtime_error("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         response.CopyToStream(strm);
     }
     void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream& strm)
@@ -317,16 +317,16 @@ namespace Tesses::Framework::Http
 
     void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
-        if(vfs == nullptr) throw TextException("vfs is null");
+        if(vfs == nullptr) throw std::runtime_error("vfs is null");
         auto strm = vfs->OpenFile(path,"wb");
-        if(strm == nullptr) throw TextException("strm is null");
+        if(strm == nullptr) throw std::runtime_error("strm is null");
         DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
         delete strm;
     }
     void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
         auto strm = vfs.OpenFile(path,"wb");
-        if(strm == nullptr) throw TextException("strm is null");
+        if(strm == nullptr) throw std::runtime_error("strm is null");
         DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
         delete strm;
     }
@@ -342,7 +342,7 @@ namespace Tesses::Framework::Http
         request.followRedirects=true;
         request.method = "GET";
         HttpResponse response(request);
-        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        if(response.statusCode < 200 || response.statusCode > 299) throw std::runtime_error("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         return response.ReadAsString();
     }
     void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm)
@@ -373,7 +373,7 @@ namespace Tesses::Framework::Http
         request.followRedirects=true;
         request.method = "GET";
         HttpResponse response(request);
-        if(response.statusCode < 200 || response.statusCode > 299) throw TextException("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
+        if(response.statusCode < 200 || response.statusCode > 299) throw std::runtime_error("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         return response.ReadAsString();
    
     }
