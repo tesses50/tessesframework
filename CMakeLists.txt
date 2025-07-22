@@ -116,18 +116,18 @@ target_compile_definitions(TessesFramework PUBLIC TESSESFRAMEWORK_CERT_BUNDLE_FI
 
 endif()
 if(TESSESFRAMEWORK_FETCHCONTENT)
-
+set(MBEDTLS_FATAL_WARNINGS OFF)
+set(ENABLE_TESTING OFF)
+set(ENABLE_PROGRAMS OFF)
+if(TESSESFRAMEWORK_ENABLE_SHARED)
+set(USE_SHARED_MBEDTLS_LIBRARY ON)
+endif()
 FetchContent_Declare(
     mbedtls
     URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.4.tar.bz2
     
 )
-set(MBEDTLS_FATAL_WARNINGS OFF CACHE INTERNAL)
-set(ENABLE_TESTING OFF CACHE INTERNAL)
-set(ENABLE_PROGRAMS OFF CACHE INTERNAL)
-if(TESSESFRAMEWORK_ENABLE_SHARED)
-set(USE_SHARED_MBEDTLS_LIBRARY ON CACHE INTERNAL)
-endif()
+
 FetchContent_MakeAvailable(mbedtls)
 else()
 set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
