@@ -372,8 +372,8 @@ namespace Tesses::Framework::Crypto
     bool RandomBytes(std::vector<uint8_t>& output, std::string personal_str)
     {
             #if defined(TESSESFRAMEWORK_ENABLE_MBED)
-            mbedtls_entropy_context entropy;
-            mbedtls_ctr_drbg_context ctr_drbg;
+            mbedtls_entropy_context entropy={0};
+            mbedtls_ctr_drbg_context ctr_drbg={0};
 
             mbedtls_entropy_init(&entropy);
             mbedtls_ctr_drbg_init(&ctr_drbg);
