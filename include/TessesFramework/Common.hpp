@@ -87,6 +87,7 @@ namespace Tesses::Framework
     void TF_Init();
     void TF_InitWithConsole();
     void TF_ConnectToSelf(uint16_t port);
+    void TF_InitEventLoop();
     void TF_RunEventLoop();
     void TF_RunEventLoopItteration();
     bool TF_IsRunning();

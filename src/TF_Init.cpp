@@ -94,6 +94,7 @@ namespace Tesses::Framework
     }
     void TF_RunEventLoop()
     {
+        TF_InitEventLoop();
         while(isRunning)
         {
             TF_RunEventLoopItteration();
@@ -173,6 +174,11 @@ namespace Tesses::Framework
         #endif
 
     }
+    void TF_InitEventLoop()
+    {
+        signal(SIGINT,_sigInt);
+        signal(SIGTERM, _sigInt);
+    }
     void TF_Init()
     {
         
@@ -221,8 +227,7 @@ if (iResult != 0) {
         // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
         #else
         signal(SIGPIPE,SIG_IGN);
-        signal(SIGINT,_sigInt);
-        signal(SIGTERM, _sigInt);
+       
         #endif
  
     }
