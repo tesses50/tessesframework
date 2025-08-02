@@ -265,13 +265,15 @@ endif()
 list(APPEND TessesFrameworkLibs tessesframework_shared)
 
 
+
+
+endif()
+
 if((TESSESFRAMEWORK_ENABLE_STATIC OR TESSESFRAMEWORK_ENABLE_SHARED) AND TESSESFRAMEWORK_FETCHCONTENT AND TESSESFRAMEWORK_ENABLE_MBED)
 list(APPEND TessesFrameworkLibs mbedtls mbedx509 mbedcrypto everest p256m)
 if(TESSESFRAMEWORK_ENABLE_STATIC AND TESSESFRAMEWORK_ENABLE_SHARED)
 list(APPEND TessesFrameworkLibs mbedtls_static mbedx509_static mbedcrypto_static)
 endif()
-endif()
-
 endif()
 
 
