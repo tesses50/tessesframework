@@ -30,9 +30,9 @@ SOFTWARE.
 Modified by Mike Nolan for this project
 I modified it to return home directory and conditionally compile for systems that are not GEKKO / NX  etc
 */
-
-#if !defined(SAGO_DISABLE)
 #include "platform_folders.h"
+#if !defined(SAGO_DISABLE)
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdio>

@@ -73,7 +73,7 @@ namespace Tesses::Framework::Platform {
             }
             
 
-            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
             #else
             int stdin_strm;
             int stdout_strm;
@@ -91,7 +91,7 @@ namespace Tesses::Framework::Platform {
 
                
 
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 
                 #else
                 this->stdin_strm=-1;
@@ -105,7 +105,7 @@ namespace Tesses::Framework::Platform {
         HANDLE strm;
         bool writing;
         bool eos;
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         #else
         int strm;
         
@@ -120,7 +120,7 @@ namespace Tesses::Framework::Platform {
                 this->writing = writing;
                 this->eos = false;
             }
-            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+            #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
             #else
             ProcessStream(int strm, bool writing)
             {
@@ -134,7 +134,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return this->strm == NULL || eos;
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return true;
                 #else
                 return this->strm < 0 || eos;
@@ -145,7 +145,7 @@ namespace Tesses::Framework::Platform {
                 //TODO: Implement for WIN32
                 #if defined(_WIN32)
                 return !writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return false;
                 #else
                 return !writing && this->strm > -1;
@@ -157,7 +157,7 @@ namespace Tesses::Framework::Platform {
                 #if defined(_WIN32)
 
                 return writing && this->strm != NULL;
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return false;
                 #else
                 return writing && this->strm > -1;
@@ -177,7 +177,7 @@ namespace Tesses::Framework::Platform {
                     this->eos = true;
                 }
                 return (size_t)dataR;
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return 0;
                 #else
                 if(this->strm < 0 || this->eos && writing) return 0;
@@ -199,7 +199,7 @@ namespace Tesses::Framework::Platform {
                     return 0;
                 
                 return (size_t)dataW;
-                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+                #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return 0;
                 #else
                 if(this->strm < 0 || !writing) return 0;
@@ -242,7 +242,9 @@ namespace Tesses::Framework::Platform {
             this->exited = true;
             return true;
         }
-        #else       
+       #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+       return true;
+       #else       
         int r;
         if (waitpid(this->hidden.GetField<ProcessData*>()->pid, &r, WNOHANG) != -1)
         {
@@ -282,8 +284,8 @@ namespace Tesses::Framework::Platform {
             CloseHandle(p->stdin_strm);
             p->stdin_strm = NULL;
         }
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
-        
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         #else
         if (p->stdin_strm > -1)
         {
@@ -313,8 +315,8 @@ namespace Tesses::Framework::Platform {
 
         CloseHandle(p->pi.hProcess);
         CloseHandle(p->pi.hThread);
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
-
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         #else
         if (!this->exited)
         {
@@ -496,7 +498,8 @@ CreateProcessW(
     );
     */
         return true;
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         return false;
         #else
 
@@ -646,7 +649,8 @@ CreateProcessW(
         else
         TerminateProcess(this->hidden.GetField<ProcessData*>()->pi.hProcess,-1);
         
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         #else
         kill(this->hidden.GetField<ProcessData*>()->pid,signal);
         #endif
@@ -664,7 +668,8 @@ CreateProcessW(
         this->exited = true;
         return (int)ret;
 
-        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         return -1;
         #else
         int r;
@@ -681,7 +686,8 @@ CreateProcessW(
     Tesses::Framework::Streams::Stream* Process::GetStdinStream()
     {
         if (this->exited) return nullptr;
-        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdin_strm,true);
@@ -691,8 +697,8 @@ CreateProcessW(
     {
 
         if (this->exited) return nullptr;
-        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
-        return nullptr;
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+               return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdout_strm,false);
         #endif
@@ -701,7 +707,7 @@ CreateProcessW(
     {
 
         if (this->exited) return nullptr;
-        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+        #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         return nullptr;
         #else 
         return new ProcessStream(this->hidden.GetField<ProcessData*>()->stderr_strm,false);

@@ -18,6 +18,8 @@ sudo make install
 
 ## What libraries have I embeded from other people
 - [HodwardHinnart's date](https://github.com/HowardHinnant/date) (in folder src/HodwardHinnart_date, modified tz.cpp to point to correct header)
+- [PlatformFolders](https://github.com/sago007/PlatformFolders) (in folder src/Platform/sago, modified to conditionally disable for GEKKO, NX etc)
+- [Sqlite 3](https://www.sqlite.org/) (in folder src/Serialization/sqlite, modified for GEKKO, NX etc, uses the amalgamation)
 
 ## Dependencies
 - [mbedtls](https://github.com/Mbed-TLS/mbedtls)
@@ -27,4 +29,3 @@ sudo make install
 
 ## Resources used from others
 - [ca-certificate.crt (from ubuntu)](ca-certificate.crt)
-- [TanoheSans-Regular.ttf (license OFL)](font/License-OFL.txt)

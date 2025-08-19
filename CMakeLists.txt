@@ -61,6 +61,7 @@ option(TESSESFRAMEWORK_ENABLE_NETWORKING "Enable Networking" ON)
 option(TESSESFRAMEWORK_ENABLE_THREADING "Enable Threading" ON)
 option(TESSESFRAMEWORK_ENABLE_SQLITE "Enable sqlite (embedded in source)" ON)
 option(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS "Enable sago platformfolders (embedded in source)" ON)
+option(TESSESFRAMEWORK_ENABLE_PROCESS "Enable process api" ON)
 
 if(TESSESFRAMEWORK_DEFINE_SDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS)
 add_definitions(-DSDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS=1)
@@ -144,6 +145,10 @@ target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENAB
 endif()
 if(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
 target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS)
+endif()
+if(TESSESFRAMEWORK_ENABLE_PROCESS)
+target_compile_definitions(${TessesFramework_TARGET} PUBLIC TESSESFRAMEWORK_ENABLE_PROCESS)
+
 endif()
 target_include_directories(${TessesFramework_TARGET}
     PUBLIC
