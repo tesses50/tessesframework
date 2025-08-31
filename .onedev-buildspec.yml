@@ -48,6 +48,7 @@ jobs:
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
   - !BranchUpdateTrigger
+    branches: master
     projects: tesses-framework
   retryCondition: never
   maxRetries: 3
