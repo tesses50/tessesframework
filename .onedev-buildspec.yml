@@ -32,22 +32,6 @@ jobs:
       passwordSecret: dockersecret
     platforms: linux/amd64
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  triggers:
-  - !BranchUpdateTrigger
-    projects: tesses-framework
-  retryCondition: never
-  maxRetries: 3
-  retryDelay: 30
-  timeout: 14400
-- name: Build Deb For x86_64
-  steps:
-  - !CheckoutStep
-    name: Checkout
-    cloneCredential: !DefaultCredential {}
-    withLfs: true
-    withSubmodules: true
-    cloneDepth: 1
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !CommandStep
     name: Build and Publish Deb Package
     runInContainer: true
@@ -64,7 +48,6 @@ jobs:
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
   - !BranchUpdateTrigger
-    branches: release
     projects: tesses-framework
   retryCondition: never
   maxRetries: 3
