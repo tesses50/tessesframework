@@ -257,7 +257,7 @@ namespace Tesses::Framework::Http
             Uri uri2;
 
             
-            if(req.followRedirects && (this->statusCode == MovedPermanently || this->statusCode == PermanentRedirect || this->statusCode == TemporaryRedirect) && this->responseHeaders.TryGetFirst("Location",location) && uri.Relative(location, uri2))
+            if(req.followRedirects && (this->statusCode == MovedPermanently || this->statusCode == PermanentRedirect || this->statusCode == TemporaryRedirect || this->statusCode == SeeOther || this->statusCode == Found) && this->responseHeaders.TryGetFirst("Location",location) && uri.Relative(location, uri2))
             {
                 this->responseHeaders.Clear();
                 
