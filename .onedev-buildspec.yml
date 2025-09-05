@@ -39,8 +39,8 @@ jobs:
     interpreter: !DefaultInterpreter
       commands: |
         cd Packaging/Linux
-        bash build-debian-jammy.sh
-        bash push-debian-jammy.sh
+        bash build-ubuntu-jammy.sh
+        bash push-ubuntu-jammy.sh
     envVars:
     - name: GITEA_AUTH
       value: '@secret:GITEA_AUTH@'
@@ -53,8 +53,8 @@ jobs:
     interpreter: !DefaultInterpreter
       commands: |
         cd Packaging/Linux
-        bash build-debian-plucky.sh
-        bash push-debian-plucky.sh
+        bash build-ubuntu-plucky.sh
+        bash push-ubuntu-plucky.sh
     envVars:
     - name: GITEA_AUTH
       value: '@secret:GITEA_AUTH@'
