@@ -35,12 +35,26 @@ jobs:
   - !CommandStep
     name: Build and Publish Deb Package
     runInContainer: true
-    image: onedev.site.tesses.net/dependencies/debbuilder:latest
+    image: onedev.site.tesses.net/dependencies/debbuilder/jammy:latest
     interpreter: !DefaultInterpreter
       commands: |
         cd Packaging/Linux
-        bash build-debian-amd64.sh
-        bash push-debian-amd64.sh
+        bash build-debian-jammy.sh
+        bash push-debian-jammy.sh
+    envVars:
+    - name: GITEA_AUTH
+      value: '@secret:GITEA_AUTH@'
+    useTTY: true
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !CommandStep
+    name: Build and Publish Deb Package (Plucky)
+    runInContainer: true
+    image: onedev.site.tesses.net/dependencies/debbuilder/plucky:latest
+    interpreter: !DefaultInterpreter
+      commands: |
+        cd Packaging/Linux
+        bash build-debian-plucky.sh
+        bash push-debian-plucky.sh
     envVars:
     - name: GITEA_AUTH
       value: '@secret:GITEA_AUTH@'

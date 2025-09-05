@@ -1,0 +1,8 @@
+echo "Package: tessesframework" > "$1"
+echo "Version: $DEB_VERSION" >> "$1"
+echo "Architecture: $2" >> "$1"
+echo "Essential: no" >> "$1"
+echo "Priority: optional" >> "$1"
+echo "Depends: libmbedtls-dev" >> "$1"
+echo "Maintainer: Mike Nolan" >> "$1"
+echo "Description: A cross platform wrapper library" >> "$1"
