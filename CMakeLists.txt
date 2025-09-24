@@ -18,6 +18,7 @@ src/Http/WebSocket.cpp
 src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
 src/Serialization/SQLite.cpp
+src/Serialization/BitConverter.cpp
 src/Platform/Environment.cpp
 src/Platform/Process.cpp
 src/Streams/FileStream.cpp

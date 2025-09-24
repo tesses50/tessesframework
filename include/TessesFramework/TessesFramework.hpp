@@ -37,3 +37,4 @@
 #include "Platform/Environment.hpp"
 #include "Platform/Process.hpp"
 #include "Text/StringConverter.hpp"
+#include "Serialization/BitConverter.hpp"
