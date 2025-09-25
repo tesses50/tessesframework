@@ -30,6 +30,7 @@ src/Streams/ByteReader.cpp
 src/Streams/ByteWriter.cpp
 src/Streams/PtyStream.cpp
 src/Text/StringConverter.cpp
+src/Text/HeaderGenerator.cpp
 src/TextStreams/StreamReader.cpp
 src/TextStreams/StreamWriter.cpp
 src/TextStreams/TextReader.cpp
@@ -340,6 +341,9 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)
+add_executable(tbin2h apps/tbin2h.cpp)
+target_link_libraries(tbin2h PUBLIC tessesframework)
+install(TARGETS tbin2h DESTINATION bin)
 add_executable(tanonydrop apps/tanonydrop.cpp)
 target_link_libraries(tanonydrop PUBLIC tessesframework)
 install(TARGETS tanonydrop DESTINATION bin)
