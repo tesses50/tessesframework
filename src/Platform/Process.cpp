@@ -611,7 +611,8 @@ CreateProcessW(
                 close(strm_stderr[0]);
                 close(strm_stderr[1]);
             }
-            Tesses::Framework::Filesystem::VFSPath::SetAbsoluteCurrentDirectory(this->workingDirectory);
+            if(!this->workingDirectory.empty())
+                Tesses::Framework::Filesystem::VFSPath::SetAbsoluteCurrentDirectory(this->workingDirectory);
             execve(this->name.c_str(),argv,envp);
             exit(1);
         }
