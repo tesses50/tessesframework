@@ -60,7 +60,7 @@ namespace Tesses::Framework::Text {
         ms.GetBuffer() = data;
         GenerateCHeaderFile(&ms,name,writer);
     }
-    std::string GenerateCHeaderFile(std::vector<uint8_t>& data,std::string name)
+    std::string GenerateCHeaderFile(const std::vector<uint8_t>& data,std::string name)
     {
         TextStreams::StringWriter writer;
         GenerateCHeaderFile(data,name,&writer);
