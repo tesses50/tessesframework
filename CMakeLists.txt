@@ -50,6 +50,7 @@ src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
 src/Crypto/ClientTLSStream.cpp
 src/Crypto/MbedHelpers.cpp
+src/Args.cpp
 src/TF_Init.cpp
 src/wrapper.cpp
 src/HiddenField.cpp
