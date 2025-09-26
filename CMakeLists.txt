@@ -64,6 +64,7 @@ option(TESSESFRAMEWORK_ENABLE_THREADING "Enable Threading" ON)
 option(TESSESFRAMEWORK_ENABLE_SQLITE "Enable sqlite (embedded in source)" ON)
 option(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS "Enable sago platformfolders (embedded in source)" ON)
 option(TESSESFRAMEWORK_ENABLE_PROCESS "Enable process api" ON)
+option(TESSESFRAMEWORK_ENABLE_RPATH "Enable RPATH" ON)
 
 if(TESSESFRAMEWORK_ENABLE_SQLITE)
 list(APPEND TESSESFRAMEWORK_SOURCE 
@@ -246,6 +247,7 @@ endif()
 
 
 if(TESSESFRAMEWORK_ENABLE_SHARED)
+if(TESSESFRAMEWORK_ENABLE_RPATH)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 
@@ -253,6 +255,7 @@ if (APPLE)
     set(CMAKE_INSTALL_RPATH "@executable_path/../${CMAKE_INSTALL_LIBDIR}")
 else()
     set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 endif()
 add_library(tessesframework_shared SHARED ${TESSESFRAMEWORK_SOURCE})
 TESSESFRAMEWORK_LINKDEPS(tessesframework_shared)
