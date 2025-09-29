@@ -8,6 +8,7 @@
 #undef min
 #else
 #include <utime.h>
+#include <sys/statvfs.h>
 #endif
 namespace Tesses::Framework::Filesystem
 {
@@ -71,9 +72,9 @@ namespace Tesses::Framework::Filesystem
         auto res = std::filesystem::read_symlink(this->VFSPathToSystem(path)).string();
         return this->SystemToVFSPath(res.c_str());
     }
-    Tesses::Framework::Streams::Stream* LocalFilesystem::OpenFile(VFSPath path, std::string mode)
+    std::shared_ptr<Tesses::Framework::Streams::Stream> LocalFilesystem::OpenFile(VFSPath path, std::string mode)
     {
-        return new Tesses::Framework::Streams::FileStream(VFSPathToSystem(path), mode);
+        return std::make_shared<Tesses::Framework::Streams::FileStream>(VFSPathToSystem(path), mode);
     }
 
     void LocalFilesystem::DeleteDirectory(VFSPath path)
@@ -191,7 +192,45 @@ namespace Tesses::Framework::Filesystem
             delete dir;
         });
     }
-    LocalFilesystem LocalFS;
+    bool LocalFilesystem::StatVFS(VFSPath path, StatVFSData& data)
+    {
+        auto pathStr = this->VFSPathToSystem(path);
+        #if defined(_WIN32)
+        //not supporting windows yet
+        VFS::StatVFS(path, data);
+        return true;
+        #else
+        struct statvfs vfs;
+        if(statvfs(pathStr.c_str(), &vfs) == 0)
+        {
+            data.BlockSize = vfs.f_bsize;
+            data.FragmentSize = vfs.f_frsize;
+            data.Blocks = vfs.f_blocks;
+            data.BlocksFree = vfs.f_bfree;
+            data.BlocksAvailable = vfs.f_bavail;
+            data.TotalInodes = vfs.f_files;
+            data.FreeInodes = vfs.f_ffree;
+            data.AvailableInodes = vfs.f_favail;
+            data.Id = vfs.f_fsid;
+            data.Flags = vfs.f_flag;
+            data.MaxNameLength = vfs.f_namemax;
+            return true;
+        }
+        return false;
+        #endif
+    }
+
+    void LocalFilesystem::Chmod(VFSPath path, uint32_t mode)
+    {
+        auto pathStr = this->VFSPathToSystem(path);
+        #if defined(_WIN32)
+
+        #else
+            chmod(pathStr.c_str(), (mode_t)mode);
+        #endif
+    }
+
+    std::shared_ptr<LocalFilesystem> LocalFS;
 }
 
 // C:/Users/Jim/Joel

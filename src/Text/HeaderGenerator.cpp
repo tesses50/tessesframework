@@ -1,7 +1,7 @@
 #include "TessesFramework/Text/HeaderGenerator.hpp"
 namespace Tesses::Framework::Text {
     
-    void GenerateCHeaderFile(Streams::Stream* strm,std::string name, TextStreams::TextWriter* writer)
+    void GenerateCHeaderFile(std::shared_ptr<Streams::Stream> strm,std::string name, std::shared_ptr<TextStreams::TextWriter> writer)
     {
         const size_t BLK_SZ=1024;
         writer->WriteLine("#pragma once");
@@ -48,22 +48,22 @@ namespace Tesses::Framework::Text {
 
     }
     
-    std::string GenerateCHeaderFile(Streams::Stream* strm,std::string name)
+    std::string GenerateCHeaderFile(std::shared_ptr<Streams::Stream> strm,std::string name)
     {
-        TextStreams::StringWriter writer;
-        GenerateCHeaderFile(strm,name,&writer);
-        return writer.GetString();
+        auto writer=std::make_shared<TextStreams::StringWriter>();
+        GenerateCHeaderFile(strm,name,writer);
+        return writer->GetString();
     }
-    void GenerateCHeaderFile(const std::vector<uint8_t>& data,std::string name, TextStreams::TextWriter* writer)
+    void GenerateCHeaderFile(const std::vector<uint8_t>& data,std::string name, std::shared_ptr<TextStreams::TextWriter> writer)
     {
-        Tesses::Framework::Streams::MemoryStream ms(false);
-        ms.GetBuffer() = data;
-        GenerateCHeaderFile(&ms,name,writer);
+        auto ms = std::make_shared<Tesses::Framework::Streams::MemoryStream>(false);
+        ms->GetBuffer() = data;
+        GenerateCHeaderFile(ms,name,writer);
     }
     std::string GenerateCHeaderFile(const std::vector<uint8_t>& data,std::string name)
     {
-        TextStreams::StringWriter writer;
-        GenerateCHeaderFile(data,name,&writer);
-        return writer.GetString();
+        auto writer = std::make_shared<TextStreams::StringWriter>();
+        GenerateCHeaderFile(data,name,writer);
+        return writer->GetString();
     }
 };

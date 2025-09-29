@@ -11,13 +11,11 @@ namespace Tesses::Framework::Crypto
             Sha1();
             bool Start();
             bool Update(const uint8_t* buffer, size_t sz);
-            bool Update(Tesses::Framework::Streams::Stream* strm);
-            bool Update(Tesses::Framework::Streams::Stream& strm);
-            std::vector<uint8_t> Finish();
+            bool Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
+           std::vector<uint8_t> Finish();
             ~Sha1();
             static std::vector<uint8_t> ComputeHash(const uint8_t* buffer, size_t len);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream* strm);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream& strm);
+            static std::vector<uint8_t> ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
     };
     class Sha256 {
         void* inner;
@@ -27,13 +25,11 @@ namespace Tesses::Framework::Crypto
             bool Start(bool is224=false);
             bool Is224();
             bool Update(const uint8_t* buffer, size_t sz);
-            bool Update(Tesses::Framework::Streams::Stream* strm);
-            bool Update(Tesses::Framework::Streams::Stream& strm);
+            bool Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
             std::vector<uint8_t> Finish();
             ~Sha256();
             static std::vector<uint8_t> ComputeHash(const uint8_t* buffer, size_t len,bool is224=false);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream* strm,bool is224=false);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream& strm,bool is224=false);
+            static std::vector<uint8_t> ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm,bool is224=false);
     
     };
     class Sha512 {
@@ -44,14 +40,12 @@ namespace Tesses::Framework::Crypto
             bool Start(bool is384=false);
             bool Is384();
             bool Update(const uint8_t* buffer, size_t sz);
-            bool Update(Tesses::Framework::Streams::Stream* strm);
-            bool Update(Tesses::Framework::Streams::Stream& strm);
-            std::vector<uint8_t> Finish();
+            bool Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
+             std::vector<uint8_t> Finish();
             ~Sha512();
 
             static std::vector<uint8_t> ComputeHash(const uint8_t* buffer, size_t len,bool is384=false);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream* strm,bool is384=false);
-            static std::vector<uint8_t> ComputeHash(Tesses::Framework::Streams::Stream& strm,bool is384=false);
+            static std::vector<uint8_t> ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm,bool is384=false);
     };
     typedef enum  {
         VERSION_SHA1=1,

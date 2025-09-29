@@ -92,30 +92,22 @@ namespace Tesses::Framework::Streams {
     {
 
     }
-    void Stream::CopyTo(Stream* strm, size_t buffSize)
-    {
-        if(strm != nullptr)
-        this->CopyTo(*strm, buffSize);
-    }
-    void Stream::CopyTo(Stream& strm, size_t buffSize)
+   
+    void Stream::CopyTo(std::shared_ptr<Stream> strm, size_t buffSize)
     {
         size_t read;
-        #if defined(_WIN32)
         uint8_t* buffer = new uint8_t[buffSize];
-        #else
+       
 
-        uint8_t buffer[buffSize];
-        #endif
         do {
             read = this->Read(buffer,buffSize);
-            strm.WriteBlock(buffer, read);
+            strm->WriteBlock(buffer, read);
             
         } while(read > 0);
-        strm.Flush();
+        strm->Flush();
 
-        #if defined(_WIN32)
         delete[] buffer;
-        #endif
+      
     }
     Stream::~Stream()
     {

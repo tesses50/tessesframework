@@ -685,34 +685,34 @@ CreateProcessW(
         #endif
     }
 
-    Tesses::Framework::Streams::Stream* Process::GetStdinStream()
+    std::shared_ptr<Tesses::Framework::Streams::Stream> Process::GetStdinStream()
     {
         if (this->exited) return nullptr;
         #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                
         return nullptr;
         #else 
-        return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdin_strm,true);
+        return std::make_shared<ProcessStream>(this->hidden.GetField<ProcessData*>()->stdin_strm,true);
         #endif
     }
-    Tesses::Framework::Streams::Stream* Process::GetStdoutStream()
+    std::shared_ptr<Tesses::Framework::Streams::Stream> Process::GetStdoutStream()
     {
 
         if (this->exited) return nullptr;
         #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                return nullptr;
         #else 
-        return new ProcessStream(this->hidden.GetField<ProcessData*>()->stdout_strm,false);
+        return std::make_shared<ProcessStream>(this->hidden.GetField<ProcessData*>()->stdout_strm,false);
         #endif
     }
-    Tesses::Framework::Streams::Stream* Process::GetStderrStream()
+    std::shared_ptr<Tesses::Framework::Streams::Stream> Process::GetStderrStream()
     {
 
         if (this->exited) return nullptr;
         #if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         return nullptr;
         #else 
-        return new ProcessStream(this->hidden.GetField<ProcessData*>()->stderr_strm,false);
+        return std::make_shared<ProcessStream>(this->hidden.GetField<ProcessData*>()->stderr_strm,false);
         #endif
     }
 

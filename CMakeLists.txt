@@ -52,7 +52,6 @@ src/Crypto/ClientTLSStream.cpp
 src/Crypto/MbedHelpers.cpp
 src/Args.cpp
 src/TF_Init.cpp
-src/wrapper.cpp
 src/HiddenField.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)

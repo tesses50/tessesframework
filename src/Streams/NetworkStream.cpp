@@ -507,7 +507,7 @@ namespace Tesses::Framework::Streams {
             NETWORK_CLOSE(this->sock);
         this->valid=false;
     }
-    NetworkStream* TcpServer::GetStream(std::string& ip, uint16_t& port)
+    std::shared_ptr<NetworkStream> TcpServer::GetStream(std::string& ip, uint16_t& port)
     {
         struct sockaddr_storage storage;
         memset(&storage,0, sizeof(storage));
@@ -522,7 +522,7 @@ namespace Tesses::Framework::Streams {
         ip = StringifyIP((struct sockaddr*)&storage);
         port = getPort((struct sockaddr*)&storage);
         
-        return new NetworkStream(s,true);
+        return std::make_shared<NetworkStream>(s,true);
     }
     bool NetworkStream::CanRead()
     {
@@ -690,7 +690,7 @@ namespace Tesses::Framework::Streams {
                     
         }
     }
-    NetworkStream* NetworkStream::Accept(std::string& ip, uint16_t& port)
+    std::shared_ptr<NetworkStream> NetworkStream::Accept(std::string& ip, uint16_t& port)
     {
         if(!this->success) return nullptr;
         struct sockaddr_storage storage;
@@ -704,7 +704,7 @@ namespace Tesses::Framework::Streams {
         ip = StringifyIP((struct sockaddr*)&storage);
         port = getPort((struct sockaddr*)&storage);
         
-        return new NetworkStream((int32_t)s,(bool)true);
+        return std::make_shared<NetworkStream>((int32_t)s,(bool)true);
     }
     size_t NetworkStream::Read(uint8_t* buff, size_t sz)
     {
@@ -803,7 +803,7 @@ TcpServer::TcpServer(std::string unixPath,int32_t backlog)
 {
     
 }
-NetworkStream* TcpServer::GetStream(std::string& ip, uint16_t& port)
+std::shared_ptr<NetworkStream> TcpServer::GetStream(std::string& ip, uint16_t& port)
 {
     return nullptr;
 }
@@ -857,7 +857,7 @@ void NetworkStream::SetBroadcast(bool bC)
 {
 
 }
-NetworkStream* NetworkStream::Accept(std::string& ip, uint16_t& port)
+std::shared_ptr<NetworkStream> NetworkStream::Accept(std::string& ip, uint16_t& port)
 {
     return nullptr;
 }

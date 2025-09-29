@@ -15,7 +15,7 @@ namespace Tesses::Framework::Streams
             TcpServer(uint16_t port, int32_t backlog);
             TcpServer(std::string ip, uint16_t port, int32_t backlog);
             TcpServer(std::string unixPath,int32_t backlog);
-            NetworkStream* GetStream(std::string& ip, uint16_t& port);
+            std::shared_ptr<NetworkStream> GetStream(std::string& ip, uint16_t& port);
             uint16_t GetPort();
             ~TcpServer();
             bool IsValid();
@@ -45,7 +45,7 @@ namespace Tesses::Framework::Streams
         void Listen(int32_t backlog);
         void Bind(std::string ip, uint16_t port);
         void SetBroadcast(bool bC);
-        NetworkStream* Accept(std::string& ip, uint16_t& port);
+        std::shared_ptr<NetworkStream> Accept(std::string& ip, uint16_t& port);
         size_t Read(uint8_t* buff, size_t sz);
         size_t Write(const uint8_t* buff, size_t sz);
         size_t ReadFrom(uint8_t* buff, size_t sz, std::string& ip, uint16_t& port);

@@ -1,19 +1,15 @@
 #include "TessesFramework/Streams/ByteWriter.hpp"
 namespace Tesses::Framework::Streams
 {
-    Stream* ByteWriter::GetStream()
+    std::shared_ptr<Stream> ByteWriter::GetStream()
     {
         return this->strm;
     }
-    ByteWriter::ByteWriter(Stream* strm, bool owns)
+    ByteWriter::ByteWriter(std::shared_ptr<Stream> strm)
     {
         this->strm = strm;
-        this->owns = owns;
     }
-    ByteWriter::ByteWriter(Stream& strm) : ByteWriter(&strm,false)
-    {
-
-    }
+    
     void ByteWriter::WriteU8(uint8_t v)
     {
         strm->WriteByte(v);
@@ -133,8 +129,5 @@ namespace Tesses::Framework::Streams
         uint64_t data = *(uint64_t*)&v;
         WriteU64LE(data);
     }
-    ByteWriter::~ByteWriter()
-    {
-        if(this->owns) delete this->strm;
-    }
+    
 }

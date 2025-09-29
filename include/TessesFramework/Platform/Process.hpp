@@ -27,14 +27,11 @@ class Process {
 
 
         void CloseStdInNow();
-        //YOU ARE RESPONSABLE FOR FREEING THIS STREAM OBJECT
+        
+        std::shared_ptr<Tesses::Framework::Streams::Stream> GetStdinStream();
 
-        Tesses::Framework::Streams::Stream* GetStdinStream();
-
-        //YOU ARE RESPONSABLE FOR FREEING THIS STREAM OBJECT
-        Tesses::Framework::Streams::Stream* GetStdoutStream();
-        //YOU ARE RESPONSABLE FOR FREEING THIS STREAM OBJECT
-        Tesses::Framework::Streams::Stream* GetStderrStream();
+        std::shared_ptr<Tesses::Framework::Streams::Stream> GetStdoutStream();
+        std::shared_ptr<Tesses::Framework::Streams::Stream> GetStderrStream();
 
         Process();
         Process(std::string name, std::vector<std::string> args,bool includeThisEnv=true);

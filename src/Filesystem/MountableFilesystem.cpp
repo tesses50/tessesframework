@@ -3,29 +3,26 @@
 #include <iostream>
 namespace Tesses::Framework::Filesystem
 {
-    MountableFilesystem::MountableFilesystem() : MountableFilesystem(new NullFilesystem(),true)
+    MountableFilesystem::MountableFilesystem() : MountableFilesystem(std::make_shared<NullFilesystem>())
     {
 
     }
-    MountableFilesystem::MountableFilesystem(VFS* root, bool owns)
+    MountableFilesystem::MountableFilesystem(std::shared_ptr<VFS> root)
     {
         this->root = root;
-        this->owns = owns;
     }
     MountableDirectory::~MountableDirectory()
     {
-        if(this->owns && this->vfs) delete this->vfs;
         for(auto dir : this->dirs) delete dir;
     }
 
     MountableFilesystem::~MountableFilesystem()
     {
-        if(this->owns && this->root) delete root;
         for(auto item : this->directories) delete item;
     }
 
 
-    void MountableFilesystem::GetFS(VFSPath srcPath, VFSPath& destRoot, VFSPath& destPath, VFS*& vfs) 
+    void MountableFilesystem::GetFS(VFSPath srcPath, VFSPath& destRoot, VFSPath& destPath, std::shared_ptr<VFS>& vfs) 
     {
         if(srcPath.path.empty()) return;
         for(auto item : this->directories)
@@ -52,7 +49,7 @@ namespace Tesses::Framework::Filesystem
 
   
     
-    void MountableDirectory::GetFS(VFSPath srcPath, VFSPath curDir, VFSPath& destRoot, VFSPath& destPath, VFS*& vfs) 
+    void MountableDirectory::GetFS(VFSPath srcPath, VFSPath curDir, VFSPath& destRoot, VFSPath& destPath, std::shared_ptr<VFS>& vfs) 
     {
         if(srcPath.path.empty()) return;
         for(auto item : this->dirs)
@@ -83,7 +80,7 @@ namespace Tesses::Framework::Filesystem
         path = path.CollapseRelativeParents();
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
         if(vfs != nullptr)
@@ -91,12 +88,37 @@ namespace Tesses::Framework::Filesystem
         return VFSPath();
     }
 
-    Tesses::Framework::Streams::Stream* MountableFilesystem::OpenFile(VFSPath path, std::string mode)
+    bool MountableFilesystem::StatVFS(VFSPath path, StatVFSData& data)
     {
         path = path.CollapseRelativeParents();
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+        if(vfs != nullptr)
+            return vfs->StatVFS(destPath,data);
+        return false;
+    }
+    void MountableFilesystem::Chmod(VFSPath path, uint32_t mode)
+    {
+        path = path.CollapseRelativeParents();
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        std::shared_ptr<VFS> vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+        if(vfs != nullptr)
+            vfs->Chmod(destPath,mode);
+    }
+    
+
+    std::shared_ptr<Tesses::Framework::Streams::Stream> MountableFilesystem::OpenFile(VFSPath path, std::string mode)
+    {
+        path = path.CollapseRelativeParents();
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -110,7 +132,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -128,7 +150,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -145,7 +167,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -160,7 +182,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -174,7 +196,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -189,7 +211,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -203,7 +225,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -217,7 +239,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -232,7 +254,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -248,7 +270,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -265,7 +287,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
         if(destPath.path.empty()) return true;
@@ -280,7 +302,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -295,7 +317,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -309,7 +331,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
 
@@ -323,10 +345,10 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath existingDestRoot;
         VFSPath existingDestPath = existingFile;
-        VFS* existingVFS = root;
+        std::shared_ptr<VFS> existingVFS = root;
         VFSPath symlinkDestRoot;
         VFSPath symlinkDestPath = symlinkFile;
-        VFS* symlinkVFS = root;
+        std::shared_ptr<VFS> symlinkVFS = root;
         
         GetFS(existingFile, existingDestRoot, existingDestPath, existingVFS);
         GetFS(symlinkFile, symlinkDestRoot, symlinkDestPath, symlinkVFS);
@@ -342,10 +364,10 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath srcDestRoot;
         VFSPath srcDestPath = src;
-        VFS* srcVFS = root;
+        std::shared_ptr<VFS> srcVFS = root;
         VFSPath destDestRoot;
         VFSPath destDestPath = dest;
-        VFS* destVFS = root;
+        std::shared_ptr<VFS> destVFS = root;
         
         GetFS(src, srcDestRoot, srcDestPath, srcVFS);
         GetFS(dest, destDestRoot, destDestPath, destVFS);
@@ -360,10 +382,10 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath srcDestRoot;
         VFSPath srcDestPath = src;
-        VFS* srcVFS = root;
+        std::shared_ptr<VFS> srcVFS = root;
         VFSPath destDestRoot;
         VFSPath destDestPath = dest;
-        VFS* destVFS = root;
+        std::shared_ptr<VFS> destVFS = root;
         
         GetFS(src, srcDestRoot, srcDestPath, srcVFS);
         GetFS(dest, destDestRoot, destDestPath, destVFS);
@@ -378,10 +400,10 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath existingDestRoot;
         VFSPath existingDestPath = existingFile;
-        VFS* existingVFS = root;
+        std::shared_ptr<VFS> existingVFS = root;
         VFSPath newNameRoot;
         VFSPath newNamePath = newName;
-        VFS* newNameVFS = root;
+        std::shared_ptr<VFS> newNameVFS = root;
         
         GetFS(existingFile, existingDestRoot, existingDestPath, existingVFS);
         GetFS(newName, newNameRoot, newNamePath, newNameVFS);
@@ -427,7 +449,7 @@ namespace Tesses::Framework::Filesystem
        
         VFSPath destRoot;
         VFSPath destPath = path;
-        VFS* vfs = root;
+        std::shared_ptr<VFS> vfs = root;
         
         GetFS(path, destRoot, destPath, vfs);
         
@@ -476,13 +498,12 @@ namespace Tesses::Framework::Filesystem
         });
     }
     
-    void MountableFilesystem::Mount(VFSPath path, VFS* fs, bool owns)
+    void MountableFilesystem::Mount(VFSPath path, std::shared_ptr<VFS> fs)
     {
          path = path.CollapseRelativeParents();
        
         if(path.path.empty())
         {
-            if(owns) delete fs;
             return;
         }
 
@@ -520,7 +541,7 @@ namespace Tesses::Framework::Filesystem
             if(item->name == lastDir)
             {
                 needToCreate=false;
-                if(item->owns && item->vfs) delete item->vfs;
+                
                 item->vfs = fs;
                 break;
             }
@@ -530,7 +551,7 @@ namespace Tesses::Framework::Filesystem
         {
              MountableDirectory* dir = new MountableDirectory();
                 dir->name = lastDir;
-                dir->owns=owns;
+                
                 dir->vfs=fs;
                 fsLs->push_back(dir);
         }
@@ -541,7 +562,6 @@ namespace Tesses::Framework::Filesystem
     {
         if(path.path.empty()) 
         {
-            if(dir->owns && dir->vfs) delete dir->vfs;
             dir->vfs = nullptr;
         }
         

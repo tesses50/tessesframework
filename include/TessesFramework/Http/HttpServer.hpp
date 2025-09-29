@@ -17,7 +17,7 @@ namespace Tesses::Framework::Http
 
     class ServerContext {
         bool sent;
-        Tesses::Framework::Streams::Stream* strm;
+        std::shared_ptr<Tesses::Framework::Streams::Stream> strm;
         std::map<std::string,ServerContextData*> data;
         public:
             HttpDictionary requestHeaders;
@@ -31,27 +31,25 @@ namespace Tesses::Framework::Http
             uint16_t port;
             std::string version;
             bool encrypted;
-            ServerContext(Tesses::Framework::Streams::Stream* strm);
+            ServerContext(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
             ~ServerContext();
-            Tesses::Framework::Streams::Stream& GetStream();
+            std::shared_ptr<Tesses::Framework::Streams::Stream> GetStream();
             std::string GetOriginalPathWithQuery();
             std::string GetUrlWithQuery();
             bool Sent();
             bool NeedToParseFormData();
-            void ParseFormData(std::function<Tesses::Framework::Streams::Stream*(std::string mime, std::string filename, std::string name)> cb);
-            void ReadStream(Tesses::Framework::Streams::Stream& strm);
-            void ReadStream(Tesses::Framework::Streams::Stream* strm);
+            void ParseFormData(std::function<std::shared_ptr<Tesses::Framework::Streams::Stream>(std::string mime, std::string filename, std::string name)> cb);
+            void ReadStream(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
             std::string ReadString();
             void SendBytes(std::vector<uint8_t> buffer);
             void SendText(std::string text);
-            void SendStream(Tesses::Framework::Streams::Stream& strm);
-            void SendStream(Tesses::Framework::Streams::Stream* strm);
+            void SendStream(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
             void SendErrorPage(bool showPath);
             void SendNotFound();
             void SendBadRequest();
             void SendException(std::exception& ex);
-            Tesses::Framework::Streams::Stream* OpenResponseStream();
-            Tesses::Framework::Streams::Stream* OpenRequestStream();
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenResponseStream();
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenRequestStream();
             ServerContext& WithLastModified(Date::DateTime time);
             ServerContext& WithHeader(std::string key, std::string value);
             ServerContext& WithSingleHeader(std::string key, std::string value);
@@ -59,7 +57,7 @@ namespace Tesses::Framework::Http
             ServerContext& WithContentDisposition(std::string filename, bool isInline);
             ServerContext& WriteHeaders();
             void StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose);
-            void StartWebSocketSession(WebSocketConnection& connection);
+            void StartWebSocketSession(std::shared_ptr<WebSocketConnection> connection);
             
             template<class T>
             T* GetServerContentData(std::string tag)
@@ -81,27 +79,20 @@ namespace Tesses::Framework::Http
     };
 
     class HttpServer {
-        Tesses::Framework::Streams::TcpServer* server;
-        IHttpServer* http;
+        std::shared_ptr<Tesses::Framework::Streams::TcpServer> server;
+        std::shared_ptr<IHttpServer> http;
         Tesses::Framework::Threading::Thread* thrd;
 
-        bool ownsTCP;
-        bool ownsHttp;
         bool showIPs;
         bool showARTL;
     
         public:
-            HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer& http, bool showIPs=true);
-            HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer& http, bool showIPs=true);
-            HttpServer(Tesses::Framework::Streams::TcpServer& tcpServer, IHttpServer* http, bool ownsHttpServer, bool showIPs=true);
-            HttpServer(Tesses::Framework::Streams::TcpServer* tcpServer, bool ownsTCP, IHttpServer* http, bool ownsHttpServer, bool showIPs=true);
-            HttpServer(uint16_t port, IHttpServer& http, bool showIPs=true);
-            HttpServer(uint16_t port, IHttpServer* http, bool owns, bool showIPs=true);
-            HttpServer(std::string unixPath, IHttpServer& http);
-            HttpServer(std::string unixPath, IHttpServer* http, bool owns);
+            HttpServer(std::shared_ptr<Tesses::Framework::Streams::TcpServer> tcpServer, std::shared_ptr<IHttpServer> http, bool showIPs=true);
+            HttpServer(uint16_t port, std::shared_ptr<IHttpServer> http, bool showIPs=true);
+            HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http);
             uint16_t GetPort();
             void StartAccepting();
-            static void Process(Tesses::Framework::Streams::Stream& strm, IHttpServer& server, std::string ip, uint16_t port, bool encrypted);
+            static void Process(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port, bool encrypted);
             ~HttpServer();
     };
 }   

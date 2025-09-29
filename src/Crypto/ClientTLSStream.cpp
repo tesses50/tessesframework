@@ -25,9 +25,8 @@ namespace Tesses::Framework::Crypto
     class ClientTLSPrivateData {
         public:
             bool eos;
-            bool owns;
             bool success;
-            Stream* strm;
+            std::shared_ptr<Stream> strm;
             mbedtls_entropy_context entropy;
             mbedtls_ctr_drbg_context ctr_drbg;
             mbedtls_ssl_context ssl;
@@ -40,7 +39,6 @@ namespace Tesses::Framework::Crypto
                 mbedtls_entropy_free(&entropy);
                 mbedtls_ssl_config_free(&conf);
                 mbedtls_ssl_free(&ssl);
-                if(this->owns) delete strm;
             }
     };
     #endif
@@ -59,12 +57,12 @@ namespace Tesses::Framework::Crypto
         return "";
     }
 
-    ClientTLSStream::ClientTLSStream(Tesses::Framework::Streams::Stream* innerStream, bool owns, bool verify, std::string domain) : ClientTLSStream(innerStream,owns,verify,domain,"")
+    ClientTLSStream::ClientTLSStream(std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream, bool verify, std::string domain) : ClientTLSStream(innerStream,verify,domain,"")
     {
         
     }
 
-    ClientTLSStream::ClientTLSStream(Tesses::Framework::Streams::Stream* innerStream, bool owns, bool verify, std::string domain, std::string cert)
+    ClientTLSStream::ClientTLSStream(std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream, bool verify, std::string domain, std::string cert)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         if(cert.empty())
@@ -77,7 +75,7 @@ namespace Tesses::Framework::Crypto
         data->eos=false;
         data->success=false;
         data->strm = innerStream;
-        data->owns = owns;
+        
 
          mbedtls_ssl_init(&data->ssl);
         mbedtls_ssl_config_init(&data->conf);

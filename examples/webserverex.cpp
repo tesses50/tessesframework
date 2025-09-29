@@ -25,7 +25,7 @@ class MyWebServer : public IHttpServer {
             std::cout << ctx.path << std::endl;
             if(ctx.path == "/")
             {
-                FileStream fs("index.html","rb");
+                std::shared_ptr<FileStream> fs = std::make_shared<FileStream>("index.html","rb");
                 
                 ctx
                 .WithMimeType("text/html")
@@ -34,7 +34,7 @@ class MyWebServer : public IHttpServer {
             }
             else if(ctx.path == "/streaming.html")
             {
-                StreamWriter writer(ctx.OpenResponseStream(),true);
+                StreamWriter writer(ctx.OpenResponseStream());
                 writer.WriteLine("<html>");
                 writer.WriteLine("<head><title>Streaming</title></head>");
                 writer.WriteLine("<body>");
@@ -58,7 +58,7 @@ class MyWebServer : public IHttpServer {
             else if(ctx.path == "/main.js")
             {
 
-                FileStream fs("main.js","rb");
+                std::shared_ptr<FileStream> fs = std::make_shared<FileStream>("main.js","rb");
                 
                 ctx
                 .WithMimeType("text/js")
@@ -67,8 +67,8 @@ class MyWebServer : public IHttpServer {
             }
             else if(ctx.path == "/upload")
             {
-                ctx.ParseFormData([](std::string mime, std::string filename, std::string name)->Tesses::Framework::Streams::Stream*{
-                    return new FileStream(filename,"wb");
+                ctx.ParseFormData([](std::string mime, std::string filename, std::string name)->std::shared_ptr<Tesses::Framework::Streams::Stream>{
+                    return std::make_shared<FileStream>(filename,"wb");
                 });
             }
             else if(ctx.path == "/steve")
@@ -117,11 +117,11 @@ class MyOtherWebServer : public IHttpServer
 int main(int argc, char** argv)
 {
     TF_InitWithConsole();
-    MyOtherWebServer myo;
-    MyWebServer mws;
+    std::shared_ptr<MyOtherWebServer> myo = std::make_shared<MyOtherWebServer>();
+    std::shared_ptr<MyWebServer> mws = std::make_shared<MyWebServer>();
 
-    MountableServer mountable(myo);
-    mountable.Mount("/mymount/",mws);
+    std::shared_ptr<MountableServer> mountable = std::make_shared<MountableServer>(myo);
+    mountable->Mount("/mymount/",mws);
     HttpServer server(10001,mountable);
     server.StartAccepting();
     TF_RunEventLoop();

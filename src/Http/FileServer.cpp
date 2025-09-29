@@ -15,23 +15,20 @@ namespace Tesses::Framework::Http
     }
     FileServer::FileServer(std::filesystem::path path,bool allowListing, bool spa, std::vector<std::string> defaultNames)
     {
-        LocalFilesystem* lfs=new LocalFilesystem();
-        SubdirFilesystem* sdfs=new SubdirFilesystem(lfs,lfs->SystemToVFSPath(path.string()),true);
+        std::shared_ptr<SubdirFilesystem> sdfs=std::make_shared<SubdirFilesystem>(Tesses::Framework::Filesystem::LocalFS,Tesses::Framework::Filesystem::LocalFS->SystemToVFSPath(path.string()));
         this->vfs = sdfs;
         this->spa = spa;
 
-        this->ownsVFS=true;
         this->allowListing = allowListing;
         this->defaultNames = defaultNames;
     }
-    FileServer::FileServer(Tesses::Framework::Filesystem::VFS* fs, bool owns, bool allowListing,bool spa) : FileServer(fs,owns,allowListing,spa,{"index.html","default.html","index.htm","default.htm"})
+    FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing,bool spa) : FileServer(fs,allowListing,spa,{"index.html","default.html","index.htm","default.htm"})
     {
         
     }
-    FileServer::FileServer(Tesses::Framework::Filesystem::VFS* fs, bool owns, bool allowListing, bool spa, std::vector<std::string> defaultNames)
+    FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing, bool spa, std::vector<std::string> defaultNames)
     {
         this->vfs = fs;
-        this->ownsVFS = owns;
         this->allowListing = allowListing;
         this->defaultNames = defaultNames;
         this->spa = spa;
@@ -49,8 +46,6 @@ namespace Tesses::Framework::Http
             retVal = true;
            
         }
-
-        delete strm;
         return retVal;
     }
 
@@ -130,7 +125,6 @@ namespace Tesses::Framework::Http
     }
     FileServer::~FileServer()
     {
-        if(this->ownsVFS)
-            delete this->vfs;
+       
     }
 }

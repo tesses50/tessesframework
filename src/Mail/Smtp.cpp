@@ -5,9 +5,9 @@
 #include "TessesFramework/Http/HttpUtils.hpp"
 namespace Tesses::Framework::Mail
 {
-    static void SMTP_ATTACHMENT_WRITE(std::string& myStr, Tesses::Framework::Streams::MemoryStream& strm)
+    static void SMTP_ATTACHMENT_WRITE(std::string& myStr, std::shared_ptr<Tesses::Framework::Streams::MemoryStream> strm)
     {
-        std::string txt = Tesses::Framework::Crypto::Base64_Encode(strm.GetBuffer());
+        std::string txt = Tesses::Framework::Crypto::Base64_Encode(strm->GetBuffer());
         bool first=true;
         size_t read;
         size_t offset = 0;
@@ -39,40 +39,30 @@ namespace Tesses::Framework::Mail
         this->text = text;
         this->mimeType=mimeType;
     }
-    void SMTPStringBody::Write(Tesses::Framework::Streams::Stream* strm)
+    void SMTPStringBody::Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         strm->WriteBlock((const uint8_t*)this->text.c_str(),this->text.size());
     }
-    SMTPStreamBody::SMTPStreamBody(std::string mimeType,Tesses::Framework::Streams::Stream* strm, bool owns)
+    SMTPStreamBody::SMTPStreamBody(std::string mimeType,std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         this->mimeType = mimeType;
         this->stream = strm;
-        this->owns=owns;
     }
-    SMTPStreamBody::SMTPStreamBody(std::string mimeType,Tesses::Framework::Streams::Stream& strm) : SMTPStreamBody(mimeType,&strm,false)
-    {
-        
-    }
-    void SMTPStreamBody::Write(Tesses::Framework::Streams::Stream* strm)
+   
+    void SMTPStreamBody::Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         this->stream->Seek(0L,Tesses::Framework::Streams::SeekOrigin::Begin);
         this->stream->CopyTo(strm);
     }
     SMTPStreamBody::~SMTPStreamBody()
     {
-        if(this->owns)
-            delete this->stream;
     }
-    SMTPClient::SMTPClient(Tesses::Framework::Streams::Stream* stream,bool owns)
+    SMTPClient::SMTPClient(std::shared_ptr<Tesses::Framework::Streams::Stream> stream)
     {
         this->strm = stream;
-        this->owns = owns;
         this->body = nullptr;
     }
-    SMTPClient::SMTPClient(Tesses::Framework::Streams::Stream& strm) : SMTPClient(&strm,false)
-    {
-
-    }
+    
     void SMTPClient::Send()
     {
         std::string emailHeaders = "EHLO ";
@@ -112,7 +102,7 @@ namespace Tesses::Framework::Mail
         emailHeaders.append("\r\nContent-Type: ");
         emailHeaders.append(this->body->mimeType);
         emailHeaders.append("; charset=utf-8\r\n\r\n");
-        Tesses::Framework::TextStreams::StreamWriter writer(this->strm,false);
+        Tesses::Framework::TextStreams::StreamWriter writer(this->strm);
         writer.Write(emailHeaders);
         this->body->Write(this->strm);
         
@@ -138,8 +128,8 @@ namespace Tesses::Framework::Mail
                 emailHeaders.append("\"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"");
                 emailHeaders.append(name);
                 emailHeaders.append("\"\r\n\r\n");
-                Tesses::Framework::Streams::MemoryStream ms(true);
-                item.second->Write(&ms);
+                std::shared_ptr<Tesses::Framework::Streams::MemoryStream> ms = std::make_shared<Tesses::Framework::Streams::MemoryStream>(true);
+                item.second->Write(ms);
                 SMTP_ATTACHMENT_WRITE(emailHeaders,ms);
                 //emailHeaders.append(Tesses::Framework::Crypto::Base64_Encode(ms.GetBuffer()));
                 writer.Write(emailHeaders);
@@ -154,10 +144,6 @@ namespace Tesses::Framework::Mail
 
     SMTPClient::~SMTPClient()
     {
-        delete this->body;
-        for(auto& item : this->attachments)
-        {
-            delete item.second;
-        }
+        
     }
 }

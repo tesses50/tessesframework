@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 {
     Tesses::Framework::TF_Init();
     HttpDictionary reqHeaders;
-    WebSocketConn conn;
+    std::shared_ptr<WebSocketConn> conn = std::make_shared<WebSocketConn>();
     WebSocketClient("ws://echo.websocket.org/",reqHeaders,conn);
     
     return 0;

@@ -4,12 +4,10 @@
 namespace Tesses::Framework::Streams
 {
     class ByteReader {
-        Stream* strm;
-        bool owns;
+        std::shared_ptr<Stream> strm;
         public:
-            Stream* GetStream();
-            ByteReader(Stream* strm, bool owns);
-            ByteReader(Stream& strm);
+            std::shared_ptr<Stream> GetStream();
+            ByteReader(std::shared_ptr<Stream> strm);
             uint8_t ReadU8();
             uint16_t ReadU16BE();
             uint16_t ReadU16LE();
@@ -28,6 +26,5 @@ namespace Tesses::Framework::Streams
             float ReadF32LE();
             double ReadF64BE();
             double ReadF64LE();
-            ~ByteReader();
     };
 }

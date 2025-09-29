@@ -5,20 +5,16 @@ using FileStream = Tesses::Framework::Streams::FileStream;
 
 namespace Tesses::Framework::TextStreams
 {
-    Stream& StreamWriter::GetStream()
+    std::shared_ptr<Stream> StreamWriter::GetStream()
     {
-        return *(this->strm);
+        return this->strm;
     }
-    StreamWriter::StreamWriter(Stream& strm) : StreamWriter(&strm, false)
+    StreamWriter::StreamWriter(std::shared_ptr<Stream> strm) : TextWriter()
     {
 
-    }
-    StreamWriter::StreamWriter(Stream* strm, bool owns) : TextWriter()
-    {
         this->strm = strm;
-        this->owns = owns;
     }
-    StreamWriter::StreamWriter(std::filesystem::path filename, bool append) : StreamWriter(new FileStream(filename, append ? "ab" : "wb"),true)
+    StreamWriter::StreamWriter(std::filesystem::path filename, bool append) : StreamWriter(std::make_shared<FileStream>(filename, append ? "ab" : "wb"))
     {
 
     }
@@ -28,7 +24,5 @@ namespace Tesses::Framework::TextStreams
     }
     StreamWriter::~StreamWriter()
     {
-        if(this->owns)
-            delete this->strm;
     }
 }

@@ -7,17 +7,14 @@ namespace Tesses::Framework::Http
 {
     class MountableServer : public IHttpServer
     {
-        IHttpServer* root;
-        bool owns;
-        std::vector<std::pair<std::string,std::pair<bool,IHttpServer*>>> servers;
+        std::shared_ptr<IHttpServer> root;
+        std::vector<std::pair<std::string,std::shared_ptr<IHttpServer>>> servers;
         std::string Subpath(Filesystem::VFSPath fullPath, Filesystem::VFSPath offsetPath);
         bool StartsWith(Filesystem::VFSPath fullPath, Filesystem::VFSPath offsetPath);
         public:
             MountableServer();
-            MountableServer(IHttpServer* root, bool owns);
-            MountableServer(IHttpServer& root);
-            void Mount(std::string path, IHttpServer* server, bool owns);
-            void Mount(std::string path, IHttpServer& server);
+            MountableServer(std::shared_ptr<IHttpServer> root);
+            void Mount(std::string path, std::shared_ptr<IHttpServer> server);
             void Unmount(std::string path);
             bool Handle(ServerContext& ctx);
             ~MountableServer();

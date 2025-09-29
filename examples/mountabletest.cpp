@@ -13,23 +13,22 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    LocalFilesystem lfs;
 
     std::string root = "./root";
     std::string mountDemi = "./demi";
     std::string mountJoelSlashJim = "./joelslashjim";
 
-    SubdirFilesystem rootdir(&lfs,root,false);
+    std::shared_ptr<SubdirFilesystem> rootdir = std::make_shared<SubdirFilesystem>(LocalFS,root);
 
-    SubdirFilesystem mountDemidir(&lfs,mountDemi,false);
+    std::shared_ptr<SubdirFilesystem> mountDemidir = std::make_shared<SubdirFilesystem>(LocalFS,mountDemi);
 
 
-    SubdirFilesystem mountjohnslashjim(&lfs,mountJoelSlashJim,false);
+    std::shared_ptr<SubdirFilesystem> mountjohnslashjim = std::make_shared<SubdirFilesystem>(LocalFS,mountJoelSlashJim);
 
-    MountableFilesystem fs(&rootdir,false);
-    fs.Mount(std::string("/demi"), &mountDemidir,false);
+    std::shared_ptr<MountableFilesystem> fs = std::make_shared<MountableFilesystem>(rootdir);
+    fs->Mount(std::string("/demi"), mountDemidir);
 
-    fs.Mount(std::string("/joel/jim"), &mountjohnslashjim,false);
+    fs->Mount(std::string("/joel/jim"), mountjohnslashjim);
 
     std::string command = argv[1];
 
@@ -39,22 +38,22 @@ int main(int argc, char** argv)
         std::string dir = "/";
         if(argc > 2) dir = argv[2];
         
-        for(auto item : fs.EnumeratePaths(dir))
+        for(auto item : fs->EnumeratePaths(dir))
         {
             std::cout << item.GetFileName() << std::endl;
         }
     }
     else if(command == "cat")
     {
-        FileStream strm(stdout, false,"wb",false);
+        std::shared_ptr<FileStream> strm = std::make_shared<FileStream>(stdout, false,"wb",false);
         for(int a = 2; a < argc; a++)
         {
             std::string path = argv[a];
-            auto f = fs.OpenFile(path,"rb");
+            auto f = fs->OpenFile(path,"rb");
             if(f != nullptr)
             {
                 f->CopyTo(strm);
-                delete f;
+                
             }
         }
     }

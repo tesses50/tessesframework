@@ -6,7 +6,7 @@ class SMTPBody
 {
     public:
         std::string mimeType;
-        virtual void Write(Tesses::Framework::Streams::Stream* strm)=0;
+        virtual void Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)=0;
         virtual ~SMTPBody();
 };
 
@@ -16,27 +16,25 @@ class SMTPStringBody : public SMTPBody
         SMTPStringBody();
         SMTPStringBody(std::string text, std::string mimeType);
         std::string text;
-        void Write(Tesses::Framework::Streams::Stream* strm);
+        void Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
 };
 
 class SMTPStreamBody : public SMTPBody 
 {
-    Tesses::Framework::Streams::Stream* stream;
-    bool owns;
+    std::shared_ptr<Tesses::Framework::Streams::Stream> stream;
+
     public:
-        SMTPStreamBody(std::string mimeType,Tesses::Framework::Streams::Stream& stream);
-        SMTPStreamBody(std::string mimeType,Tesses::Framework::Streams::Stream* stream, bool owns);
-        void Write(Tesses::Framework::Streams::Stream* strm);
+        SMTPStreamBody(std::string mimeType,std::shared_ptr<Tesses::Framework::Streams::Stream> stream);
+        void Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
         ~SMTPStreamBody();
 };
 
 
 class SMTPClient {
-    Tesses::Framework::Streams::Stream* strm;
-    bool owns;
+    std::shared_ptr<Tesses::Framework::Streams::Stream> strm;
+    
     public:
-        SMTPClient(Tesses::Framework::Streams::Stream* stream,bool owns=true);
-        SMTPClient(Tesses::Framework::Streams::Stream& strm);
+        SMTPClient(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
         std::string domain;
         std::string username;
         std::string password;
@@ -44,8 +42,8 @@ class SMTPClient {
         std::string from_name;
         std::string to;
         std::string subject;
-        SMTPBody* body;
-        std::vector<std::pair<std::string,SMTPBody*>> attachments;
+        std::shared_ptr<SMTPBody> body;
+        std::vector<std::pair<std::string,std::shared_ptr<SMTPBody>>> attachments;
         void Send();
         ~SMTPClient();
 };

@@ -116,7 +116,7 @@ namespace Tesses::Framework::Filesystem
         return nullptr;
     }
 
-    Streams::Stream* MemoryFilesystem::OpenFile(VFSPath path, std::string mode)
+    std::shared_ptr<Streams::Stream> MemoryFilesystem::OpenFile(VFSPath path, std::string mode)
     {
         bool canRead=false;
         bool canWrite=false;
@@ -181,7 +181,7 @@ namespace Tesses::Framework::Filesystem
             if(canWrite) f->data->canAccess=false;
 
             mtx->Unlock();
-            return new MemoryFilesystemStream(mtx,f->data,canRead,canWrite,canSeek);
+            return std::make_shared<MemoryFilesystemStream>(mtx,f->data,canRead,canWrite,canSeek);
         }
         else
         {
@@ -204,7 +204,7 @@ namespace Tesses::Framework::Filesystem
                 file->data->readers++;
                 if(truncate) {file->data->file.clear(); file->data->lastWrite=Date::DateTime::NowUTC();}
                 mtx->Unlock();
-                return new MemoryFilesystemStream(mtx,file->data,canRead,canWrite,canSeek);
+                return std::make_shared<MemoryFilesystemStream>(mtx,file->data,canRead,canWrite,canSeek);
                 
             }
 
@@ -287,7 +287,7 @@ namespace Tesses::Framework::Filesystem
                 myDir->entries.push_back(f);
 
                 mtx->Unlock();
-                return new MemoryFilesystemStream(mtx,f->data,canRead,canWrite,canSeek);
+                return std::make_shared<MemoryFilesystemStream>(mtx,f->data,canRead,canWrite,canSeek);
             }
             if(thefile != nullptr)
             {
@@ -305,7 +305,7 @@ namespace Tesses::Framework::Filesystem
                 thefile->data->readers++;
                 if(truncate) {thefile->data->file.clear(); thefile->data->lastWrite=Date::DateTime::NowUTC();}
                 mtx->Unlock();
-                return new MemoryFilesystemStream(mtx,thefile->data,canRead,canWrite,canSeek);
+                return std::make_shared<MemoryFilesystemStream>(mtx,thefile->data,canRead,canWrite,canSeek);
             }
         }
 

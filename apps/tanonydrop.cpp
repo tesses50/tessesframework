@@ -5,16 +5,16 @@ using namespace Tesses::Framework::Streams;
 using namespace Tesses::Framework::Http;
 using namespace Tesses::Framework::Filesystem;
 
-VFS* vfs;
+std::shared_ptr<VFS> vfs;
 
 int main(int argc, char** argv)
 {
 
 
     TF_InitWithConsole();
-    vfs = new SubdirFilesystem(&LocalFS,Tesses::Framework::Filesystem::VFSPath::GetAbsoluteCurrentDirectory(),false);
+    vfs = std::make_shared<SubdirFilesystem>(LocalFS,Tesses::Framework::Filesystem::VFSPath::GetAbsoluteCurrentDirectory());
 
-    CallbackServer cb([](ServerContext& ctx)->bool{
+    std::shared_ptr<CallbackServer> cb = std::make_shared<CallbackServer>([](ServerContext& ctx)->bool{
         if(ctx.path == "/")
         {
             ctx.WithMimeType("text/html")
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
         {
             if(ctx.NeedToParseFormData())
             {
-                ctx.ParseFormData([](std::string mime, std::string filename,std::string name)->Stream* {
+                ctx.ParseFormData([](std::string mime, std::string filename,std::string name)->std::shared_ptr<Stream> {
                     if(name != "file") return nullptr;
                     VFSPath path("/"+filename);
                     auto strm = vfs->OpenFile(path,"wb");
@@ -81,8 +81,8 @@ int main(int argc, char** argv)
         return false;
     });
 
-    Tesses::Framework::Http::MountableServer mountable(cb);
-    mountable.Mount("/files/",new FileServer(vfs,true,true,false),true);
+    auto mountable = std::make_shared<Tesses::Framework::Http::MountableServer>(cb);
+    mountable->Mount("/files/",std::make_shared<FileServer>(vfs,true,false));
 
     HttpServer srv(4985,mountable);
     srv.StartAccepting();

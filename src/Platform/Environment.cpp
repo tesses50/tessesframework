@@ -124,7 +124,7 @@ namespace Tesses::Framework::Platform::Environment
 
         
         if(!realPath.relative) return realPath;
-        if(LocalFS.FileExists(realPath)) return realPath.MakeAbsolute();
+        if(LocalFS->FileExists(realPath)) return realPath.MakeAbsolute();
         const char* path = std::getenv("PATH");
         #if defined(_WIN32)
         const char* pathext = std::getenv("PATHEXT");
@@ -134,13 +134,13 @@ namespace Tesses::Framework::Platform::Environment
         for(auto item : pathParts)
         {
 
-            auto newPath = LocalFS.SystemToVFSPath(item) / realPath;
+            auto newPath = LocalFS->SystemToVFSPath(item) / realPath;
             for(auto item2 : pext)
             {
                 auto newPathExt = newPath + item2;
-                if(LocalFS.FileExists(newPathExt)) return newPathExt;
+                if(LocalFS->FileExists(newPathExt)) return newPathExt;
             }
-            if(LocalFS.FileExists(newPath)) return newPath;
+            if(LocalFS->FileExists(newPath)) return newPath;
         }
         return realPath;
         #else
@@ -148,8 +148,8 @@ namespace Tesses::Framework::Platform::Environment
         auto pathParts = HttpUtils::SplitString(path,":");
         for(auto item : pathParts)
         {
-            auto newPath = LocalFS.SystemToVFSPath(item) / realPath;
-            if(LocalFS.FileExists(newPath)) return newPath;
+            auto newPath = LocalFS->SystemToVFSPath(item) / realPath;
+            if(LocalFS->FileExists(newPath)) return newPath;
         }
         return realPath.MakeAbsolute();
         #endif

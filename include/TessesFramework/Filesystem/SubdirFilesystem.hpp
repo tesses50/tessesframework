@@ -6,14 +6,13 @@ namespace Tesses::Framework::Filesystem
 {
     class SubdirFilesystem : public VFS
     {
-        bool owns;
-        VFS* parent;
+        std::shared_ptr<VFS> parent;
         VFSPath path;
         VFSPath ToParent(VFSPath path);
         VFSPath FromParent(VFSPath path);
         public:
-            SubdirFilesystem(VFS* parent, VFSPath path, bool owns);
-            Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            SubdirFilesystem(std::shared_ptr<VFS> parent, VFSPath path);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
             bool SpecialFileExists(VFSPath path);
@@ -38,6 +37,9 @@ namespace Tesses::Framework::Filesystem
             ~SubdirFilesystem();
             void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
-   
+             bool StatVFS(VFSPath path, StatVFSData& vfsData);
+
+            void Chmod(VFSPath path, uint32_t mode);
+
     };
 }

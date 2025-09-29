@@ -7,7 +7,7 @@ namespace Tesses::Framework::Filesystem
     class NullFilesystem : public VFS
     {
         public:  
-            Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
             bool RegularFileExists(VFSPath path);

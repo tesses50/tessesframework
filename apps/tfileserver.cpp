@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     std::cout << "In folder: " << std::filesystem::absolute(directory).string() << std::endl;
 
 
-    FileServer fs(directory,allowListing, spa);
+    auto fs = std::make_shared<FileServer>(directory,allowListing, spa);
     HttpServer server(port,fs);
     server.StartAccepting();
     TF_RunEventLoop();

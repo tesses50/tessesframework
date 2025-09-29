@@ -11,8 +11,8 @@ namespace Tesses::Framework::Crypto
         public:
             static std::string GetCertChain();
 
-            ClientTLSStream(Tesses::Framework::Streams::Stream* innerStream, bool owns, bool verify, std::string domain);
-            ClientTLSStream(Tesses::Framework::Streams::Stream* innerStream, bool owns, bool verify, std::string domain, std::string cert);
+            ClientTLSStream(std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream, bool verify, std::string domain);
+            ClientTLSStream(std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream, bool verify, std::string domain, std::string cert);
             size_t Read(uint8_t* buff, size_t sz);
             size_t Write(const uint8_t* buff, size_t sz);
             bool CanRead();

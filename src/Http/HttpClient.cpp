@@ -41,7 +41,7 @@ namespace Tesses::Framework::Http
         dict.SetValue("Content-Type",this->mimeType);
         dict.SetValue("Content-Length",std::to_string(this->text.size()));
     }
-    void TextHttpRequestBody::Write(Tesses::Framework::Streams::Stream* strm)
+    void TextHttpRequestBody::Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         strm->WriteBlock((const uint8_t*)this->text.c_str(),this->text.size());
     }
@@ -50,10 +50,9 @@ namespace Tesses::Framework::Http
 
     }
 
-    StreamHttpRequestBody::StreamHttpRequestBody(Stream* strm, bool owns, std::string mimeType)
+    StreamHttpRequestBody::StreamHttpRequestBody(std::shared_ptr<Stream> strm, std::string mimeType)
     {
         this->strm = strm;
-        this->owns = owns;
         this->mimeType = mimeType;
     }
     void StreamHttpRequestBody::HandleHeaders(HttpDictionary& dict)
@@ -63,14 +62,12 @@ namespace Tesses::Framework::Http
         if(len > -1) dict.AddValue("Content-Length",std::to_string(len));
 
     }
-    void StreamHttpRequestBody::Write(Tesses::Framework::Streams::Stream* strm)
+    void StreamHttpRequestBody::Write(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         this->strm->CopyTo(strm);
     }
     StreamHttpRequestBody::~StreamHttpRequestBody()
     {
-        if(this->owns)
-            delete this->strm;
     }
     HttpRequest::HttpRequest()
     {
@@ -82,7 +79,7 @@ namespace Tesses::Framework::Http
         this->requestHeaders.SetValue("Connection","close");
     }
 
-    void HttpRequest::SendRequest(Tesses::Framework::Streams::Stream* strm)
+    void HttpRequest::SendRequest(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         Uri uri;
         if(!Uri::TryParse(this->url, uri)) return;
@@ -109,7 +106,7 @@ namespace Tesses::Framework::Http
         request.append("\r\n");
 
 
-        StreamWriter writer(strm, false);
+        StreamWriter writer(strm);
         writer.Write(request);
 
         if(body != nullptr)
@@ -117,52 +114,51 @@ namespace Tesses::Framework::Http
             body->Write(strm);
         }
     }
-    Stream* HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
+    std::shared_ptr<Stream> HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
     {
         if(uri.scheme == "http:" || uri.scheme == "ws:")
         {
-            return new NetworkStream(uri.host,uri.GetPort(),false,false,false);
+            return std::make_shared<NetworkStream>(uri.host,uri.GetPort(),false,false,false);
         }
         else if(uri.scheme == "https:" || uri.scheme == "wss:")
         {
-            auto netStrm = new NetworkStream(uri.host,uri.GetPort(),false,false,false);
+            auto netStrm = std::make_shared<NetworkStream>(uri.host,uri.GetPort(),false,false,false);
             if(netStrm == nullptr) return nullptr;
-            return new ClientTLSStream(netStrm, true, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
+            return std::make_shared<ClientTLSStream>(netStrm, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
         }
             
         return nullptr;
     }
-    Stream* HttpRequest::EstablishUnixPathConnection(std::string unixPath,Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
+    std::shared_ptr<Stream> HttpRequest::EstablishUnixPathConnection(std::string unixPath,Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle)
     {
         if(uri.scheme == "http:" || uri.scheme == "ws:")
         {
-            return new NetworkStream(unixPath,false);
+            return std::make_shared<NetworkStream>(unixPath,false);
         }
         else if(uri.scheme == "https:" || uri.scheme == "wss:")
         {
-            auto netStrm = new NetworkStream(unixPath,false);
+            auto netStrm = std::make_shared <NetworkStream>(unixPath,false);
             if(netStrm == nullptr) return nullptr;
-            return new ClientTLSStream(netStrm, true, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
+            return std::make_shared<ClientTLSStream>(netStrm, !ignoreSSLErrors,uri.host, trusted_root_cert_bundle);
         }
             
         return nullptr;
     }
-    Tesses::Framework::Streams::Stream* HttpResponse::GetInternalStream()
+    std::shared_ptr<Tesses::Framework::Streams::Stream> HttpResponse::GetInternalStream()
     {
         return this->handleStrm;
     }
     
     HttpResponse::~HttpResponse()
     {
-        if(this->owns)
-            delete this->handleStrm;
+        
     }
 
-    HttpResponse::HttpResponse(Stream* strm, bool owns)
+    HttpResponse::HttpResponse(std::shared_ptr<Stream> strm)
     {
         this->handleStrm=nullptr;
         this->owns=owns;
-        StreamReader reader(strm, false);
+        StreamReader reader(strm);
             std::string statusLine;
             if(!reader.ReadLine(statusLine)) return;
             auto statusLinesPart = HttpUtils::SplitString(statusLine," ",3);
@@ -178,7 +174,6 @@ namespace Tesses::Framework::Http
                 auto v = HttpUtils::SplitString(line,": ", 2);
                 if(v.size() != 2) 
                 {
-                    delete strm;
                     return;
                 }
                 this->responseHeaders.AddValue(v[0],v[1]);
@@ -222,7 +217,7 @@ namespace Tesses::Framework::Http
             request.append("\r\n");
 
 
-            StreamWriter writer(strm, false);
+            StreamWriter writer(strm);
             writer.Write(request);
 
             if(req.body != nullptr)
@@ -230,7 +225,7 @@ namespace Tesses::Framework::Http
                 req.body->Write(strm);
             }
 
-            StreamReader reader(strm, false);
+            StreamReader reader(strm);
             std::string statusLine;
             if(!reader.ReadLine(statusLine)) break;
             auto statusLinesPart = HttpUtils::SplitString(statusLine," ",3);
@@ -246,7 +241,6 @@ namespace Tesses::Framework::Http
                 auto v = HttpUtils::SplitString(line,": ", 2);
                 if(v.size() != 2) 
                 {
-                    delete strm;
                     return;
                 }
                 this->responseHeaders.AddValue(v[0],v[1]);
@@ -264,7 +258,6 @@ namespace Tesses::Framework::Http
                 url = uri2.ToString();
                
                 
-                delete strm;
                 continue;
             }
             this->handleStrm = strm;
@@ -275,18 +268,18 @@ namespace Tesses::Framework::Http
     {
         auto strm = ReadAsStream();
         if(strm == nullptr) return {};
-        StreamReader r(strm, true);
+        StreamReader r(strm);
         return r.ReadToEnd();
     }
-    void HttpResponse::CopyToStream(Stream* strm)
+    void HttpResponse::CopyToStream(std::shared_ptr<Stream> strm)
     {
         if(strm == nullptr) return;
         auto src = ReadAsStream();
         if(src == nullptr) return;
-        src->CopyTo(*strm);
-        delete src;
+        src->CopyTo(strm);
+        
     }
-    Stream* HttpResponse::ReadAsStream()
+    std::shared_ptr<Stream> HttpResponse::ReadAsStream()
     {
         if(this->handleStrm == nullptr) return nullptr;
         int64_t length = -1;
@@ -295,10 +288,10 @@ namespace Tesses::Framework::Http
             length = -1;
         }
 
-        return new HttpStream(this->handleStrm,false,length,true,version=="HTTP/1.1");
+        return std::make_shared<HttpStream>(this->handleStrm,length,true,version=="HTTP/1.1");
     }
 
-    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream* strm)
+    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         if(strm == nullptr) throw std::runtime_error("strm is null");
         HttpRequest request;
@@ -310,26 +303,17 @@ namespace Tesses::Framework::Http
         if(response.statusCode < 200 || response.statusCode > 299) throw std::runtime_error("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         response.CopyToStream(strm);
     }
-    void DownloadUnixSocketToStreamSimple(std::string unixSocket,std::string url, Tesses::Framework::Streams::Stream& strm)
-    {
-        DownloadUnixSocketToStreamSimple(unixSocket,url,&strm);
-    }
+    
 
-    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
+    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, std::shared_ptr<Tesses::Framework::Filesystem::VFS> vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
         if(vfs == nullptr) throw std::runtime_error("vfs is null");
         auto strm = vfs->OpenFile(path,"wb");
         if(strm == nullptr) throw std::runtime_error("strm is null");
         DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
-        delete strm;
+        
     }
-    void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
-    {
-        auto strm = vfs.OpenFile(path,"wb");
-        if(strm == nullptr) throw std::runtime_error("strm is null");
-        DownloadUnixSocketToStreamSimple(unixSocket,url,strm);
-        delete strm;
-    }
+   
     void DownloadUnixSocketToFileSimple(std::string unixSocket,std::string url, Tesses::Framework::Filesystem::VFSPath path)
     {
         DownloadUnixSocketToFileSimple(unixSocket,url,Tesses::Framework::Filesystem::LocalFS,path);
@@ -345,23 +329,17 @@ namespace Tesses::Framework::Http
         if(response.statusCode < 200 || response.statusCode > 299) throw std::runtime_error("Status code does not indicate success: " + std::to_string(response.statusCode) + " " + HttpUtils::StatusCodeString(response.statusCode));
         return response.ReadAsString();
     }
-    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream* strm)
+    void DownloadToStreamSimple(std::string url, std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         DownloadUnixSocketToStreamSimple("",url,strm);
     }
-    void DownloadToStreamSimple(std::string url, Tesses::Framework::Streams::Stream& strm)
-    {
-        DownloadUnixSocketToStreamSimple("",url,strm);
-    }
+   
 
-    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS* vfs, Tesses::Framework::Filesystem::VFSPath path)
+    void DownloadToFileSimple(std::string url, std::shared_ptr<Tesses::Framework::Filesystem::VFS> vfs, Tesses::Framework::Filesystem::VFSPath path)
     {
         DownloadUnixSocketToFileSimple("",url,vfs,path);
     }
-    void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFS& vfs, Tesses::Framework::Filesystem::VFSPath path)
-    {
-        DownloadUnixSocketToFileSimple("",url,vfs,path);
-    }
+    
     void DownloadToFileSimple(std::string url, Tesses::Framework::Filesystem::VFSPath path)
     {
         DownloadUnixSocketToFileSimple("",url,path);
@@ -381,22 +359,15 @@ namespace Tesses::Framework::Http
     {
         return true;
     }
-    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb)
-    {
-        WebSocketUnixSocketClient("",url,requestHeaders,wsc,cb);
-    }
-    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, WebSocketConnection& wsc, std::function<bool(HttpDictionary&,bool)> cb)
-    {
-        WebSocketUnixSocketClient(unixSocket,url,requestHeaders, &wsc,cb);
-    }
+   
 
     class WSClient {
         public:
         std::atomic<bool> closed;
         Threading::Mutex mtx;
         
-        WebSocketConnection* conn;
-        Stream* strm;
+        std::shared_ptr<WebSocketConnection> conn;
+        std::shared_ptr<Stream> strm;
         void close()
         {
             mtx.Lock();
@@ -557,7 +528,7 @@ namespace Tesses::Framework::Http
             return true;
         }
         
-        WSClient(Tesses::Framework::Streams::Stream* strm,WebSocketConnection* conn)
+        WSClient(std::shared_ptr<Tesses::Framework::Streams::Stream> strm,std::shared_ptr<WebSocketConnection> conn)
         {
            this->strm = strm;
            this->conn = conn;
@@ -626,12 +597,12 @@ namespace Tesses::Framework::Http
     };
 
 
-    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    void WebSocketClient(std::string url, HttpDictionary& requestHeaders, std::shared_ptr<WebSocketConnection> wsc, std::function<bool(HttpDictionary&,bool)> cb)
     {
         WebSocketUnixSocketClient("",url,requestHeaders,wsc,cb);
     }
    
-    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, WebSocketConnection* wsc, std::function<bool(HttpDictionary&,bool)> cb)
+    void WebSocketUnixSocketClient(std::string unixSocket,std::string url, HttpDictionary& requestHeaders, std::shared_ptr<WebSocketConnection> wsc, std::function<bool(HttpDictionary&,bool)> cb)
     {
         HttpRequest req;
         req.url = url;

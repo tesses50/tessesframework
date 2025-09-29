@@ -9,8 +9,6 @@ int main(int argc, char** argv)
     VFSPath dest = fs.SystemToVFSPath(argv[2]);
     auto srcs = fs.OpenFile(src,"rb");
     auto dests = fs.OpenFile(dest,"wb");
-    srcs->CopyTo(*dests);
+    srcs->CopyTo(dests);
 
-    delete srcs;
-    delete dests;
 }

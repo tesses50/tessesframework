@@ -1,18 +1,14 @@
 #include "TessesFramework/Streams/BufferedStream.hpp"
 namespace Tesses::Framework::Streams {
-    BufferedStream::BufferedStream(Stream* strm, bool owns, size_t bufferSize)
+    BufferedStream::BufferedStream(std::shared_ptr<Stream> strm, size_t bufferSize)
     {
         this->strm = strm;
-        this->owns = owns;
         this->bufferSize = bufferSize;
         this->buffer = new uint8_t[bufferSize];
         this->read = 0;
         this->offset = 0;
     }
-    BufferedStream::BufferedStream(Stream& strm, size_t bufferSize) : BufferedStream(&strm,false, bufferSize)
-    {
-
-    }
+    
     bool BufferedStream::EndOfStream()
     {
         if(this->offset < this->read) return false;
@@ -60,8 +56,6 @@ namespace Tesses::Framework::Streams {
 
     BufferedStream::~BufferedStream()
     {
-        if(this->owns)
-            delete this->strm;
         delete buffer;
     }
 }

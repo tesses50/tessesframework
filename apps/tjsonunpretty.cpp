@@ -2,35 +2,33 @@
 using namespace Tesses::Framework::Streams;
 using namespace Tesses::Framework::Serialization::Json;
 using namespace Tesses::Framework::TextStreams;
-FileStream* OpenWrite(std::string dest)
+std::shared_ptr<FileStream> OpenWrite(std::string dest)
 {
     if(dest == "-")
     {
-        return new FileStream(stdout,false,"w");
+        return std::make_shared<FileStream>(stdout,false,"w");
     }
     else
     {
-        FileStream* strm = new FileStream(dest,"w");
+        auto strm = std::make_shared<FileStream>(dest,"w");
         if(!strm->CanWrite())
         {
-            delete strm;
             return nullptr;
         }
         return strm;
     }
 }
-FileStream* OpenRead(std::string src)
+std::shared_ptr<FileStream> OpenRead(std::string src)
 {
     if(src == "-")
     {
-        return new FileStream(stdin,false,"r");
+        return  std::make_shared<FileStream>(stdin,false,"r");
     }
     else
     {
-        FileStream* strm = new FileStream(src,"r");
+        auto strm = std::make_shared<FileStream>(src,"r");
         if(!strm->CanRead())
         {
-            delete strm;
             return nullptr;
         }
         return strm;
@@ -45,25 +43,24 @@ int main(int argc, char** argv)
         std::cout << "DEST: unprettied file or - for stdout" << std::endl;
         return 0;
     }
-    FileStream* src = OpenRead(argv[1]);
+    auto src = OpenRead(argv[1]);
 
-    FileStream* dest = OpenWrite(argv[2]);
+    auto dest = OpenWrite(argv[2]);
 
     if(src == nullptr)
     {
-        if(dest != nullptr) delete dest;
         std::cerr << "ERROR: Input could not be read" << std::endl;
         return 1;
     }
     if(dest == nullptr)
     {
-        delete src;
+       
         std::cerr << "ERROR: Output could not be read" << std::endl;
         return 1;
     }
 
-    StreamReader reader(src,true);
-    StreamWriter writer(dest,true);
+    StreamReader reader(src);
+    StreamWriter writer(dest);
 
     auto str = reader.ReadToEnd();
     writer.WriteLine(Json::Encode(Json::Decode(str),false));

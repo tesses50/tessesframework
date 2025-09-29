@@ -96,7 +96,7 @@ int main(int argc,char** argv)
         {
             if(args.size()<3) continue;
             std::vector<std::string> args2(args.begin()+2,args.end());
-            auto f = LocalFS.OpenFile(args[1],"rb");
+            auto f = LocalFS->OpenFile(args[1],"rb");
             if(f != nullptr)
             {
                 auto path = Environment::GetRealExecutablePath(args2[0]);
@@ -106,11 +106,10 @@ int main(int argc,char** argv)
                 {
                     auto strm = p.GetStdinStream();
                     f->CopyTo(strm);
-                    delete strm;
+                    
                     p.CloseStdInNow();
                     p.WaitForExit();
                 }
-                delete f;
             }
         }
         else {

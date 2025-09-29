@@ -73,7 +73,7 @@ namespace Tesses::Framework::Filesystem
         MemoryEntry* GetEntry(VFSPath path,bool followSymlink);
         public:
             MemoryFilesystem();
-            Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);

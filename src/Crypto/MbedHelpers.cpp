@@ -83,7 +83,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha1::Update(Tesses::Framework::Streams::Stream* strm)
+    bool Sha1::Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         if(strm == nullptr) return false;
@@ -97,10 +97,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha1::Update(Tesses::Framework::Streams::Stream& strm)
-    {
-        return Update(&strm);
-    }
+    
     std::vector<uint8_t> Sha1::Finish()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
@@ -127,20 +124,14 @@ namespace Tesses::Framework::Crypto
         if(!sha1.Update(buffer,len)) return {};
         return sha1.Finish();
     }
-    std::vector<uint8_t> Sha1::ComputeHash(Tesses::Framework::Streams::Stream* strm)
+    std::vector<uint8_t> Sha1::ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         Sha1 sha1;
         if(!sha1.Start()) return {};
         if(!sha1.Update(strm)) return {};
         return sha1.Finish();
     }
-    std::vector<uint8_t> Sha1::ComputeHash(Tesses::Framework::Streams::Stream& strm)
-    {
-        Sha1 sha1;
-        if(!sha1.Start()) return {};
-        if(!sha1.Update(strm)) return {};
-        return sha1.Finish();
-    }
+    
 
     Sha256::Sha256()
     {
@@ -175,7 +166,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha256::Update(Tesses::Framework::Streams::Stream* strm)
+    bool Sha256::Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         if(strm == nullptr) return false;
@@ -189,10 +180,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha256::Update(Tesses::Framework::Streams::Stream& strm)
-    {
-        return Update(&strm);
-    }
+    
     std::vector<uint8_t> Sha256::Finish()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
@@ -219,20 +207,14 @@ namespace Tesses::Framework::Crypto
         if(!sha256.Update(buffer,len)) return {};
         return sha256.Finish();
     }
-    std::vector<uint8_t> Sha256::ComputeHash(Tesses::Framework::Streams::Stream* strm,bool is224)
+    std::vector<uint8_t> Sha256::ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm,bool is224)
     {
         Sha256 sha256;
         if(!sha256.Start(is224)) return {};
         if(!sha256.Update(strm)) return {};
         return sha256.Finish();
     }
-    std::vector<uint8_t> Sha256::ComputeHash(Tesses::Framework::Streams::Stream& strm,bool is224)
-    {
-        Sha256 sha256;
-        if(!sha256.Start(is224)) return {};
-        if(!sha256.Update(strm)) return {};
-        return sha256.Finish();
-    }
+    
     
     Sha512::Sha512()
     {
@@ -265,7 +247,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha512::Update(Tesses::Framework::Streams::Stream* strm)
+    bool Sha512::Update(std::shared_ptr<Tesses::Framework::Streams::Stream> strm)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
         if(strm == nullptr) return false;
@@ -279,10 +261,7 @@ namespace Tesses::Framework::Crypto
         #endif
         return false;
     }
-    bool Sha512::Update(Tesses::Framework::Streams::Stream& strm)
-    {
-        return Update(&strm);
-    }
+   
     std::vector<uint8_t> Sha512::Finish()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
@@ -310,20 +289,14 @@ namespace Tesses::Framework::Crypto
         if(!sha512.Update(buffer,len)) return {};
         return sha512.Finish();
     }
-    std::vector<uint8_t> Sha512::ComputeHash(Tesses::Framework::Streams::Stream* strm,bool is384)
+    std::vector<uint8_t> Sha512::ComputeHash(std::shared_ptr<Tesses::Framework::Streams::Stream> strm,bool is384)
     {
         Sha512 sha512;
         if(!sha512.Start(is384)) return {};
         if(!sha512.Update(strm)) return {};
         return sha512.Finish();
     }
-    std::vector<uint8_t> Sha512::ComputeHash(Tesses::Framework::Streams::Stream& strm,bool is384)
-    {
-        Sha512 sha512;
-        if(!sha512.Start(is384)) return {};
-        if(!sha512.Update(strm)) return {};
-        return sha512.Finish();
-    }
+   
 
 
     bool PBKDF2(std::vector<uint8_t>& output,std::string pass, std::vector<uint8_t>& salt, long itterations, ShaVersion version)

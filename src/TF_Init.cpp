@@ -1,6 +1,7 @@
 #include "TessesFramework/Common.hpp"
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/Lazy.hpp"
+#include "TessesFramework/Filesystem/LocalFS.hpp"
 #include <atomic>
 #include <csignal>
 #include <iostream>
@@ -181,7 +182,7 @@ namespace Tesses::Framework
     }
     void TF_Init()
     {
-        
+        Tesses::Framework::Filesystem::LocalFS = std::make_shared<Tesses::Framework::Filesystem::LocalFilesystem>();
         #if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
            sqlite3_initialize();
             #if defined(GEKKO) || defined(__SWITCH__) || defined(__PS2__)

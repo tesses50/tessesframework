@@ -7,29 +7,28 @@ namespace Tesses::Framework::Filesystem
     class MountableDirectory {
         public:
             std::string name;
-            VFS* vfs;
+            std::shared_ptr<VFS> vfs;
             bool owns;
             std::vector<MountableDirectory*> dirs;
-            void GetFS(VFSPath srcPath, VFSPath curDir, VFSPath& destRoot, VFSPath& destPath, VFS*& vfs);
+            void GetFS(VFSPath srcPath, VFSPath curDir, VFSPath& destRoot, VFSPath& destPath, std::shared_ptr<VFS>& vfs);
             ~MountableDirectory();
     };
 
     class MountableFilesystem : public VFS
     {
-        bool owns;
-        VFS* root;
+        std::shared_ptr<VFS> root;
 
         std::vector<MountableDirectory*> directories;
         
-        void GetFS(VFSPath srcPath, VFSPath& destRoot, VFSPath& destPath, VFS*& vfs);
+        void GetFS(VFSPath srcPath, VFSPath& destRoot, VFSPath& destPath, std::shared_ptr<VFS>& vfs);
 
     
         public:
             MountableFilesystem();
-            MountableFilesystem(VFS* root, bool owns);
-            void Mount(VFSPath path, VFS* fs, bool owns);
+            MountableFilesystem(std::shared_ptr<VFS> root);
+            void Mount(VFSPath path, std::shared_ptr<VFS> vfs);
             void Unmount(VFSPath path);
-            Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
             bool SpecialFileExists(VFSPath path);
@@ -53,5 +52,10 @@ namespace Tesses::Framework::Filesystem
             ~MountableFilesystem();
             void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
+
+            bool StatVFS(VFSPath path, StatVFSData& vfsData);
+
+            void Chmod(VFSPath path, uint32_t mode);
+
     };
 }

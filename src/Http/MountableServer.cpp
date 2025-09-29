@@ -22,26 +22,18 @@ bool MountableServer::StartsWith(Filesystem::VFSPath fullPath, Filesystem::VFSPa
     }
     return true;
 }
-MountableServer::MountableServer() : MountableServer(nullptr,false)
+MountableServer::MountableServer() : MountableServer(nullptr)
 {
 
 }
-MountableServer::MountableServer(IHttpServer* root, bool owns)
+MountableServer::MountableServer(std::shared_ptr<IHttpServer> root)
 {
     this->root = root;
-    this->owns = owns;
 }
-MountableServer::MountableServer(IHttpServer& root) : MountableServer(&root,false)
+
+void MountableServer::Mount(std::string path, std::shared_ptr<IHttpServer> server)
 {
-    
-}
-void MountableServer::Mount(std::string path, IHttpServer* server, bool owns)
-{
-    this->servers.insert(this->servers.begin(), std::pair<std::string,std::pair<bool,IHttpServer*>>(path, std::pair<bool,IHttpServer*>(owns,server)));
-}
-void MountableServer::Mount(std::string path, IHttpServer& server)
-{
-    Mount(path,&server,false);
+    this->servers.insert(this->servers.begin(), std::pair<std::string,std::shared_ptr<IHttpServer>>(path, server));
 }
 void MountableServer::Unmount(std::string path)
 {
@@ -50,7 +42,6 @@ void MountableServer::Unmount(std::string path)
         auto& item = *i;
         if(item.first == path)
         {
-            if(item.second.first) delete item.second.second;
             this->servers.erase(i);
             return;
         }
@@ -64,7 +55,7 @@ bool MountableServer::Handle(ServerContext& ctx)
         if(StartsWith(oldPath, item.first))
         {
             ctx.path = Subpath(oldPath, item.first);
-            if(item.second.second->Handle(ctx))
+            if(item.second->Handle(ctx))
             {
                 ctx.path = oldPath;
                 return true;
@@ -79,7 +70,5 @@ bool MountableServer::Handle(ServerContext& ctx)
 }
 MountableServer::~MountableServer()
 {
-    if(this->owns) delete this->root;
-    for(auto svr : this->servers) if(svr.second.first) delete svr.second.second;
 }
 }

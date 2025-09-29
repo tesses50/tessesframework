@@ -8,6 +8,20 @@
             
 namespace Tesses::Framework::Filesystem
 {
+    class StatVFSData {
+        public:
+            uint64_t BlockSize;
+            uint64_t FragmentSize;
+            uint64_t Blocks;
+            uint64_t BlocksFree;
+            uint64_t BlocksAvailable;
+            uint64_t TotalInodes;
+            uint64_t FreeInodes;
+            uint64_t AvailableInodes;
+            uint64_t Id;
+            uint64_t Flags;
+            uint64_t MaxNameLength;
+    };
     class VFSPath {
         public:
             static VFSPath CurrentDirectoryAsRelative();
@@ -107,7 +121,7 @@ namespace Tesses::Framework::Filesystem
     class VFS {
         public:
             
-            virtual Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode)=0;
+            virtual std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode)=0;
             virtual void CreateDirectory(VFSPath path)=0;
             virtual void DeleteDirectory(VFSPath path)=0;
             virtual bool RegularFileExists(VFSPath path)=0;
@@ -133,6 +147,10 @@ namespace Tesses::Framework::Filesystem
 
             virtual void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             virtual void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
+
+            virtual bool StatVFS(VFSPath path, StatVFSData& data);
+
+            virtual void Chmod(VFSPath path, uint32_t mode);
 
             virtual ~VFS();
     };

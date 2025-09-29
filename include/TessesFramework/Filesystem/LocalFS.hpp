@@ -8,7 +8,7 @@ namespace Tesses::Framework::Filesystem
     {
         public:
             
-            Tesses::Framework::Streams::Stream* OpenFile(VFSPath path, std::string mode);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
@@ -35,6 +35,11 @@ namespace Tesses::Framework::Filesystem
             void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
 
+            bool StatVFS(VFSPath path, StatVFSData& vfsData);
+
+            void Chmod(VFSPath path, uint32_t mode);
+
+            
     };  
-    extern LocalFilesystem LocalFS;
+    extern std::shared_ptr<LocalFilesystem> LocalFS;
 }

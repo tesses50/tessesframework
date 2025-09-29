@@ -4,12 +4,11 @@
 namespace Tesses::Framework::Streams
 {
     class ByteWriter {
-        Stream* strm;
-        bool owns;
+        std::shared_ptr<Stream> strm;
+        
         public:
-            Stream* GetStream();
-            ByteWriter(Stream* strm, bool owns);
-            ByteWriter(Stream& strm);
+            std::shared_ptr<Stream> GetStream();
+            ByteWriter(std::shared_ptr<Stream> strm);
             void WriteU8(uint8_t v);
             void WriteU16BE(uint16_t v);
             void WriteU16LE(uint16_t v);
@@ -28,6 +27,5 @@ namespace Tesses::Framework::Streams
             void WriteF32LE(float v);
             void WriteF64BE(double v);
             void WriteF64LE(double v);
-            ~ByteWriter();
     };
 }

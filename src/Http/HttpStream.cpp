@@ -7,10 +7,9 @@ using StreamWriter = Tesses::Framework::TextStreams::StreamWriter;
 using StreamReader = Tesses::Framework::TextStreams::StreamReader;
 namespace Tesses::Framework::Http
 {
-    HttpStream::HttpStream(Tesses::Framework::Streams::Stream* strm, bool owns, int64_t length, bool recv, bool http1_1)
+    HttpStream::HttpStream(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, int64_t length, bool recv, bool http1_1)
     {
         this->strm = strm;
-        this->owns = owns;
         this->length = length;
         this->recv = recv;
         this->http1_1 = http1_1;
@@ -18,10 +17,6 @@ namespace Tesses::Framework::Http
         this->read = 0;
         this->position = 0;
         this->done=false;
-    }
-    HttpStream::HttpStream(Tesses::Framework::Streams::Stream& strm, int64_t length, bool recv,bool http1_1) : HttpStream(&strm,false,length,recv,http1_1)
-    {
-        
     }
     bool HttpStream::CanRead()
     {
@@ -79,14 +74,14 @@ namespace Tesses::Framework::Http
                     this->position += len;
                     if(this->offset >= this->read)
                     {
-                        StreamReader reader(this->strm, false);
+                        StreamReader reader(this->strm);
                         reader.ReadLine();
                     }
                     return len;
                 }
                 else
                 {
-                    StreamReader reader(this->strm, false);
+                    StreamReader reader(this->strm);
                     std::string line = reader.ReadLine();
                     if(!line.empty())
                     {
@@ -141,7 +136,7 @@ namespace Tesses::Framework::Http
                 std::stringstream strm;
                 strm << std::hex << len;
                 
-                StreamWriter writer(this->strm,false);
+                StreamWriter writer(this->strm);
                 writer.newline = "\r\n";
                 writer.WriteLine(strm.str());
                 
@@ -160,11 +155,10 @@ namespace Tesses::Framework::Http
     {
         if(this->length == -1 && this->http1_1) 
         {
-            StreamWriter writer(this->strm,false);
+            StreamWriter writer(this->strm);
             writer.newline = "\r\n";
             writer.WriteLine("0");
             writer.WriteLine();
         }
-        if(this->owns) delete this->strm;
     }
 }

@@ -1,19 +1,15 @@
 #include "TessesFramework/Streams/ByteReader.hpp"
 namespace Tesses::Framework::Streams
 {
-    Stream* ByteReader::GetStream()
+    std::shared_ptr<Stream> ByteReader::GetStream()
     {
         return this->strm;
     }
-    ByteReader::ByteReader(Stream* strm, bool owns)
+    ByteReader::ByteReader(std::shared_ptr<Stream> strm)
     {
         this->strm = strm;
-        this->owns = owns;
     }
-    ByteReader::ByteReader(Stream& strm) : ByteReader(&strm,false)
-    {
-
-    }
+    
     uint8_t ByteReader::ReadU8()
     {
         auto r = this->strm->ReadByte();
@@ -153,8 +149,5 @@ namespace Tesses::Framework::Streams
         auto v=ReadU64LE();
         return *(double*)&v;
     }
-    ByteReader::~ByteReader()
-    {
-        if(this->owns) delete this->strm;
-    }   
+   
 }

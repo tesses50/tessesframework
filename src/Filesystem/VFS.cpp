@@ -194,11 +194,11 @@ namespace Tesses::Framework::Filesystem
     VFSPath VFSPath::GetAbsoluteCurrentDirectory()
     {
         auto p = std::filesystem::current_path();
-        return LocalFS.SystemToVFSPath(p.string());
+        return LocalFS->SystemToVFSPath(p.string());
     }
     void VFSPath::SetAbsoluteCurrentDirectory(VFSPath path)
     {
-        auto res = LocalFS.VFSPathToSystem(path);
+        auto res = LocalFS->VFSPathToSystem(path);
         std::filesystem::path mpath=res;
         std::filesystem::current_path(mpath);
     }
@@ -497,6 +497,24 @@ namespace Tesses::Framework::Filesystem
     }
     void VFS::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
+
+    }
+    bool VFS::StatVFS(VFSPath path, StatVFSData& data)
+    {
+        data.BlockSize = 512;
+        data.Blocks=10000000000000;
+        data.BlocksFree=10000000000000;
+        data.BlocksAvailable=10000000000000;
+        data.AvailableInodes=10000000000000;
+        data.TotalInodes=10000000000000;
+        data.FreeInodes=10000000000000;
+        data.FragmentSize=512;
+        data.Id = 85138;
+        data.Flags = 0;
+        data.MaxNameLength=255;
+        return true;
+    }
+    void VFS::Chmod(VFSPath path, uint32_t mode) {
 
     }
    

@@ -2,7 +2,7 @@
 
 namespace Tesses::Framework::Filesystem
 {
-    Tesses::Framework::Streams::Stream* NullFilesystem::OpenFile(VFSPath path, std::string mode)
+    std::shared_ptr<Tesses::Framework::Streams::Stream> NullFilesystem::OpenFile(VFSPath path, std::string mode)
     {
         return nullptr;
     }

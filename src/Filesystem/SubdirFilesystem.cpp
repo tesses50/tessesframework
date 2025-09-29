@@ -29,10 +29,10 @@ namespace Tesses::Framework::Filesystem
     {
         return this->path / path.CollapseRelativeParents();
     }
-    SubdirFilesystem::SubdirFilesystem(VFS* parent, VFSPath path, bool owns)
+    SubdirFilesystem::SubdirFilesystem(std::shared_ptr<VFS> parent, VFSPath path)
     {
         this->parent = parent;
-        if(path.relative && dynamic_cast<LocalFilesystem*>(parent) != nullptr)
+        if(path.relative && std::dynamic_pointer_cast<LocalFilesystem>(parent) != nullptr)
         {
             Tesses::Framework::Filesystem::LocalFilesystem lfs;
             auto curDir = std::filesystem::current_path();
@@ -41,9 +41,9 @@ namespace Tesses::Framework::Filesystem
         }
         else
         this->path = path;
-        this->owns=owns;
+        
     }
-    Tesses::Framework::Streams::Stream* SubdirFilesystem::OpenFile(VFSPath path, std::string mode)
+    std::shared_ptr<Tesses::Framework::Streams::Stream> SubdirFilesystem::OpenFile(VFSPath path, std::string mode)
     {
         return this->parent->OpenFile(ToParent(path),mode);
     }
@@ -151,7 +151,16 @@ namespace Tesses::Framework::Filesystem
             
     SubdirFilesystem::~SubdirFilesystem()
     {
-        if(this->owns)
-            delete this->parent;
+     
     }
+    bool SubdirFilesystem::StatVFS(VFSPath path, StatVFSData& vfsData)
+    {
+        return this->parent->StatVFS(path, vfsData);
+    }
+
+    void SubdirFilesystem::Chmod(VFSPath path, uint32_t mode)
+    {
+        return this->parent->Chmod(path, mode);
+    }
+
 }

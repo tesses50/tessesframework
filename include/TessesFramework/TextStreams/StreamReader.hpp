@@ -6,12 +6,11 @@ namespace Tesses::Framework::TextStreams
     class StreamReader : public TextReader
     {
         private:
-            Tesses::Framework::Streams::Stream* strm;
+            std::shared_ptr<Tesses::Framework::Streams::Stream> strm;
             bool owns;
         public:
-            Tesses::Framework::Streams::Stream& GetStream();
-            StreamReader(Tesses::Framework::Streams::Stream& strm);
-            StreamReader(Tesses::Framework::Streams::Stream* strm, bool owns);
+            std::shared_ptr<Tesses::Framework::Streams::Stream> GetStream();
+            StreamReader(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
             StreamReader(std::filesystem::path filename);
             bool ReadBlock(std::string& str,size_t sz);
             bool Rewind();

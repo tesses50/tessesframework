@@ -6,15 +6,13 @@ namespace Tesses::Framework::Streams
     class BufferedStream : public Stream
     {
         private:
-            Stream* strm;
-            bool owns;
+            std::shared_ptr<Stream> strm;
             uint8_t* buffer;
             size_t bufferSize;
             size_t offset;
             size_t read;
         public:
-            BufferedStream(Stream* strm, bool owns, size_t bufferSize=1024);
-            BufferedStream(Stream& strm, size_t bufferSize=1024);
+            BufferedStream(std::shared_ptr<Stream> strm, size_t bufferSize=1024);
             bool EndOfStream();
             bool CanRead();
             bool CanWrite();
