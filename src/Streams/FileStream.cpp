@@ -110,6 +110,9 @@ namespace Tesses::Framework::Streams
     {
         if(!f) return;
         if(this->owns)
+        {
              fclose(this->f);
+            f=NULL;
+        }
     }
 }
