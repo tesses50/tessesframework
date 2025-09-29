@@ -92,6 +92,10 @@ namespace Tesses::Framework::Streams {
     {
 
     }
+    void Stream::Close()
+    {
+        
+    }
    
     void Stream::CopyTo(std::shared_ptr<Stream> strm, size_t buffSize)
     {

@@ -3,6 +3,7 @@
 
 namespace Tesses::Framework::Filesystem
 {
+    
     MemoryFilesystemStream::MemoryFilesystemStream(std::shared_ptr<Tesses::Framework::Threading::Mutex> mtx, std::shared_ptr<MemoryFileData> data,bool canRead, bool canWrite, bool canSeek)
     {
         this->mtx = mtx;
@@ -635,7 +636,7 @@ namespace Tesses::Framework::Filesystem
     }
     MemoryFilesystem::~MemoryFilesystem()
     {
-
+        
     }
     MemoryFilesystem::MemoryFilesystem()
     {

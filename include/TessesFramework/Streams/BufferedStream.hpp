@@ -20,6 +20,7 @@ namespace Tesses::Framework::Streams
             size_t Write(const uint8_t* buff, size_t sz);
 
             ~BufferedStream();
+            void Close();
     };
 
 }

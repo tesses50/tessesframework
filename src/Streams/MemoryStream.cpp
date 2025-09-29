@@ -67,4 +67,8 @@ namespace Tesses::Framework::Streams
                 break;
         }
     }
+    void MemoryStream::Close()
+    {
+        this->buffer.clear();
+    }
 }

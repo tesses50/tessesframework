@@ -25,5 +25,6 @@ namespace Tesses::Framework::Streams
             void Resize(WindowSize sz);
             WindowSize GetWindowSize();
             ~PtyStream();
+            void Close();
     };
 }

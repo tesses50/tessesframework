@@ -17,6 +17,6 @@ namespace Tesses::Framework::Streams
             int64_t GetLength();
             int64_t GetPosition();
             void Seek(int64_t pos, SeekOrigin whence);
-        
+            void Close();
     };
 }

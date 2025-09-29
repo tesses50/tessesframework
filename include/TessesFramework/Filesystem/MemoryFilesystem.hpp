@@ -94,6 +94,7 @@ namespace Tesses::Framework::Filesystem
             VFSPath SystemToVFSPath(std::string path);
             void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
+            
             ~MemoryFilesystem();
     };
 };

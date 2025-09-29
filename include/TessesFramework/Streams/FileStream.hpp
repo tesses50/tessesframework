@@ -23,6 +23,6 @@ namespace Tesses::Framework::Streams
             void Flush();
             void Seek(int64_t pos, SeekOrigin whence);
             ~FileStream();
-   
+            void Close();
     };
 }

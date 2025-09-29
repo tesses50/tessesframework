@@ -58,4 +58,9 @@ namespace Tesses::Framework::Streams {
     {
         delete buffer;
     }
+
+    void BufferedStream::Close()
+    {
+        this->strm->Close();
+    }
 }

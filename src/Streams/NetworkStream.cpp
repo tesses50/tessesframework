@@ -771,10 +771,15 @@ namespace Tesses::Framework::Streams {
         if(sz2 < 0) return 0;
         return (size_t)sz2;
     }
-    NetworkStream::~NetworkStream()
+    void NetworkStream::Close()
     {
         if(this->owns && this->success)
             NETWORK_CLOSE(this->sock);
+        this->success=0;
+    }
+    NetworkStream::~NetworkStream()
+    {
+        Close();
     }
     void NetworkStream::SetNoDelay(bool noDelay)
     {
@@ -888,6 +893,10 @@ NetworkStream::~NetworkStream()
 void NetworkStream::SetNoDelay(bool noDelay)
 {
     
+}
+void NetworkStream::Close()
+{
+
 }
 uint16_t NetworkStream::GetPort()
 {

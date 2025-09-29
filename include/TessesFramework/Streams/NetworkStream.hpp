@@ -53,5 +53,6 @@ namespace Tesses::Framework::Streams
         static std::vector<std::pair<std::string,std::string>> GetIPs(bool ipV6=false);
         ~NetworkStream();
         void SetNoDelay(bool noDelay);
+        void Close();
     };
 }

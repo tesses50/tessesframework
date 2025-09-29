@@ -39,7 +39,6 @@ namespace Tesses::Framework::Filesystem
 
             void Chmod(VFSPath path, uint32_t mode);
 
-            
     };  
     extern std::shared_ptr<LocalFilesystem> LocalFS;
 }

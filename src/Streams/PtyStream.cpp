@@ -122,6 +122,11 @@ namespace Tesses::Framework::Streams {
     }
     PtyStream::~PtyStream()
     {
+        Close();
+    }
+    void PtyStream::Close()
+    {
+        if(this->eos) return;
         this->eos=true; 
         #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         close(this->socket);

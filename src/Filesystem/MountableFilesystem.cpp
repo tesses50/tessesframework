@@ -21,6 +21,13 @@ namespace Tesses::Framework::Filesystem
         for(auto item : this->directories) delete item;
     }
 
+    void MountableFilesystem::Close()
+    {
+        this->root=nullptr;
+        for(auto item : this->directories) delete item;
+        this->directories.clear();
+    }
+
 
     void MountableFilesystem::GetFS(VFSPath srcPath, VFSPath& destRoot, VFSPath& destPath, std::shared_ptr<VFS>& vfs) 
     {
