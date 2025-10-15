@@ -6,6 +6,7 @@
 #include "Http/CallbackServer.hpp"
 #include "Http/MountableServer.hpp"
 #include "Http/ContentDisposition.hpp"
+#include "Http/ChangeableServer.hpp"
 #include "Streams/FileStream.hpp"
 #include "Streams/MemoryStream.hpp"
 #include "Streams/NetworkStream.hpp"

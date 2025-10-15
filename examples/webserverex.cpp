@@ -32,6 +32,22 @@ class MyWebServer : public IHttpServer {
                 .SendStream(fs);
                 return true;
             }
+            else if(ctx.path == "/mypath.html")
+            {
+                std::string txt = "<h1>Root: " + HttpUtils::HtmlEncode(ctx.GetServerRoot()) + "</h1>";
+                ctx.WithMimeType("text/html").SendText(txt);
+                return true;
+            }
+            else if(ctx.path == "/getabsolute.html")
+            {
+                std::string path;
+                if(ctx.queryParams.TryGetFirst("path",path))
+                {
+                    std::string txt = "<h1>Path: " + HttpUtils::HtmlEncode(ctx.MakeAbsolute(path)) + "</h1>";
+                    ctx.WithMimeType("text/html").SendText(txt);
+                    return true;
+                }
+            }
             else if(ctx.path == "/streaming.html")
             {
                 StreamWriter writer(ctx.OpenResponseStream());
@@ -107,6 +123,12 @@ class MyOtherWebServer : public IHttpServer
             {
                 Johnny* data = ctx.GetServerContentData<Johnny>("mytag");
                 ctx.SendText(data->text);
+                return true;
+            }
+            else if(ctx.path == "/mypath.html")
+            {
+                std::string txt = "<h1>Root: " + HttpUtils::HtmlEncode(ctx.GetServerRoot()) + "</h1>";
+                ctx.WithMimeType("text/html").SendText(txt);
                 return true;
             }
             

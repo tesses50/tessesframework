@@ -43,7 +43,10 @@ namespace Tesses::Framework
                 mtx.Lock();
                 for(std::shared_ptr<Event<TArgs...>>& item : this->items)
                 {
-                    if(item.get() == event.get()) return;
+                    if(item.get() == event.get()) {
+                        mtx.Unlock();
+                        return;
+                    }
                 }
                 this->items.push_back(event);
                 mtx.Unlock();
@@ -56,10 +59,11 @@ namespace Tesses::Framework
                     if(i->get() == event.get())
                     {
                         this->items.erase(i);
+                        mtx.Unlock();
                         return;
                     }
                 }
-                mtx.Lock();
+                mtx.Unlock();
             }
             void Invoke(TArgs... args)
             {

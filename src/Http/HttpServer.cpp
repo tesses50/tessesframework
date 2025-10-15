@@ -10,6 +10,8 @@
 #include "TessesFramework/Threading/Mutex.hpp"
 #include "TessesFramework/Common.hpp"
 #include "TessesFramework/TextStreams/StdIOWriter.hpp"
+#include "TessesFramework/Filesystem/VFSFix.hpp"
+#include "TessesFramework/Filesystem/VFS.hpp"
 
 #include <iostream>
 using FileStream = Tesses::Framework::Streams::FileStream;
@@ -801,7 +803,7 @@ namespace Tesses::Framework::Http
                         this->strm->WriteBlock(buffer,read);
 
                         begin += read;
-                    } while(read > 0);
+                    } while(read > 0 && !this->strm->EndOfStream());
 
                     
                 }
@@ -858,6 +860,26 @@ namespace Tesses::Framework::Http
         this->responseHeaders.SetValue("Content-Disposition",cd.ToString());
         return *this;
     }
+    ServerContext& ServerContext::WithLocationHeader(std::string url)
+    {
+        return WithSingleHeader("Location", this->MakeAbsolute(url));
+    }
+    ServerContext& ServerContext::WithLocationHeader(std::string url,StatusCode sc)
+    {
+        this->statusCode = sc;
+        return WithSingleHeader("Location", this->MakeAbsolute(url));
+    }
+    void ServerContext::SendRedirect(std::string url)
+    {
+        WithLocationHeader(url);
+        this->WriteHeaders();
+    }
+    void ServerContext::SendRedirect(std::string url,StatusCode sc)
+    {
+        WithLocationHeader(url,sc);
+        this->WriteHeaders();
+    }
+
     void ServerContext::SendNotFound()
     {
         if(sent) return;
@@ -1053,5 +1075,22 @@ namespace Tesses::Framework::Http
         svr.Start();
         thrd.Join();
     }
+    std::string ServerContext::GetServerRoot()
+    {
+        if(this->originalPath == this->path) return "/";
+        Tesses::Framework::Filesystem::VFSPath originalPath=this->originalPath;
 
+        Tesses::Framework::Filesystem::VFSPath path=this->path;
+        if(originalPath.path.size() <= path.path.size()) return "/";
+
+        originalPath.path.resize(originalPath.path.size() - path.path.size());
+        return originalPath.ToString();
+    }
+    std::string ServerContext::MakeAbsolute(std::string path)
+    {
+        if(path.find("http://") == 0 || path.find("https://") == 0 || path.find("/") == 0) return path;
+        Tesses::Framework::Filesystem::VFSPath path2 = GetServerRoot();
+        path2 = path2 / path;
+        return path2.CollapseRelativeParents().ToString();
+    }
 }

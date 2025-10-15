@@ -56,8 +56,15 @@ namespace Tesses::Framework::Http
             ServerContext& WithMimeType(std::string mime);
             ServerContext& WithContentDisposition(std::string filename, bool isInline);
             ServerContext& WriteHeaders();
+            ServerContext& WithLocationHeader(std::string url);
+            ServerContext& WithLocationHeader(std::string url,StatusCode sc);
             void StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose);
             void StartWebSocketSession(std::shared_ptr<WebSocketConnection> connection);
+            std::string GetServerRoot();
+            std::string MakeAbsolute(std::string path);
+            void SendRedirect(std::string url);
+            void SendRedirect(std::string url, StatusCode sc);
+
             
             template<class T>
             T* GetServerContentData(std::string tag)

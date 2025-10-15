@@ -24,6 +24,7 @@ namespace Tesses::Framework::Streams
             virtual void Flush();
             virtual void Seek(int64_t pos, SeekOrigin whence);
             void CopyTo(std::shared_ptr<Stream> strm, size_t buffSize=1024);
+            void CopyToLimit(std::shared_ptr<Stream> strm,uint64_t len, size_t buffSize=1024);
             virtual void Close();
             virtual ~Stream();
     };
