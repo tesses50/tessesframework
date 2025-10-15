@@ -582,6 +582,62 @@ namespace Tesses::Framework::Http {
         }
         return buff;
     }
+    std::string HttpUtils::HtmlP(std::string text)
+    {
+        std::string newText = "";
+        std::string builder = "";
+
+        auto flush = [&]()->void {
+            if(!builder.empty())
+            {
+                if(builder.find("http://") == 0 || builder.find("https://") == 0 || builder.find("ftp://") == 0 || builder.find("ftps://") == 0 || builder.find("magnet:") == 0 || builder.find("btmh:") == 0)
+                {
+                    newText += "<a href=\"" + HttpUtils::HtmlEncode(builder) + "\">" + HttpUtils::HtmlEncode(builder) + "</a>";    
+                }
+                else if(builder.find("mailto:") == 0)
+                {
+                    newText += "<a href=\"" + HttpUtils::HtmlEncode(builder) + "\">" + HttpUtils::HtmlEncode(builder.substr(7)) + "</a>";    
+                }
+                else if(builder.find("tel:") == 0)
+                {
+                    newText += "<a href=\"" + HttpUtils::HtmlEncode(builder) + "\">" + HttpUtils::HtmlEncode(builder.substr(4)) + "</a>";    
+                }
+                else {
+                    newText += HttpUtils::HtmlEncode(builder);
+                }
+                builder = "";
+            }
+        };
+
+
+        for(auto item : text)
+        {
+            switch(item)
+            {
+                case ' ':
+                    flush();
+                    newText += " ";
+                    break;
+                case '\n':
+                    flush();
+                    newText += "<br>";
+                    break;
+                case '\t':
+                    flush();
+                    newText += "&tab;";
+                    break;
+                case '\r':
+                    flush();
+                    break;
+                default:
+                    builder += item;
+                    break;
+            }
+        }
+        flush();
+
+        return newText;
+    }
     std::string HttpUtils::HtmlEncode(std::string html)
     {
         std::string myHtml = {};

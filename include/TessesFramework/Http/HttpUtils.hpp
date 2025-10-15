@@ -156,6 +156,7 @@ struct CaseInsensitiveLess {
         static std::string UrlPathDecode(std::string v);
         static std::string UrlPathEncode(std::string v, bool ignoreSpace=false);
         static std::string HtmlEncode(std::string v);
+        static std::string HtmlP(std::string text);
         static std::string HtmlDecodeOnlyEntityNumber(std::string v);
         static std::vector<std::string> SplitString(std::string text, std::string delimiter,std::size_t maxCnt = std::string::npos);
         static std::string Replace(std::string str, std::string find, std::string replace);
