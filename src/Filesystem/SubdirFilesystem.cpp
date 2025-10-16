@@ -155,12 +155,12 @@ namespace Tesses::Framework::Filesystem
     }
     bool SubdirFilesystem::StatVFS(VFSPath path, StatVFSData& vfsData)
     {
-        return this->parent->StatVFS(path, vfsData);
+        return this->parent->StatVFS(ToParent(path), vfsData);
     }
 
     void SubdirFilesystem::Chmod(VFSPath path, uint32_t mode)
     {
-        return this->parent->Chmod(path, mode);
+        return this->parent->Chmod(ToParent(path), mode);
     }
 
 }
