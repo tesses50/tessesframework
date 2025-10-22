@@ -25,7 +25,12 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <winsock2.h>
 #include <iphlpapi.h>
 #include <windows.h>
+#if defined __has_include
+#if __has_include(<afunix.h>)
 #include <afunix.h>
+#define HAS_AFUNIX
+#endif
+#endif
 #undef min
 #pragma comment(lib, "ws2_32.lib")
 #else
@@ -281,7 +286,7 @@ namespace Tesses::Framework::Streams {
         this->endOfStream=false;
         this->owns = true;
         this->success=false;
-        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__)
+        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__) && ((defined(_WIN32) && defined(HAS_AFUNIX) ) || !defined(_WIN32))
         this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
         if(this->sock < 0)
         {
@@ -324,7 +329,7 @@ namespace Tesses::Framework::Streams {
         
         this->owns=true;
         this->valid=false;
-        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__)
+        #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__) && ((defined(_WIN32) && defined(HAS_AFUNIX) ) || !defined(_WIN32))
 
         this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_STREAM,0);
         if(this->sock < 0)
@@ -565,7 +570,7 @@ namespace Tesses::Framework::Streams {
                 #endif
             break;
             case SocketType::ST_UNIX:
-            #if defined(AF_UNIX)
+            #if defined(AF_UNIX) && ((defined(_WIN32) && defined(HAS_AFUNIX) ) || !defined(_WIN32))
                     this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_DGRAM, 0);
            
             #endif
