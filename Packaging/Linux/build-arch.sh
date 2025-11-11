@@ -2,7 +2,7 @@
 cd /home/build
 mkdir x86_64
 cd x86_64
-cp ../PKGBUILD
+cp ../PKGBUILD .
 makepkg
 curl --user tesses50:$GITEA_AUTH \
      --upload-file *.pkg.tar.zst \
