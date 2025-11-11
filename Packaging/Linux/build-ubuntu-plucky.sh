@@ -3,7 +3,7 @@ source ./version.sh
 mkdir -p build/plucky
 cd build/plucky
 mkdir build-amd64
-cmake -S ../../../../ -B build-amd64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF
+cmake -S ../../../../ -B build-amd64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF
 cd build-amd64
 make -j`nproc`
 make install DESTDIR=../tessesframework_$DEB_VERSION\_amd64
@@ -14,7 +14,7 @@ dpkg-deb --build tessesframework_$DEB_VERSION\_amd64
 
 # ARM64
 mkdir build-arm64
-cmake -S ../../../../ -B build-arm64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/arm64.cmake
+cmake -S ../../../../ -B build-arm64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/arm64.cmake
 cd build-arm64
 make -j`nproc`
 make install DESTDIR=../tessesframework_$DEB_VERSION\_arm64
@@ -25,7 +25,7 @@ dpkg-deb --build tessesframework_$DEB_VERSION\_arm64
 
 # RISCV64
 mkdir build-riscv64
-cmake -S ../../../../ -B build-riscv64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/riscv64.cmake
+cmake -S ../../../../ -B build-riscv64 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/riscv64.cmake
 cd build-riscv64
 make -j`nproc`
 make install DESTDIR=../tessesframework_$DEB_VERSION\_riscv64
@@ -36,7 +36,7 @@ dpkg-deb --build tessesframework_$DEB_VERSION\_riscv64
 
 # ARMHF
 mkdir build-armhf
-cmake -S ../../../../ -B build-armhf -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/armhf.cmake
+cmake -S ../../../../ -B build-armhf -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/armhf.cmake
 cd build-armhf
 make -j`nproc`
 make install DESTDIR=../tessesframework_$DEB_VERSION\_armhf
@@ -47,7 +47,7 @@ dpkg-deb --build tessesframework_$DEB_VERSION\_armhf
 
 # I386
 mkdir build-i386
-cmake -S ../../../../ -B build-i386 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/i386.cmake
+cmake -S ../../../../ -B build-i386 -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/i386.cmake
 cd build-i386
 make -j`nproc`
 make install DESTDIR=../tessesframework_$DEB_VERSION\_i386
