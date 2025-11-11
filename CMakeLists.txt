@@ -85,7 +85,7 @@ option(TESSESFRAMEWORK_ENABLE_STATIC "Enable Tesses Framework Static Libraries" 
 option(TESSESFRAMEWORK_ENABLE_SHARED "Enable Tesses Framework Shared Libraries" ON)
 option(TESSESFRAMEWORK_ENABLE_SETDATE "Enable setting date to file" ON)
 option(TESSESFRAMEWORK_LOGTOFILE "TessesFramework Log to file" OFF)
-option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" OFF)
+option(TESSESFRAMEWORK_FETCHCONTENT "TessesFramework fetchcontent" ON)
 option(TESSESFRAMEWORK_VENDERCERTCHAIN "Use the ca-certificates.crt in project rather than system" ON)
 if(TESSESFRAMEWORK_FETCHCONTENT)
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
