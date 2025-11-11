@@ -16,7 +16,7 @@ jobs:
       commands: |
         mkdir build
         cd build
-        cmake -S .. -B . -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DTESSESFRAMEWORK_ENABLE_SDL2=ON
+        cmake -S .. -B . -DTESSESFRAMEWORK_FETCHCONTENT=OFF
         make -j12
         make install DESTDIR=out
     useTTY: true
@@ -31,6 +31,25 @@ jobs:
       userName: '@job_token@'
       passwordSecret: dockersecret
     platforms: linux/amd64
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !CommandStep
+    name: Build archlinux
+    runInContainer: true
+    image: git.tesseslanguage.com/tesses50/arch-builds:2025-11-11
+    interpreter: !DefaultInterpreter
+      commands: |
+        pacman --noconfirm -Sy mbedtls curl
+        pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
+        cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
+        cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
+        chmod 755 /home/build/build-arch.sh
+        chown build:build /home/build/PKGBUILD
+        chown build:build /home/build/build-arch.sh
+        su build -c /home/build/build-arch.sh
+    envVars:
+    - name: GITEA_AUTH
+      value: '@secret:GITEA_AUTH@'
+    useTTY: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !CommandStep
     name: Build and Publish Deb Package
