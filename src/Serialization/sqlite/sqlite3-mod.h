@@ -1,0 +1,8 @@
+#pragma once
+#if defined(GEKKO) || defined(__SWITCH__)
+//-DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_OMIT_WAL -DSQLITE_THREADSAFE=0
+#define SQLITE_OMIT_LOAD_EXTENSION
+#define SQLITE_OMIT_WAL
+#define SQLITE_THREADSAFE 0
+#endif
+#include "sqlite3.h"

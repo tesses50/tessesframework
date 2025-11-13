@@ -1,6 +1,6 @@
 #include "TessesFramework/Serialization/SQLite.hpp"
 #if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
-#include "sqlite/sqlite3.h"
+#include "sqlite/sqlite3-mod.h"
 #endif
 namespace Tesses::Framework::Serialization {
     int SQLiteDatabase::collector(void* user, int count,char** vals, char** keys)

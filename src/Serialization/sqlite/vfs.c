@@ -117,7 +117,7 @@
 
 #if defined(GEKKO) || defined(__SWITCH__)
 
-#include "sqlite3.h"
+#include "sqlite3-mod.h"
 
 #include <assert.h>
 #include <string.h>

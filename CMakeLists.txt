@@ -69,7 +69,7 @@ option(TESSESFRAMEWORK_ENABLE_RPATH "Enable RPATH" ON)
 
 if(TESSESFRAMEWORK_ENABLE_SQLITE)
 list(APPEND TESSESFRAMEWORK_SOURCE 
-    src/Serialization/sqlite/sqlite3.c
+    src/Serialization/sqlite/sqlite3-mod.c
     src/Serialization/sqlite/vfs.c
 )
 endif()
