@@ -40,7 +40,7 @@ namespace Tesses::Framework::Http
             mtx.Lock();
             closed=true;
             uint8_t finField = 0b10000000 ;
-            uint8_t firstByte= finField | 0x9;
+            uint8_t firstByte= finField | 0x8;
             strm->WriteByte(firstByte);
             strm->WriteByte(0);
            
