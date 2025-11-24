@@ -123,32 +123,32 @@ namespace Tesses::Framework::Date
             
     };
 
-    DateTime operator+(const DateTime& dt, const TimeSpan& ts)
+    inline DateTime operator+(const DateTime& dt, const TimeSpan& ts)
     {
         DateTime dt2(dt.ToEpoch() + ts.TotalSeconds());
         if(dt.IsLocal())
             dt2.SetToLocal();
         return dt2;
     }
-    DateTime operator+(const TimeSpan& ts,const DateTime& dt)
+    inline DateTime operator+(const TimeSpan& ts,const DateTime& dt)
     {
         DateTime dt2(dt.ToEpoch() + ts.TotalSeconds());
         if(dt.IsLocal())
             dt2.SetToLocal();
         return dt2;
     }
-    TimeSpan operator+(const TimeSpan& ts, const TimeSpan& ts2)
+    inline TimeSpan operator+(const TimeSpan& ts, const TimeSpan& ts2)
     {
         return (int64_t)ts + (int64_t)ts2;
     }
-    DateTime operator-(const DateTime& dt, const TimeSpan& ts)
+    inline DateTime operator-(const DateTime& dt, const TimeSpan& ts)
     {
         DateTime dt2(dt.ToEpoch() - ts.TotalSeconds());
         if(dt.IsLocal())
             dt2.SetToLocal();
         return dt2;
     }
-    TimeSpan operator-(const DateTime& dt, const DateTime& dt2)
+    inline TimeSpan operator-(const DateTime& dt, const DateTime& dt2)
     {
         return (int64_t)dt - (int64_t)dt2;
     }
