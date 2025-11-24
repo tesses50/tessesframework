@@ -63,6 +63,8 @@ jobs:
     envVars:
     - name: GITEA_AUTH
       value: '@secret:GITEA_AUTH@'
+    - name: BUILD_NO
+      value: '@build_number@'
     useTTY: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !CommandStep
@@ -77,6 +79,8 @@ jobs:
     envVars:
     - name: GITEA_AUTH
       value: '@secret:GITEA_AUTH@'
+    - name: BUILD_NO
+      value: '@build_number@'
     useTTY: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
