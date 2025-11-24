@@ -33,6 +33,23 @@ namespace Tesses::Framework::TextStreams
         } while(r != -1);
         return ret;
     }
+    void TextReader::ReadAllLines(std::vector<std::string>& lines)
+    {
+        int32_t r = -1;
+        std::string builder;
+        do {
+            r = ReadChar();
+            if(r == -1)  break;
+            if(r == '\r') continue;
+            if(r == '\n') {
+                lines.push_back(builder);
+                builder.clear();
+                continue;
+            }
+            builder += (char)r;
+
+        } while(r != -1);
+    }
 
     std::string TextReader::ReadToEnd()
     {

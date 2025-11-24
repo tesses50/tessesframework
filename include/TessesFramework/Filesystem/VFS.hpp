@@ -29,6 +29,8 @@ namespace Tesses::Framework::Filesystem
             static std::vector<std::string> SplitPath(std::string path);
             std::vector<std::string> path;  
             VFSPath();
+            VFSPath(const char* path) : VFSPath((std::string)path)
+            {}
             VFSPath(std::vector<std::string> path);
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
@@ -36,22 +38,27 @@ namespace Tesses::Framework::Filesystem
             
             
 
-            VFSPath GetParent();
-            VFSPath CollapseRelativeParents();
-            std::string GetFileName();
-            bool HasExtension();
-            std::string GetExtension();
+            VFSPath GetParent() const;
+            VFSPath CollapseRelativeParents() const;
+            std::string GetFileName() const;
+            bool HasExtension() const;
+            std::string GetExtension() const;
             void ChangeExtension(std::string ext);
             void RemoveExtension();
-            std::string ToString();
+            std::string ToString() const;
+
+            operator std::string() const
+            {
+                return ToString();
+            }
 
             static VFSPath GetAbsoluteCurrentDirectory();
             static void SetAbsoluteCurrentDirectory(VFSPath path);
-            VFSPath MakeAbsolute();
+            VFSPath MakeAbsolute() const;
     
-            VFSPath MakeAbsolute(VFSPath curDir);
-            VFSPath MakeRelative();
-            VFSPath MakeRelative(VFSPath toMakeRelativeTo);
+            VFSPath MakeAbsolute(VFSPath curDir) const;
+            VFSPath MakeRelative() const;
+            VFSPath MakeRelative(VFSPath toMakeRelativeTo) const;
     };
     VFSPath operator/(VFSPath p, VFSPath p2);
     VFSPath operator/(VFSPath p, std::string p2);

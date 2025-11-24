@@ -202,21 +202,21 @@ namespace Tesses::Framework::Filesystem
         std::filesystem::path mpath=res;
         std::filesystem::current_path(mpath);
     }
-    VFSPath VFSPath::MakeAbsolute()
+    VFSPath VFSPath::MakeAbsolute() const
     {
         return MakeAbsolute(GetAbsoluteCurrentDirectory());
     }
-    VFSPath VFSPath::MakeAbsolute(VFSPath curDir)
+    VFSPath VFSPath::MakeAbsolute(VFSPath curDir) const
     {
         if (!this->relative) return *this;
         VFSPath p2 = curDir / *this;
         return p2.CollapseRelativeParents();
     }
-    VFSPath VFSPath::MakeRelative()
+    VFSPath VFSPath::MakeRelative() const
     {
         return MakeRelative(GetAbsoluteCurrentDirectory());
     }
-    VFSPath VFSPath::MakeRelative(VFSPath toMakeRelativeTo)
+    VFSPath VFSPath::MakeRelative(VFSPath toMakeRelativeTo) const
     {
 
         if(this->relative) return *this;
@@ -250,7 +250,7 @@ namespace Tesses::Framework::Filesystem
         p2.relative = true;
         return p2;
     }
-    VFSPath VFSPath::CollapseRelativeParents()
+    VFSPath VFSPath::CollapseRelativeParents() const
     {
         std::vector<std::string> parts;
 
@@ -330,7 +330,7 @@ namespace Tesses::Framework::Filesystem
         this->path = p;
     }
 
-    bool VFSPath::HasExtension()
+    bool VFSPath::HasExtension() const
     {
         if(this->path.empty()) return false;
         auto& str = this->path.back();
@@ -338,7 +338,7 @@ namespace Tesses::Framework::Filesystem
         if(index == std::string::npos) return false;
         return true;
     }
-    std::string VFSPath::GetExtension()
+    std::string VFSPath::GetExtension() const
     {
         if(this->path.empty()) return {};
         auto& str = this->path.back();
@@ -395,7 +395,7 @@ namespace Tesses::Framework::Filesystem
     {
 
     }
-    VFSPath VFSPath::GetParent()
+    VFSPath VFSPath::GetParent() const
     {
         std::vector<std::string> paths;
         if(this->path.empty()) return VFSPath();
@@ -407,13 +407,13 @@ namespace Tesses::Framework::Filesystem
         return res;
     }
 
-    std::string VFSPath::GetFileName()
+    std::string VFSPath::GetFileName() const
     {
         if(this->path.empty()) return "";
         return this->path.back();
     }
 
-    std::string VFSPath::ToString()
+    std::string VFSPath::ToString() const
     {
         if(this->path.empty() && !this->relative) return "/";
         if(!this->relative && this->path.size() == 1 && !this->path[0].empty() && this->path[0].back() == ':') return this->path[0] + "/";

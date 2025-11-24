@@ -11,6 +11,7 @@ namespace Tesses::Framework::TextStreams
             int32_t ReadChar();
             std::string ReadLine();
             bool ReadLine(std::string& str);
+            void ReadAllLines(std::vector<std::string>& lines);
             std::string ReadToEnd();
             void ReadToEnd(std::string& str);
             void CopyTo(TextWriter& writer, size_t bufSz=1024);

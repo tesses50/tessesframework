@@ -105,35 +105,35 @@ namespace Tesses::Framework::Date
         this->second = seconds;
         this->isLocal = isLocal;
     }
-    int DateTime::Year()
+    int DateTime::Year() const
     {
         return this->year;
     }
-    int DateTime::Month()
+    int DateTime::Month() const
     {
         return this->month;
     }
-    int DateTime::Day()
+    int DateTime::Day() const
     {
         return this->day;
     }
-    int DateTime::Hour()
+    int DateTime::Hour() const
     {
         return this->hour;
     }
-    int DateTime::Minute()
+    int DateTime::Minute() const
     {
         return this->minute;
     }
-    int DateTime::Second()
+    int DateTime::Second() const
     {
         return this->second;
     }
-    bool DateTime::IsLocal()
+    bool DateTime::IsLocal() const
     {
         return this->isLocal;
     }
-    int DateTime::DayOfWeek()
+    int DateTime::DayOfWeek() const
     {
         date::year_month_day ymd(date::year(year),date::month((uint32_t)month),date::day((uint32_t)day));
         date::sys_days d = ymd;
@@ -214,7 +214,7 @@ namespace Tesses::Framework::Date
         this->isLocal=true;
         this->FromEpochNoConvert(local);
     }
-    DateTime DateTime::ToLocal()
+    DateTime DateTime::ToLocal() const
     {
         DateTime dt = *this;
         dt.SetToLocal();
@@ -294,13 +294,13 @@ namespace Tesses::Framework::Date
        this->FromEpochNoConvert(local);
         
     }
-    DateTime DateTime::ToUTC()
+    DateTime DateTime::ToUTC() const
     {
         DateTime dt = *this;
         dt.SetToUTC();
         return dt;
     }
-    int64_t DateTime::ToEpoch()
+    int64_t DateTime::ToEpoch() const
     {
         if(this->isLocal)
         {
@@ -309,7 +309,7 @@ namespace Tesses::Framework::Date
         }
         return this->ToEpochNoConvert();
     }
-    int64_t DateTime::ToEpochNoConvert()
+    int64_t DateTime::ToEpochNoConvert() const
     {
         date::year y = (date::year)year;
         date::month m  = (date::month)month;
@@ -551,7 +551,7 @@ namespace Tesses::Framework::Date
         dt.second = second;
         return true;
     }
-    std::string DateTime::ToHttpDate()
+    std::string DateTime::ToHttpDate() const
     {
         auto utc=this->ToUTC();
         std::string weekday=weekday_short[utc.DayOfWeek()];
@@ -567,12 +567,12 @@ namespace Tesses::Framework::Date
         return strm.str();
        
     }
-    std::string DateTime::ToString()
+    std::string DateTime::ToString() const
     {
         return ToString("%Y/%m/%d %H:%M:%S");
     }
     
-    std::string DateTime::ToString(std::string fmt)
+    std::string DateTime::ToString(std::string fmt) const
     {
         auto weekday = this->DayOfWeek();
       
@@ -731,5 +731,212 @@ namespace Tesses::Framework::Date
             }
        }
        return text;
+    }
+    TimeSpan::TimeSpan()
+    {
+        this->totalSeconds = 0;
+    }
+    TimeSpan::TimeSpan(int64_t totalSeconds)
+    {
+        this->totalSeconds = totalSeconds;
+
+    }
+    TimeSpan::TimeSpan(int hours, int minutes, int seconds) : TimeSpan(0,hours,minutes,seconds)
+    {
+
+    }
+    TimeSpan::TimeSpan(int days,int hours, int minutes, int seconds)
+    {
+        this->totalSeconds = (int64_t)days * 86400;
+        this->totalSeconds += (int64_t)hours * 3600;
+        this->totalSeconds += (int64_t)minutes * 60;
+        this->totalSeconds += (int64_t)seconds;
+    }
+    void TimeSpan::Set(int days, int hours, int minutes, int seconds)
+    {
+        this->totalSeconds = (int64_t)days * 86400;
+        this->totalSeconds += (int64_t)hours * 3600;
+        this->totalSeconds += (int64_t)minutes * 60;
+        this->totalSeconds += (int64_t)seconds;
+    }
+    void TimeSpan::Set(int hours, int minutes, int seconds)
+    {
+        this->totalSeconds = (int64_t)hours * 3600;
+        this->totalSeconds += (int64_t)minutes * 60;
+        this->totalSeconds += (int64_t)seconds;
+    }
+
+    void TimeSpan::SetDays(int d)
+    {
+        Set(d,this->Hours(),this->Minutes(),this->Seconds());
+    }
+    void TimeSpan::SetHours(int h)
+    {
+        Set(this->Days(),h,this->Minutes(), this->Seconds());
+    }
+    void TimeSpan::SetMinutes(int m)
+    {
+        Set(this->Days(),this->Hours(),m,this->Seconds());
+    }
+    void TimeSpan::SetSeconds(int s)
+    {
+        Set(this->Days(),this->Hours(),this->Minutes(),s);
+    }
+        
+    int TimeSpan::Days() const
+    {
+
+        return (int)(this->totalSeconds / 86400);
+    }
+    int TimeSpan::Hours() const
+    {
+
+        return (int)((this->totalSeconds / 3600) % 24);
+    }
+    int TimeSpan::Minutes() const
+    {
+        return (int)((this->totalSeconds / 60) % 60);
+    }
+    int TimeSpan::Seconds() const
+    {
+        return (int)(this->totalSeconds % 60);
+    }
+
+
+    int64_t TimeSpan::TotalSeconds() const
+    {
+        return this->totalSeconds;
+    }
+    int64_t TimeSpan::TotalMinutes() const
+    {
+        return this->totalSeconds / 60;
+    }
+    int64_t TimeSpan::TotalHours() const
+    {
+        return this->totalSeconds / 3600;
+    }
+
+    void TimeSpan::AddSeconds(int64_t seconds)
+    {
+        this->totalSeconds += seconds;
+    }
+    void TimeSpan::AddMinutes(int64_t minutes)
+    {
+        this->totalSeconds += minutes * 60;
+    }
+    void TimeSpan::AddHours(int64_t hours)
+    {
+        this->totalSeconds += hours * 3600;
+    }
+    void TimeSpan::AddDays(int64_t days)
+    {
+        this->totalSeconds += days * 86400;
+    }
+
+    void TimeSpan::SetTotalSeconds(int64_t totalSeconds)
+    {   
+        this->totalSeconds = totalSeconds;
+    }
+    void TimeSpan::SetTotalMinutes(int64_t totalMinutes)
+    {
+        this->totalSeconds = totalMinutes * 60;
+    }
+    void TimeSpan::SetTotalHours(int64_t totalHours)
+    {
+        this->totalSeconds = totalHours * 3600;
+    }
+
+    std::string TimeSpan::ToString(bool slim) const
+    {
+        std::string str={};
+        if(this->totalSeconds < 0)
+            str += "-";
+        if(slim && this->totalSeconds > -36000 && this->totalSeconds < 36000)
+        {
+            //0:00
+            //00:00
+            //0:00:00
+            if(this->totalSeconds <= -3600 || this->totalSeconds >= 3600)
+            {
+                //hours must force multi digit minutes
+                str += std::to_string(this->Hours());
+                str += ":";
+                str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,' ');
+            }
+            else
+            {
+                str += std::to_string(this->Minutes());
+            }
+            
+            str += ":";
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,' ');
+        }
+        else
+        {
+            //00:00:00
+            //0.00:00:00
+
+            if(this->totalSeconds <= -86400 || this->totalSeconds >= 86400)
+            {
+                str += std::to_string(this->Days());
+                str += ".";       
+            }
+
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Hours()),2,' ');
+            str += ":";
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,' ');
+            str += ":";
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,' ');
+           
+        }
+        return str;
+    }
+
+    bool TimeSpan::TryParse(std::string text, TimeSpan& span)
+    {
+        if(text.empty()) return false;
+        bool negative = text[0] == '-';
+        int64_t totalSeconds = 0;
+       
+
+        try{
+      
+
+        std::string colonPart = text.substr(negative ? 1 : 0);
+        auto res = Http::HttpUtils::SplitString(colonPart,":");
+
+        if(res.size() < 2 || res.size() > 3) return false;
+        std::string hour = res[0];
+        size_t index=hour.find('.');
+        if(index != std::string::npos)
+        {
+            totalSeconds += std::stoll(hour.substr(0,index)) * 86400;
+            hour = hour.substr(index+1);
+        }
+
+        
+        if(res.size() == 2)
+        {
+            //mm:ss
+            
+
+            totalSeconds += std::stoll(hour) * 60;
+            totalSeconds += std::stoll(res[1]);
+        } 
+        else if(res.size() == 3)
+        {
+            totalSeconds += std::stoll(hour) * 3600;
+            totalSeconds += std::stoll(res[1]) * 60;
+            totalSeconds += std::stoll(res[2]);
+        }
+        else return false;
+
+        }catch(...) {return false;}
+
+        if(negative) totalSeconds = -totalSeconds;
+        
+        span.SetTotalSeconds(totalSeconds);
+        return true;
+
     }
 }

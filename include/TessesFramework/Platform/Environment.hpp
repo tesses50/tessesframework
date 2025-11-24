@@ -9,6 +9,7 @@ namespace Tesses::Framework::Platform::Environment
     
 
     namespace SpecialFolders {
+        Tesses::Framework::Filesystem::VFSPath GetTemp();
         Tesses::Framework::Filesystem::VFSPath GetHomeFolder();
         Tesses::Framework::Filesystem::VFSPath GetDownloads();
         Tesses::Framework::Filesystem::VFSPath GetMusic();

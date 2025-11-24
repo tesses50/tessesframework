@@ -25,13 +25,18 @@ namespace Tesses::Framework::Platform::Environment
 
     namespace SpecialFolders 
     {
-
+        VFSPath GetTemp()
+        {
+            return std::filesystem::temp_directory_path().string();
+        }
         VFSPath GetHomeFolder()
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getHomeDir();
             #elif defined(__EMSCRIPTEN__)
             return (std::string)"/home/web_user";
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/TF_User";
             #else
             return (std::string)"/TF_User";
             #endif
@@ -40,6 +45,8 @@ namespace Tesses::Framework::Platform::Environment
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDownloadFolder();
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/Download";
             #else
             return GetHomeFolder() / "Downloads";
             #endif
@@ -48,6 +55,8 @@ namespace Tesses::Framework::Platform::Environment
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getMusicFolder();
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/Music";
             #else
             return GetHomeFolder() / "Music";
             #endif
@@ -56,6 +65,8 @@ namespace Tesses::Framework::Platform::Environment
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getPicturesFolder();
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/Pictures";
             #else
             return GetHomeFolder() / "Pictures";
             #endif
@@ -64,6 +75,8 @@ namespace Tesses::Framework::Platform::Environment
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getVideoFolder();
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/Movies";
             #else
             return GetHomeFolder() / "Videos";
             #endif
@@ -72,6 +85,8 @@ namespace Tesses::Framework::Platform::Environment
         {
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDocumentsFolder();
+            #elif defined(__ANDROID__)
+            return (std::string)"/sdcard/Documents";
             #else
             return GetHomeFolder() / "Documents";
             #endif
@@ -237,6 +252,9 @@ namespace Tesses::Framework::Platform::Environment
     }
     std::string GetPlatform()
     {
+        #if defined(__ANDROID__)
+            return "Android";
+        #endif
         #if defined(__SWITCH__)
             return "Nintendo Switch";
         #endif

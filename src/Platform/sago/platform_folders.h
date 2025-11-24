@@ -37,7 +37,7 @@ I modified it to return home directory and conditionally compile for systems tha
 #ifndef SAGO_PLATFORM_FOLDERS_H
 #define SAGO_PLATFORM_FOLDERS_H
 
-#if defined(GEKKO) || defined(__SWITCH__) || defined(__EMSCRIPTEN__) || defined(__PS2__)
+#if defined(GEKKO) || defined(__SWITCH__) || defined(__EMSCRIPTEN__) || defined(__PS2__) || defined(__ANDROID__)
 #define SAGO_DISABLE
 #endif
 

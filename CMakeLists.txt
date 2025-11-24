@@ -49,6 +49,8 @@ src/Filesystem/MemoryFilesystem.cpp
 src/Filesystem/SubdirFilesystem.cpp
 src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
+src/Filesystem/FSHelpers.cpp
+src/Filesystem/TempFS.cpp
 src/Crypto/ClientTLSStream.cpp
 src/Crypto/MbedHelpers.cpp
 src/Args.cpp
@@ -379,3 +381,4 @@ set(CPACK_PACKAGE_VERSION_MINOR "${TessesFramework_VERSION_MINOR}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libmbedtls-dev (>= 2.28.8)")
 
 include(CPack)
+add_subdirectory(pkgconfig)
