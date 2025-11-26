@@ -861,7 +861,7 @@ namespace Tesses::Framework::Date
                 //hours must force multi digit minutes
                 str += std::to_string(this->Hours());
                 str += ":";
-                str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,' ');
+                str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,'0');
             }
             else
             {
@@ -869,7 +869,7 @@ namespace Tesses::Framework::Date
             }
             
             str += ":";
-            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,' ');
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,'0');
         }
         else
         {
@@ -882,11 +882,11 @@ namespace Tesses::Framework::Date
                 str += ".";       
             }
 
-            str += Http::HttpUtils::LeftPad(std::to_string(this->Hours()),2,' ');
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Hours()),2,'0');
             str += ":";
-            str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,' ');
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Minutes()),2,'0');
             str += ":";
-            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,' ');
+            str += Http::HttpUtils::LeftPad(std::to_string(this->Seconds()),2,'0');
            
         }
         return str;

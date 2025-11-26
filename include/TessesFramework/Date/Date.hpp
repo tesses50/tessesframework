@@ -135,5 +135,8 @@ namespace Tesses::Framework::Date
     {
         return dt.ToEpoch() - dt2.ToEpoch();
     }
-    
+    inline TimeSpan operator-(const TimeSpan& ts, const TimeSpan& ts2)
+    {
+        return ts.TotalSeconds() - ts2.TotalSeconds();
+    }
 };
