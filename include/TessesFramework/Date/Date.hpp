@@ -59,15 +59,6 @@ namespace Tesses::Framework::Date
         std::string ToHttpDate() const;
         static bool TryParseHttpDate(std::string txt, DateTime& dt);
 
-        operator std::string() const
-        {
-            return ToString();
-        }
-
-        operator int64_t() const
-        {
-            return ToEpoch();
-        }
     };
     class TimeSpan {
         int64_t totalSeconds;
@@ -111,15 +102,7 @@ namespace Tesses::Framework::Date
 
             static bool TryParse(std::string text, TimeSpan& span);
 
-            operator int64_t() const
-            {
-                return TotalSeconds();
-            }
-
-            operator std::string()
-            {
-                return ToString();
-            }
+            
             
     };
 
@@ -139,7 +122,7 @@ namespace Tesses::Framework::Date
     }
     inline TimeSpan operator+(const TimeSpan& ts, const TimeSpan& ts2)
     {
-        return (int64_t)ts + (int64_t)ts2;
+        return ts.TotalSeconds() + ts2.TotalSeconds();
     }
     inline DateTime operator-(const DateTime& dt, const TimeSpan& ts)
     {
@@ -150,7 +133,7 @@ namespace Tesses::Framework::Date
     }
     inline TimeSpan operator-(const DateTime& dt, const DateTime& dt2)
     {
-        return (int64_t)dt - (int64_t)dt2;
+        return dt.ToEpoch() - dt2.ToEpoch();
     }
     
 };

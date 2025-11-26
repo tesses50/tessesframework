@@ -46,11 +46,6 @@ namespace Tesses::Framework::Filesystem
             void RemoveExtension();
             std::string ToString() const;
 
-            operator std::string() const
-            {
-                return ToString();
-            }
-
             static VFSPath GetAbsoluteCurrentDirectory();
             static void SetAbsoluteCurrentDirectory(VFSPath path);
             VFSPath MakeAbsolute() const;
