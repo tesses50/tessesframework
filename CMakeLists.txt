@@ -51,8 +51,8 @@ src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
 src/Filesystem/FSHelpers.cpp
 src/Filesystem/TempFS.cpp
-src/Crypto/ClientTLSStream.cpp
-src/Crypto/MbedHelpers.cpp
+src/Crypto/MbedTLS/ClientTLSStream.cpp
+src/Crypto/MbedTLS/Crypto.cpp
 src/Args.cpp
 src/TF_Init.cpp
 src/HiddenField.cpp

@@ -107,11 +107,18 @@ namespace Tesses::Framework::Filesystem
     {
         return VFSPathEnumeratorItterator();
     }
-    VFSPath operator/(VFSPath p, VFSPath p2)
+     VFSPath operator/(VFSPath p, VFSPath p2)
     {
         return VFSPath(p,p2);
     }
-   
+    VFSPath operator/(VFSPath p, std::string p2)
+    {
+        return VFSPath(p,p2);
+    }
+    VFSPath operator/(std::string p, VFSPath p2)
+    {
+        return VFSPath(p,p2);
+    }
     VFSPath operator+(VFSPath p, VFSPath p2)
     {
         VFSPath pout;
@@ -139,7 +146,14 @@ namespace Tesses::Framework::Filesystem
 
         return pout;
     }
-   
+    VFSPath operator+(VFSPath p, std::string p2)
+    {
+        return p + VFSPath(p2);
+    }
+    VFSPath operator+(std::string p, VFSPath p2)
+    {
+        return VFSPath(p) + p2;
+    }
     bool operator==(VFSPath p,VFSPath p2)
     {
         if(p.relative != p2.relative) return false;
@@ -156,6 +170,22 @@ namespace Tesses::Framework::Filesystem
             if(p.path[i] != p2.path[i]) return true;
         return false;
     
+    }
+    bool operator==(std::string p,VFSPath p2)
+    {
+        return VFSPath(p) == p2;
+    }
+    bool operator!=(std::string p,VFSPath p2)
+    {
+        return VFSPath(p) != p2;
+    }
+    bool operator==(VFSPath p,std::string p2)
+    {
+        return p == VFSPath(p2);
+    }
+    bool operator!=(VFSPath p,std::string p2)
+    {
+        return p != VFSPath(p2);
     }
     VFSPath VFS::ReadLink(VFSPath path)
     {

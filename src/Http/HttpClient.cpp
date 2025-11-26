@@ -1,6 +1,6 @@
 #include "TessesFramework/Http/HttpClient.hpp"
 #include "TessesFramework/Crypto/ClientTLSStream.hpp"
-#include "TessesFramework/Crypto/MbedHelpers.hpp"
+#include "TessesFramework/Crypto/Crypto.hpp"
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/TextStreams/StreamWriter.hpp"
 #include "TessesFramework/TextStreams/StreamReader.hpp"

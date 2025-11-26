@@ -613,7 +613,7 @@ CreateProcessW(
             }
             if(!this->workingDirectory.empty())
                 Tesses::Framework::Filesystem::VFSPath::SetAbsoluteCurrentDirectory(this->workingDirectory);
-            execve(this->name.c_str(),argv,envp);
+            execvpe(this->name.c_str(),argv,envp);
             exit(1);
         }
         p->pid = pid;

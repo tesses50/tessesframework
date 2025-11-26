@@ -6,8 +6,6 @@ namespace Tesses::Framework::Crypto
 {
     class ClientTLSStream : public Tesses::Framework::Streams::Stream {
         void* privateData;
-        static int strm_send(void* ctx,const unsigned char* buf,size_t len);
-        static int strm_recv(void* ctx,unsigned char* buf,size_t len);
         public:
             static std::string GetCertChain();
 

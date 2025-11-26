@@ -29,8 +29,7 @@ namespace Tesses::Framework::Filesystem
             static std::vector<std::string> SplitPath(std::string path);
             std::vector<std::string> path;  
             VFSPath();
-            VFSPath(const char* path) : VFSPath((std::string)path)
-            {}
+            
             VFSPath(std::vector<std::string> path);
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
@@ -61,9 +60,17 @@ namespace Tesses::Framework::Filesystem
             VFSPath MakeRelative(VFSPath toMakeRelativeTo) const;
     };
     VFSPath operator/(VFSPath p, VFSPath p2);
+    VFSPath operator/(VFSPath p, std::string p2);
+    VFSPath operator/(std::string p, VFSPath p2);
     VFSPath operator+(VFSPath p, VFSPath p2);
+    VFSPath operator+(VFSPath p, std::string p2);
+    VFSPath operator+(std::string p, VFSPath p2);
     bool operator==(VFSPath p,VFSPath p2);
     bool operator!=(VFSPath p,VFSPath p2);
+    bool operator==(std::string p,VFSPath p2);
+    bool operator!=(std::string p,VFSPath p2);
+    bool operator==(VFSPath p,std::string p2);
+    bool operator!=(VFSPath p,std::string p2);
     class VFSPathEnumeratorData {
         public:
             VFSPathEnumeratorData(std::function<bool(VFSPath&)> moveNext, std::function<void()> destroy)

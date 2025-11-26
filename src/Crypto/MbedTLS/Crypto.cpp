@@ -1,4 +1,4 @@
-#include "TessesFramework/Crypto/MbedHelpers.hpp"
+#include "TessesFramework/Crypto/Crypto.hpp"
 
 #if defined(TESSESFRAMEWORK_ENABLE_MBED)
 #include <mbedtls/sha1.h>

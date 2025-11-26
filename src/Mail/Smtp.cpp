@@ -1,5 +1,5 @@
 #include "TessesFramework/Mail/Smtp.hpp"
-#include "TessesFramework/Crypto/MbedHelpers.hpp"
+#include "TessesFramework/Crypto/Crypto.hpp"
 #include "TessesFramework/Streams/MemoryStream.hpp"
 #include "TessesFramework/TextStreams/StreamWriter.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"

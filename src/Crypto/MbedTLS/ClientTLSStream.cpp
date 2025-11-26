@@ -41,7 +41,20 @@ namespace Tesses::Framework::Crypto
                 mbedtls_ssl_free(&ssl);
             }
     };
+     static int strm_send(void* ctx,const unsigned char* buf,size_t len)
+    {
+        auto priv = static_cast<ClientTLSPrivateData*>(ctx);
+        return (int)priv->strm->Write(buf, len);
+        
+    }
+    static int strm_recv(void* ctx,unsigned char* buf,size_t len)
+    {
+        auto priv = static_cast<ClientTLSPrivateData*>(ctx);
+        return (int)priv->strm->Read(buf, len);
+        
+    }
     #endif
+    
     std::string ClientTLSStream::GetCertChain()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
@@ -88,16 +101,7 @@ namespace Tesses::Framework::Crypto
         int ret=0;
 
 
-/*
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
-    psa_status_t status = psa_crypto_init();
-    if (status != PSA_SUCCESS) {
-        mbedtls_fprintf(stderr, "Failed to initialize PSA Crypto implementation: %d\n",
-                        (int) status);
-        return;
-    }
-#endif
-*/
+
     if ((ret = mbedtls_ctr_drbg_seed(&data->ctr_drbg, mbedtls_entropy_func, &data->entropy,
                                      (const unsigned char *) pers,
                                      strlen(pers))) != 0) 
@@ -209,24 +213,7 @@ namespace Tesses::Framework::Crypto
         return (size_t)0;
         #endif
     }
-    int ClientTLSStream::strm_send(void* ctx,const unsigned char* buf,size_t len)
-    {
-        #if defined(TESSESFRAMEWORK_ENABLE_MBED)
-        auto priv = static_cast<ClientTLSPrivateData*>(ctx);
-        return (int)priv->strm->Write(buf, len);
-        #else
-        return 0;
-        #endif
-    }
-    int ClientTLSStream::strm_recv(void* ctx,unsigned char* buf,size_t len)
-    {
-        #if defined(TESSESFRAMEWORK_ENABLE_MBED)
-        auto priv = static_cast<ClientTLSPrivateData*>(ctx);
-        return (int)priv->strm->Read(buf, len);
-        #else
-        return 0;
-        #endif
-    }
+   
     bool ClientTLSStream::CanRead()
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)

@@ -25,7 +25,7 @@ jobs:
     name: Build Docker Image
     dockerfile: Dockerfile.run
     output: !RegistryOutput
-      tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest
+      tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest onedev.site.tesses.net/tesses-framework/tesses-framework:@commit_hash@
     registryLogins:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
