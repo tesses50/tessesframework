@@ -1,6 +1,10 @@
 #include "TessesFramework/Streams/PtyStream.hpp"
 #if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if defined(__APPLE__)
+#include <util.h>
+#else
 #include <pty.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
