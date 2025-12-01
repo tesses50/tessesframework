@@ -157,7 +157,6 @@ namespace Tesses::Framework::Http
     HttpResponse::HttpResponse(std::shared_ptr<Stream> strm)
     {
         this->handleStrm=nullptr;
-        this->owns=owns;
         StreamReader reader(strm);
             std::string statusLine;
             if(!reader.ReadLine(statusLine)) return;
@@ -184,7 +183,6 @@ namespace Tesses::Framework::Http
 
     HttpResponse::HttpResponse(HttpRequest& req)
     {
-        this->owns=true;
         this->handleStrm = nullptr;
         
         std::string url = req.url;
