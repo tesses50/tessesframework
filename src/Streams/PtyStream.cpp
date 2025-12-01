@@ -1,7 +1,10 @@
 #include "TessesFramework/Streams/PtyStream.hpp"
-#if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
-
+#if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if defined(__APPLE__)
+#include <util.h>
+#else
 #include <pty.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -11,7 +14,7 @@
 namespace Tesses::Framework::Streams {
     PtyStream::PtyStream(WindowSize windowSize,std::string filename, std::vector<std::string> args, std::vector<std::string> env)
     {
-        #if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+        #if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         this->wS = windowSize;
         this->eos=false;
         winsize sz;
@@ -81,7 +84,7 @@ namespace Tesses::Framework::Streams {
     size_t PtyStream::Read(uint8_t* buff, size_t sz)
     {
         if(this->eos) return 0;
-        #if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+        #if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         auto res = read(this->socket, buff,sz);
         
         if(res == -1)
@@ -97,7 +100,7 @@ namespace Tesses::Framework::Streams {
     }
     size_t PtyStream::Write(const uint8_t* buff, size_t sz)
     {
-        #if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+        #if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         auto res = write(this->socket, buff,sz);
         return res;
         #else
@@ -110,7 +113,7 @@ namespace Tesses::Framework::Streams {
     }
     void PtyStream::Resize(WindowSize windowSize)
     {
-        #if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+        #if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         this->wS = windowSize;
         winsize sz;
         sz.ws_col =(unsigned short)windowSize.Columns;
@@ -129,7 +132,7 @@ namespace Tesses::Framework::Streams {
     {
         if(this->eos) return;
         this->eos=true; 
-        #if !define(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+        #if !defined(GEKKO) && !defined(__APPLE__) && !defined(__PS2__) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__FreeBSD__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
         close(this->socket);
        
         kill((pid_t)this->pid,SIGHUP);
