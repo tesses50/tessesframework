@@ -41,7 +41,7 @@ namespace Tesses::Framework::Http {
             if(security[0] != "Basic") return false;
             auto decoded = Crypto::Base64_Decode(security[0]);
             std::string decoded_str(decoded.begin(),decoded.end());
-            security = HttpUtils::SplitString(auth,":",2);
+            security = HttpUtils::SplitString(decoded_str,":",2);
             if(security.size() < 2) return false;
             user = security[0];
             pass = security[1];
