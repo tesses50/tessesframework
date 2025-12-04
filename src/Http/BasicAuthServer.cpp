@@ -18,7 +18,8 @@ namespace Tesses::Framework::Http {
             if(!GetCreds(ctx,user,pass) || !this->authorization(user,pass)) {
                 ctx.responseHeaders.SetValue("WWW-Authenticate",www_authenticate);
                 ctx.statusCode = Unauthorized;
-                return false;
+                ctx.WithMimeType("text/html").SendText("<h1>Unauthorized</h1>");
+                return true;
             }
 
             if(this->server)
