@@ -1,5 +1,6 @@
 #include "TessesFramework/Http/BasicAuthServer.hpp"
 #include "TessesFramework/Crypto/Crypto.hpp"
+#include <iostream>
 namespace Tesses::Framework::Http {
     
         BasicAuthServer::BasicAuthServer()
@@ -39,7 +40,9 @@ namespace Tesses::Framework::Http {
             auto security = HttpUtils::SplitString(auth," ",2);
             if(security.size() < 2) return false;
             if(security[0] != "Basic") return false;
-            auto decoded = Crypto::Base64_Decode(security[0]);
+
+            auto decoded = Crypto::Base64_Decode(security[1]);
+            
             std::string decoded_str(decoded.begin(),decoded.end());
             security = HttpUtils::SplitString(decoded_str,":",2);
             if(security.size() < 2) return false;

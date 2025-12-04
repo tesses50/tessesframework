@@ -343,6 +343,9 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 
          add_executable(runevent examples/runevent.cpp)
         target_link_libraries(runevent PUBLIC tessesframework)
+
+         add_executable(tests examples/tests.cpp)
+        target_link_libraries(tests PUBLIC tessesframework)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_APPS)

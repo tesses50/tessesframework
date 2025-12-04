@@ -10,6 +10,7 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #endif
+#include <iostream>
 namespace Tesses::Framework::Crypto
 {
     bool HaveCrypto()
@@ -40,14 +41,14 @@ namespace Tesses::Framework::Crypto
     std::vector<uint8_t> Base64_Decode(std::string str)
     {
         #if defined(TESSESFRAMEWORK_ENABLE_MBED)
-         size_t olen;
+         size_t olen=0;
 
          std::vector<uint8_t> data;
-        
 
         mbedtls_base64_decode(data.data(), 0, &olen, (const uint8_t*)str.data(),str.size());
+       
         data.resize(olen);
-                
+        
 
         if(mbedtls_base64_decode(data.data(), olen, &olen, (const uint8_t*)str.data(),str.size())==0)
         {   
