@@ -25,7 +25,7 @@ namespace Tesses::Framework::Http {
             if(this->server)
                 return this->server->Handle(ctx);
             ctx.statusCode = InternalServerError;
-            ctx.WithMimeType("text/html").SendText("<h1>Internal Server Error</h1>");
+            ctx.WithMimeType("text/html").SendText("<h1>Internal Server Error</h1>\r\n<h3>REASON: Internal server not set on Basic Auth</h3>");
             return true;
             
         }
