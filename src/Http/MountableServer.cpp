@@ -65,7 +65,7 @@ bool MountableServer::Handle(ServerContext& ctx)
         }
     }
     ctx.path=oldPath;
-    if(this->root != nullptr && this->root->Handle(ctx)) return true;
+    if(this->root && this->root->Handle(ctx)) return true;
     return false;
 }
 MountableServer::~MountableServer()

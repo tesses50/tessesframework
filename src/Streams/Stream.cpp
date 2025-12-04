@@ -1,4 +1,5 @@
 #include "TessesFramework/Streams/Stream.hpp"
+#include <iostream>
 
 namespace Tesses::Framework::Streams {
     int32_t Stream::ReadByte()
@@ -108,6 +109,7 @@ namespace Tesses::Framework::Streams {
             read = (size_t)std::min(len-offset,(uint64_t)buffSize);
 
             read = this->Read(buffer,read);
+
             strm->WriteBlock(buffer, read);
 
             offset += read;
@@ -122,8 +124,6 @@ namespace Tesses::Framework::Streams {
     {
         size_t read;
         uint8_t* buffer = new uint8_t[buffSize];
-       
-
         do {
             read = this->Read(buffer,buffSize);
             strm->WriteBlock(buffer, read);

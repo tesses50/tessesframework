@@ -515,8 +515,7 @@ namespace Tesses::Framework::Http
         {
             if(ct.find("multipart/form-data") != 0)
             {
-                std::cout << "Not form data" << std::endl;
-                return;
+                throw std::runtime_error("Not form data");
             }
             auto res = ct.find("boundary=");
             if(res == std::string::npos) return;
@@ -581,9 +580,10 @@ namespace Tesses::Framework::Http
         fflush(stdout);
         if(http == nullptr || server == nullptr) return;
         auto svr=this->server;
+        auto serverPort = this->server->GetPort();
         auto http = this->http;
         TF_LOG("Before Creating Thread");
-        thrd = new Threading::Thread([svr,http]()->void {
+        thrd = new Threading::Thread([svr,http,serverPort]()->void {
             while(TF_IsRunning())
             {
                 TF_LOG("after TF_IsRunning");
@@ -599,9 +599,9 @@ namespace Tesses::Framework::Http
                     return;
                 }
                 TF_LOG("Before entering socket thread");
-                Threading::Thread thrd2([sock,http,ip,port]()->void {
+                Threading::Thread thrd2([sock,http,ip,port,serverPort]()->void {
                     TF_LOG("In thread to process");
-                    HttpServer::Process(sock,http,ip,port,false);
+                    HttpServer::Process(sock,http,ip,port,serverPort,false);
                     TF_LOG("In thread after process");
                     
                 });
@@ -829,7 +829,8 @@ namespace Tesses::Framework::Http
         else
         {
             auto chunkedStream = this->OpenResponseStream();
-            this->strm->CopyTo(chunkedStream);
+
+            strm->CopyTo(chunkedStream);
             
             
         }
@@ -928,7 +929,7 @@ namespace Tesses::Framework::Http
         
         return *this;
     }
-    void HttpServer::Process(std::shared_ptr<Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port, bool encrypted)
+    void HttpServer::Process(std::shared_ptr<Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted)
     {
         TF_LOG("In process");
         while(true)
@@ -939,6 +940,7 @@ namespace Tesses::Framework::Http
             ctx.ip = ip;
             ctx.port = port;
             ctx.encrypted = encrypted;
+            ctx.serverPort = serverPort;
             try{
             bool firstLine = true;
             std::string line;
@@ -1093,4 +1095,7 @@ namespace Tesses::Framework::Http
         path2 = path2 / path;
         return path2.CollapseRelativeParents().ToString();
     }
+
+
 }
+

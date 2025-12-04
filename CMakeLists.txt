@@ -16,6 +16,8 @@ src/Http/HttpStream.cpp
 src/Http/ContentDisposition.cpp
 src/Http/WebSocket.cpp
 src/Http/ChangeableServer.cpp
+src/Http/BasicAuthServer.cpp
+src/Http/CGIServer.cpp
 src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
 src/Serialization/SQLite.cpp

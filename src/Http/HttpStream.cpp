@@ -124,6 +124,7 @@ namespace Tesses::Framework::Http
         {
             
             len = std::min((size_t)(this->length - this->position), len);
+            
             if(len > 0)
                 len = this->strm->Write(buff,len);
             this->position += len;
@@ -131,6 +132,7 @@ namespace Tesses::Framework::Http
         }
         else
         {
+            if(len == 0) return 0;
             if(this->http1_1)
             {
                 std::stringstream strm;

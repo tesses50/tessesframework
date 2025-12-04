@@ -129,9 +129,16 @@ namespace Tesses::Framework::Streams {
 
         #else
         struct ifaddrs *ifAddrStruct = NULL;
-        getifaddrs(&ifAddrStruct);
+        errno = 0;
+        if(getifaddrs(&ifAddrStruct) == -1)
+        {
 
+            freeifaddrs(ifAddrStruct);
+            return {};
+        }
         for (struct ifaddrs *ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+            if (ifa->ifa_addr == NULL)
+                   continue;
             if (ifa->ifa_addr->sa_family == AF_INET) { // IPv4
                 
                 ipConfig.push_back(std::pair<std::string,std::string>(ifa->ifa_name, StringifyIP(ifa->ifa_addr)));

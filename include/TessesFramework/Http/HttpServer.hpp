@@ -29,6 +29,7 @@ namespace Tesses::Framework::Http
             StatusCode statusCode;
             std::string ip;
             uint16_t port;
+            uint16_t serverPort;
             std::string version;
             bool encrypted;
             ServerContext(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
@@ -99,7 +100,7 @@ namespace Tesses::Framework::Http
             HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http);
             uint16_t GetPort();
             void StartAccepting();
-            static void Process(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port, bool encrypted);
+            static void Process(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted);
             ~HttpServer();
     };
 }   

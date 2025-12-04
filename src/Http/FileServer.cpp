@@ -51,7 +51,8 @@ namespace Tesses::Framework::Http
 
     bool FileServer::Handle(ServerContext& ctx)
     {
-        auto path = HttpUtils::UrlPathDecode(ctx.path);
+        auto path = ((VFSPath)HttpUtils::UrlPathDecode(ctx.path)).CollapseRelativeParents();
+        
         
         if(this->vfs->DirectoryExists(path))
         {

@@ -180,8 +180,9 @@ namespace Tesses::Framework::Platform {
                 #elif defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__) || !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
                 return 0;
                 #else
-                if(this->strm < 0 || this->eos && writing) return 0;
 
+                if(this->strm < 0 || this->eos && writing) return 0;
+                
                 auto r = read(this->strm,buff,sz);
                 if(r == -1) return 0;
                 if(r == 0 && sz != 0) { this->eos=true; return 0;}
