@@ -25,7 +25,9 @@ namespace Tesses::Framework::Http {
             if(this->server)
                 return this->server->Handle(ctx);
             ctx.statusCode = InternalServerError;
-            return false;
+            ctx.WithMimeType("text/html").SendText("<h1>Internal Server Error</h1>");
+            return true;
+            
         }
 
 
