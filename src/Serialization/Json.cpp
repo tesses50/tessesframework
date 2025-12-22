@@ -524,4 +524,378 @@ namespace Tesses::Framework::Serialization::Json
         return "";
     }
 
+    JArray Json::DocDecode(std::string str)
+    {
+        JArray data;
+        std::string builder = "";
+        bool inSplit = false;
+        size_t i=0;
+        auto flush_builder = [&]()->void{
+            if(builder.empty()) return;
+            data.Add(builder);
+            builder.clear();
+        };
+        auto consume_white_space = [&]()->void {
+            for(; i < str.size(); i++)
+            {
+                switch(str[i])
+                {
+                    case '\t':
+                    case '\r':
+                    case '\n':
+                    case ' ':
+                        break;
+                    default:
+                        return;
+                }
+            }
+        };
+        auto is_keyword_of_and_consume = [&](std::string text)->bool {
+            if(i + text.size() <= str.size()) {
+                if(str.substr(i,text.size()) == text)
+                {
+                    i+=text.size();
+                    return true;
+                }
+            }
+            return false;
+        };
+        std::function<JToken()> json_decode_token;
+        json_decode_token = [&]() -> JToken {
+            if(i >= str.size()) return JUndefined();
+            if(is_keyword_of_and_consume("true")) return true;
+            if(is_keyword_of_and_consume("false")) return false;
+            if(is_keyword_of_and_consume("null")) return nullptr;
+            
+            
+
+            if(str[i] == '[')
+            {
+                i++;
+                JArray array;
+                //array
+                while(i < str.size())
+                {
+                    consume_white_space();
+                    if(i < str.size() && str[i] ==',')
+                    {
+                        i++;
+                    }
+
+                    consume_white_space();
+                    if(i < str.size() && str[i] ==']')
+                    {
+                        i++;
+                        return array;
+                    }
+                    auto val = json_decode_token();
+                    array.Add(val);
+                }   
+                return array;
+            }
+            if(str[i] == '{')
+            {
+                //dictionary
+                i++;
+                JObject dict;
+                while(i < str.size())
+                {
+                    consume_white_space();
+                    if(i < str.size() && str[i] ==',')
+                    {
+                        i++;
+                    }
+
+                    consume_white_space();
+                    if(i < str.size() && str[i] =='}')
+                    {
+                        i++;
+                        return dict;
+                    }
+                    auto key = json_decode_token();
+                    consume_white_space();
+                    if(i < str.size() && str[i] ==':')
+                    {
+                        i++;
+                    }
+                    consume_white_space();
+                    auto value = json_decode_token();
+                    std::string keyStr;
+                    if(TryGetJToken(key,keyStr) && !std::holds_alternative<JUndefined>(value))
+                    {
+                        dict.SetValue(keyStr,value);   
+                    }
+                }   
+                return dict;
+            }
+            if(str[i] == '\"')
+            {
+                i++;
+                std::string str2 = "";
+                //string
+                for(; i < str.size() && str[i] != '\"'; i++)
+                    {
+                        if(str[i] == '\\')
+                        {
+                            i++;
+                            if(i < str.size())
+                            {
+                                if(str[i] == 'n')
+                                {
+                                    str2.push_back('\n');
+                                }
+                                else if(str[i] == 'r')
+                                {
+                                    str2.push_back('\r');
+                                }
+                                else if(str[i] == 't')
+                                {
+                                    str2.push_back('\t');
+                                }
+                                else if(str[i] == 'f')
+                                {
+                                    str2.push_back('\f');
+                                }
+                                else if(str[i] == 'b')
+                                {
+                                    str2.push_back('\b');
+                                }
+                                else if(str[i] == 'u')
+                                {
+                                    i++;
+                                    //we need to get four of these
+                                    uint16_t v = 0;
+                                    if(i + 4 <= str.size())
+                                    {
+                                        for(size_t i2 = 0; i2 < 4; i2++,i++)
+                                        {
+                                            v |= HttpUtils::HexToNibble(str[i]) << ((3-i2) * 4);
+                                        }
+                                        
+
+                                        uint32_t v2 = v;
+
+                                        if((v & 0xFC00) == 0xD800) 
+                                        {
+
+                                            v2 = (v & 0x03FF) << 10;
+                                            if(i + 6 <= str.size() && str.substr(i,2) == "\\u")
+                                            {
+                                                i+=2;
+                                                v=0;
+
+                                                for(size_t i2 = 0; i2 < 4; i2++, i++)
+                                                {
+                                                    v |= HttpUtils::HexToNibble(str[i]) << ((3-i2) * 4);
+                                                }
+                                                if((v & 0xFC00) != 0xDC00) 
+                                                {
+                                                    throw std::runtime_error("Not a lower utf-16 surrogate pair.");
+                                                }
+                                                
+
+                                                v2 |= (v & 0x03FF);
+
+                                                v2 += 0x10000;
+                                            }
+                                            else
+                                            {
+                                               
+                                                throw std::runtime_error("Could not read lower utf-16 surrogate pair.");
+                                            }
+                                            if(v2 <= 0x7F)
+                                            {
+                                                str2.push_back((char)v2);
+                                            }
+                                            else if(v2 >= 0x80 && v2 <= 0x7FF)
+                                            {
+                                                uint8_t high = 0b11000000 | ((v2 >> 6) & 0b00011111);
+                                                uint8_t low = 0b10000000 | (v2 & 0b00111111);
+                                                str2.push_back((char)high);
+                                                str2.push_back((char)low);
+                                            }
+                                            else if(v2 >= 0x800 && v2 <= 0xFFFF)
+                                            {
+                                                uint8_t highest = 0b11100000 | ((v2 >> 12) & 0b00001111);
+                                                uint8_t high = 0b10000000 | ((v2 >> 6) & 0b00111111);
+                                                uint8_t low = 0b10000000 | (v2 & 0b00111111);
+                                                str2.push_back((char)highest);
+                                                str2.push_back((char)high);
+                                                str2.push_back((char)low);
+                                            }
+                                            else if(v2 >= 0x010000 && v2 <= 0x10FFFF)
+                                            {
+                                                uint8_t highest = 0b11110000 | ((v2 >> 18) & 0b00000111);
+                                                uint8_t high = 0b10000000 | ((v2 >> 12) & 0b00111111);
+                                                uint8_t low = 0b10000000 | ((v2 >> 6) & 0b00111111);
+                                                uint8_t lowest = 0b10000000 | (v2 & 0b00111111);
+                                                str2.push_back((char)highest);
+                                                str2.push_back((char)high);
+                                                str2.push_back((char)low);
+                                                str2.push_back((char)lowest);
+                                            }
+                                        }
+                                        
+
+                                    }
+                                }
+                                else
+                                {
+                                        str2.push_back(str[i]);
+                                }
+                            }
+                            else break;
+                        }
+                        else
+                        {
+                                str2.push_back(str[i]);
+                        }
+                    }
+                i++;
+                return str2;
+            }
+            if((str[i] >= '0' && str[i] <= '9' ) || str[i] == '-')
+            {
+                //number
+                std::string noStr = "";
+                bool hasPt = false;
+                bool hasExponent=false;
+                bool hasNeg = false;
+                for(;i<str.size(); i++)
+                {
+                    if(str[i] == 'E' || str[i] == 'e') 
+                    {
+                        if(hasExponent) break;
+                        hasExponent=true;
+                        hasNeg=false;
+                        noStr += str[i];
+                    }
+                    else if(str[i] == '.')
+                    {
+                        if(hasPt) break;
+                        hasPt=true;
+                        noStr += str[i];
+                    }
+                    else if(str[i] == '-')
+                    {
+                        if(hasNeg) break;
+                        hasNeg = true;
+                        noStr += str[i];
+                    }
+                    else if(str[i] == '+')
+                    {
+                        if(!hasExponent) break;
+                        if(hasNeg) break;
+                        hasNeg=true;
+                        noStr += str[i];
+                    }
+                    else if(str[i] >= '0' && str[i] <= '9')
+                    {
+                        noStr += str[i];
+                    }
+                    else break;
+                }
+                if(noStr.find(".") != std::string::npos)
+                {
+                    return std::stod(noStr);
+                }
+                else
+                {
+                    return (int64_t)std::stoll(noStr);
+                }
+            }
+            return JUndefined();
+        };
+
+
+        for(; i < str.size(); i++)
+        {
+            if(inSplit)
+            {
+                consume_white_space();
+                std::string key = "";
+                for(; i < str.size() && str[i] != ' '; i++)
+                {
+                    key += str[i];
+                }
+                consume_white_space();
+                auto value = json_decode_token();
+                if(!std::holds_alternative<JUndefined>(value))
+                {
+                    data.Add(JObject({
+                        JOItem("key",key),
+                        JOItem("value", value)
+                    }));
+                }
+                inSplit=false;
+                i--;
+            }
+            else {
+                if(str[i] == '@')
+                {
+                    if(i+1<str.size() && str[i+1] == '@')
+                    {
+                        i++;
+                        builder.push_back('@');
+                        continue;
+                    }
+                    inSplit=true;
+                    flush_builder();
+                    continue;
+                }
+                builder.push_back(str[i]);
+            }
+        }
+        flush_builder();
+        return data;
+    }
+    std::string Json::DocEncode(JArray array,bool indent)
+    {
+        /*
+            The beautiful text
+            @name "John"
+            @list ["A","B"]
+            @number 42
+            @dict {"a": 5, "b": true}
+        */
+
+        /*
+            [
+                "\tThe beautiful text\n\t",
+                {
+                    "key": "name",
+                    "value": ["A","B"]
+                },
+                "\n\t",
+                {
+                    "key": "number",
+                    "value": 42
+                },
+                "\n\t",
+                {
+                    "key": "dict",
+                    "value": {"a": 5, "b": true}
+                },
+                "\n"
+            ]
+        */
+        std::string text = "";
+
+        for(auto& item : array.GetVector())
+        {
+            std::string str;
+            JObject obj;
+            if(TryGetJToken(item,str)) text += HttpUtils::Replace(str,"@","@@");
+            if(TryGetJToken(item,obj))
+            {
+                auto value = obj.GetValue("value");
+                if(obj.TryGetValueAsType("key", str) && !std::holds_alternative<JUndefined>(value))
+                {
+                    text += "@" + str + " " + Json::Encode(value,indent);
+                }
+            }
+        }
+
+        return text;
+    }
 }

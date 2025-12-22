@@ -362,6 +362,14 @@ add_executable(tfileserver apps/tfileserver.cpp)
 target_link_libraries(tfileserver PUBLIC tessesframework)
 install(TARGETS tfileserver DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
+add_executable(tdoc2json apps/tdoc2json.cpp)
+target_link_libraries(tdoc2json PUBLIC tessesframework)
+install(TARGETS tdoc2json DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tjson2doc apps/tjson2doc.cpp)
+target_link_libraries(tjson2doc PUBLIC tessesframework)
+install(TARGETS tjson2doc DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
 add_executable(tjsonpretty apps/tjsonpretty.cpp)
 target_link_libraries(tjsonpretty PUBLIC tessesframework)
 install(TARGETS tjsonpretty DESTINATION "${CMAKE_INSTALL_BINDIR}")

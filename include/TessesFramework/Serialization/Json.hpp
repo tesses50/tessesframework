@@ -90,5 +90,7 @@ namespace Tesses::Framework::Serialization::Json
         public:
             static JToken Decode(std::string str);
             static std::string Encode(JToken tkn, bool indent=true);
+            static JArray DocDecode(std::string str);
+            static std::string DocEncode(JArray array,bool indent=true);
     };
 }
