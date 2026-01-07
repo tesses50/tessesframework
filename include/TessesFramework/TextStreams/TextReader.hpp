@@ -5,12 +5,14 @@ namespace Tesses::Framework::TextStreams
 {
     class TextReader 
     {
+        bool eof=false;
         public:
             virtual bool Rewind();
             virtual bool ReadBlock(std::string& str,size_t sz)=0;
             int32_t ReadChar();
             std::string ReadLine();
             bool ReadLine(std::string& str);
+            bool ReadLineHttp(std::string& str);
             void ReadAllLines(std::vector<std::string>& lines);
             std::string ReadToEnd();
             void ReadToEnd(std::string& str);

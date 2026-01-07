@@ -10,7 +10,7 @@ namespace Tesses::Framework::TextStreams
     {
         std::string txt;
         this->ReadBlock(txt,1);
-        if(txt.empty()) return -1;
+        if(txt.empty()) { eof=true; return -1;}
         return (uint8_t)txt[0];
     }
     std::string TextReader::ReadLine()
@@ -19,13 +19,14 @@ namespace Tesses::Framework::TextStreams
         ReadLine(str);
         return str;
     }
-    bool TextReader::ReadLine(std::string& str)
+    bool TextReader::ReadLineHttp(std::string& str)
     {
+        if(eof) return false;
         bool ret = false;
         int32_t r = -1;
         do {
             r = ReadChar();
-            if(r == -1)  break;
+            if(r == -1)  {break;}
             if(r == '\r') continue;
             if(r == '\n') break;
             str.push_back((char)(uint8_t)r);
@@ -33,8 +34,25 @@ namespace Tesses::Framework::TextStreams
         } while(r != -1);
         return ret;
     }
+    bool TextReader::ReadLine(std::string& str)
+    {
+
+        if(eof) return false;
+        bool ret = false;
+        int32_t r = -1;
+        do {
+            r = ReadChar();
+            if(r == -1)  break;
+            if(r == '\r') continue;
+            if(r == '\n') return true;
+            str.push_back((char)(uint8_t)r);
+            ret = true;
+        } while(r != -1);
+        return ret;
+    }
     void TextReader::ReadAllLines(std::vector<std::string>& lines)
     {
+        if(eof) return;
         int32_t r = -1;
         std::string builder;
         do {
@@ -60,10 +78,14 @@ namespace Tesses::Framework::TextStreams
 
     void TextReader::ReadToEnd(std::string& str)
     {
+        
+        if(eof) return;
         while(ReadBlock(str,1024));
     }
     void TextReader::CopyTo(TextWriter& writer, size_t buffSz)
     {
+
+        if(eof) return;
         std::string str = {};
         while(ReadBlock(str,buffSz))
         {

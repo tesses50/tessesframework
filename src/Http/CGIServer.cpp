@@ -104,7 +104,7 @@ namespace Tesses::Framework::Http {
             auto stout = p.GetStdoutStream();
             Tesses::Framework::TextStreams::StreamReader reader(stout);
             std::string line;
-            while(reader.ReadLine(line))
+            while(reader.ReadLineHttp(line))
             {
                 auto v = HttpUtils::SplitString(line,": ", 2);
                 if(v.size() == 2)

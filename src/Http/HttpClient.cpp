@@ -159,7 +159,7 @@ namespace Tesses::Framework::Http
         this->handleStrm=nullptr;
         StreamReader reader(strm);
             std::string statusLine;
-            if(!reader.ReadLine(statusLine)) return;
+            if(!reader.ReadLineHttp(statusLine)) return;
             auto statusLinesPart = HttpUtils::SplitString(statusLine," ",3);
             if(statusLinesPart.size() >= 2)
             {
@@ -167,7 +167,7 @@ namespace Tesses::Framework::Http
                 this->statusCode = (StatusCode)std::stoi(statusLinesPart[1]);
             }
             std::string line;
-            while(reader.ReadLine(line))
+            while(reader.ReadLineHttp(line))
             {
                 if(line.empty()) break;
                 auto v = HttpUtils::SplitString(line,": ", 2);
@@ -225,7 +225,7 @@ namespace Tesses::Framework::Http
 
             StreamReader reader(strm);
             std::string statusLine;
-            if(!reader.ReadLine(statusLine)) break;
+            if(!reader.ReadLineHttp(statusLine)) break;
             auto statusLinesPart = HttpUtils::SplitString(statusLine," ",3);
             if(statusLinesPart.size() >= 2)
             {
@@ -233,7 +233,7 @@ namespace Tesses::Framework::Http
                 this->statusCode = (StatusCode)std::stoi(statusLinesPart[1]);
             }
             std::string line;
-            while(reader.ReadLine(line))
+            while(reader.ReadLineHttp(line))
             {
                 if(line.empty()) break;
                 auto v = HttpUtils::SplitString(line,": ", 2);

@@ -468,7 +468,7 @@ namespace Tesses::Framework::Http
         HttpDictionary req;
         StreamReader reader(ctx->GetStream());
         std::string line;
-        while(reader.ReadLine(line))
+        while(reader.ReadLineHttp(line))
         {
             auto v = HttpUtils::SplitString(line,": ", 2);    
             if(v.size() == 2)
@@ -944,7 +944,7 @@ namespace Tesses::Framework::Http
             try{
             bool firstLine = true;
             std::string line;
-            while(reader.ReadLine(line))
+            while(reader.ReadLineHttp(line))
             {
                  if(firstLine)
                 {
