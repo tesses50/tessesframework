@@ -44,5 +44,5 @@
 #include "Platform/Process.hpp"
 #include "Serialization/BitConverter.hpp"
 #include "Args.hpp"
-#include "BitTorrent/TorrentManager.hpp"
+#include "BitTorrent/TorrentFile.hpp"
 #include "Random.hpp"

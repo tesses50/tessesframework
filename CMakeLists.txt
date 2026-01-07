@@ -62,7 +62,6 @@ src/TF_Init.cpp
 src/HiddenField.cpp
 src/BitTorrent/TorrentFile.cpp
 src/BitTorrent/TorrentStream.cpp
-src/BitTorrent/TorrentManager.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -404,12 +403,6 @@ add_executable(tclearwebseed apps/tclearwebseed.cpp)
 
 target_link_libraries(tclearwebseed PUBLIC tessesframework)
 install(TARGETS tclearwebseed DESTINATION "${CMAKE_INSTALL_BINDIR}")
-
-add_executable(tdownloadsingletorrent apps/tdownloadsingletorrent.cpp)
-
-target_link_libraries(tdownloadsingletorrent PUBLIC tessesframework)
-install(TARGETS tdownloadsingletorrent DESTINATION "${CMAKE_INSTALL_BINDIR}")
-
 
 add_executable(trng apps/trng.cpp)
 
