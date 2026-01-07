@@ -182,7 +182,6 @@ namespace Tesses::Framework
     }
     void TF_Init()
     {
-        Tesses::Framework::Filesystem::LocalFS = std::make_shared<Tesses::Framework::Filesystem::LocalFilesystem>();
         #if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
            sqlite3_initialize();
             #if defined(GEKKO) || defined(__SWITCH__) || defined(__PS2__)
@@ -303,4 +302,41 @@ if (iResult != 0) {
         #endif
     }
     #endif
+
+    static std::string TF_FileSizeBin(uint64_t bytes)
+    {
+        if(bytes == 1) return "1 Byte";
+        if(bytes < 1024ULL) return std::to_string(bytes) + " Bytes";
+        if(bytes < 1024ULL*1024ULL) return std::to_string(bytes / 1024ULL) + " kiB";
+        if(bytes < 1024ULL*1024ULL*1024ULL) return std::to_string(bytes / (1024ULL*1024ULL)) + " MiB";
+        if(bytes < 1024ULL*1024ULL*1024ULL*1024ULL) return std::to_string(bytes / (1024ULL*1024ULL*1024ULL)) + " GiB";
+        if(bytes < 1024ULL*1024ULL*1024ULL*1024ULL*1024ULL) return std::to_string(bytes / (1024ULL*1024ULL*1024ULL*1024ULL)) + " TiB";
+        return std::to_string(bytes / (1024ULL*1024ULL*1024ULL*1024ULL*1024ULL)) + " PiB";
+    }
+    static std::string TF_FileSizeDec(uint64_t bytes)
+    {
+        if(bytes == 1) return "1 Byte";
+        if(bytes < 1000ULL) return std::to_string(bytes) + " Bytes";
+        if(bytes < 1000ULL*1000ULL) return std::to_string(bytes / 1000ULL) + " kB";
+        if(bytes < 1000ULL*1000ULL*1000ULL) return std::to_string(bytes / (1000ULL*1000ULL)) + " MB";
+        if(bytes < 1000ULL*1000ULL*1000ULL*1000ULL) return std::to_string(bytes / (1000ULL*1000ULL*1000ULL)) + " GB";
+        if(bytes < 1000ULL*1000ULL*1000ULL*1000ULL*1000ULL) return std::to_string(bytes / (1000ULL*1000ULL*1000ULL*1000ULL)) + " TB";
+        return std::to_string(bytes / (1000ULL*1000ULL*1000ULL*1000ULL*1000ULL)) + " PB";
+    }
+    std::string TF_FileSize(uint64_t bytes, bool usesBin)
+    {
+        return usesBin ? TF_FileSizeBin(bytes) : TF_FileSizeDec(bytes);
+    }
+
+    std::optional<std::string> _argv0=std::nullopt;
+
+    void TF_AllowPortable(std::string argv0)
+    {
+        _argv0 = argv0;
+    }
+
+    std::optional<std::string> TF_GetCommandName()
+    {
+        return _argv0;
+    }
 }

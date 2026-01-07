@@ -9,9 +9,7 @@ namespace Tesses::Framework::Serialization::Json
 {
     class JArray;
     class JObject;
-    class JUndefined {
-        public:
-    };
+    using JUndefined = std::monostate;
 
     using JToken = std::variant<JUndefined,std::nullptr_t,bool,int64_t,double,std::string, JArray, JObject>;
 

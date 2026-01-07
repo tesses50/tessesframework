@@ -312,6 +312,34 @@ namespace Tesses::Framework::Filesystem
             vfs->DeleteFile(destPath);
        
     }
+     void MountableFilesystem::Lock(VFSPath path)
+    {
+        path = path.CollapseRelativeParents();
+       
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        std::shared_ptr<VFS> vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+
+        if(vfs != nullptr)
+            vfs->Lock(destPath);
+       
+    }
+     void MountableFilesystem::Unlock(VFSPath path)
+    {
+        path = path.CollapseRelativeParents();
+       
+        VFSPath destRoot;
+        VFSPath destPath = path;
+        std::shared_ptr<VFS> vfs = root;
+        
+        GetFS(path, destRoot, destPath, vfs);
+
+        if(vfs != nullptr)
+            vfs->Unlock(destPath);
+       
+    }
       void MountableFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
 

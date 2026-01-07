@@ -520,4 +520,12 @@ namespace Tesses::Framework::Filesystem
     void VFS::Close() {
         
     }
+    void VFS::Lock(VFSPath path)
+    {
+
+    }
+    void VFS::Unlock(VFSPath path)
+    {
+        
+    }
 }

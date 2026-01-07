@@ -57,5 +57,7 @@ namespace Tesses::Framework::Filesystem
 
             void Chmod(VFSPath path, uint32_t mode);
 
+            void Lock(VFSPath path);
+            void Unlock(VFSPath path);
     };
 }

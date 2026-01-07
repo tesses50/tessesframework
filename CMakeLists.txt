@@ -5,6 +5,7 @@ project(TessesFramework VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND TESSESFRAMEWORK_SOURCE 
+src/Random.cpp
 src/Date/Date.cpp
 src/Http/FileServer.cpp
 src/Http/MountableServer.cpp
@@ -22,6 +23,7 @@ src/Mail/Smtp.cpp
 src/Serialization/Json.cpp
 src/Serialization/SQLite.cpp
 src/Serialization/BitConverter.cpp
+src/Serialization/Bencode.cpp
 src/Platform/Environment.cpp
 src/Platform/Process.cpp
 src/Streams/FileStream.cpp
@@ -58,6 +60,9 @@ src/Crypto/MbedTLS/Crypto.cpp
 src/Args.cpp
 src/TF_Init.cpp
 src/HiddenField.cpp
+src/BitTorrent/TorrentFile.cpp
+src/BitTorrent/TorrentStream.cpp
+src/BitTorrent/TorrentManager.cpp
 )
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -384,6 +389,32 @@ install(TARGETS ttime DESTINATION "${CMAKE_INSTALL_BINDIR}")
 add_executable(tshell apps/tshell.cpp)
 target_link_libraries(tshell PUBLIC tessesframework)
 install(TARGETS tshell DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tprinttorrent apps/printtorrent.cpp)
+
+target_link_libraries(tprinttorrent PUBLIC tessesframework)
+install(TARGETS tprinttorrent DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(ttorrentcreate apps/ttorrentcreate.cpp)
+
+target_link_libraries(ttorrentcreate PUBLIC tessesframework)
+install(TARGETS ttorrentcreate DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tclearwebseed apps/tclearwebseed.cpp)
+
+target_link_libraries(tclearwebseed PUBLIC tessesframework)
+install(TARGETS tclearwebseed DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tdownloadsingletorrent apps/tdownloadsingletorrent.cpp)
+
+target_link_libraries(tdownloadsingletorrent PUBLIC tessesframework)
+install(TARGETS tdownloadsingletorrent DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+
+add_executable(trng apps/trng.cpp)
+
+target_link_libraries(trng PUBLIC tessesframework)
+install(TARGETS trng DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
 include(InstallRequiredSystemLibraries)

@@ -34,6 +34,7 @@ namespace Tesses::Framework::Streams
         bool success;
         bool endOfStream;
         public:
+        bool DataAvailable(int timeout=0);
         bool EndOfStream();
         bool CanRead();
         bool CanWrite();

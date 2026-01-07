@@ -3,4 +3,8 @@
 #undef DeleteFile
 #undef MoveFile
 #undef MoveDirectory
-            
+/*
+    Just in case
+*/
+#undef Lock
+#undef Unlock

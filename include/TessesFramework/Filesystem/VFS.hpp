@@ -153,6 +153,9 @@ namespace Tesses::Framework::Filesystem
 
             virtual void Chmod(VFSPath path, uint32_t mode);
 
+            virtual void Lock(VFSPath path);
+            virtual void Unlock(VFSPath path);
+
             virtual ~VFS();
 
             virtual void Close();

@@ -965,5 +965,43 @@ namespace Tesses::Framework::Http {
         if(!TryGetFirst(key,val)) return false;
         return val == "true" || val == "on";
     }
+    std::string HttpUtils::BytesToHex(const std::vector<uint8_t>& data)
+    {
+        std::string text;
+        BytesToHex(text,data);
+        return text;
+    }
+    void HttpUtils::BytesToHex(std::string& text,const std::vector<uint8_t>& data)
+    {
+        if(data.empty()) {
+            text.clear();
+            return;
+        }
+        text.resize(data.size()*2);
+        for(size_t i = 0; i < data.size(); i++)
+        {
+            text[i*2] = NibbleToHex(data[i] >> 4);
+            text[i*2+1] += NibbleToHex(data[i]);
+        }
+    }
+    std::vector<uint8_t> HttpUtils::HexToBytes(const std::string& text)
+    {
+        std::vector<uint8_t> data;
+        HexToBytes(data,text);
+        return data;
+    }
+    void HttpUtils::HexToBytes(std::vector<uint8_t>& data,const std::string& text)
+    {
+        if(text.empty()) { data.clear();  return;}
+        if(text.size() % 2 != 0) throw std::runtime_error("Text length is not even");
+        
     
+        data.resize(text.size()/2);
+        for(size_t i = 0; i < text.size(); i+=2)
+        {
+            uint8_t b = HexToNibble(text[i]) << 4;
+            b |= HexToNibble(text[i+1]);
+            data[i/2] = b;
+        }
+    }
 }

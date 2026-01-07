@@ -109,6 +109,16 @@ namespace Tesses::Framework::Filesystem {
         if(this->vfs == nullptr) return;
         this->vfs->DeleteFile(path);
     }
+    void TempFS::Lock(VFSPath path)
+    {
+        if(this->vfs == nullptr) return;
+        this->vfs->Lock(path);
+    }
+    void TempFS::Unlock(VFSPath path)
+    {
+        if(this->vfs == nullptr) return;
+        this->vfs->Unlock(path);
+    }
     void TempFS::CreateSymlink(VFSPath existingFile, VFSPath symlinkFile)
     {
         if(this->vfs == nullptr) return;
@@ -202,4 +212,5 @@ namespace Tesses::Framework::Filesystem {
     {
         Close();
     }
+    
 }

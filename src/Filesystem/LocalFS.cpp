@@ -230,7 +230,27 @@ namespace Tesses::Framework::Filesystem
         #endif
     }
 
-    std::shared_ptr<LocalFilesystem> LocalFS;
+    
+    void LocalFilesystem::Lock(VFSPath path)
+    {
+        auto p2 = VFSPathToSystem(path);
+        const char* fopenPath = p2.c_str();
+        while(true)
+        {
+            FILE* fp = fopen(fopenPath,"wx");
+            if(fp) {
+                fclose(fp);
+                break;
+            }
+        }
+    }
+    void LocalFilesystem::Unlock(VFSPath path)
+    {
+        std::error_code error;
+        std::filesystem::remove(VFSPathToSystem(path),error);
+    }
+
+    std::shared_ptr<LocalFilesystem> LocalFS = std::make_shared<LocalFilesystem>();
 }
 
 // C:/Users/Jim/Joel

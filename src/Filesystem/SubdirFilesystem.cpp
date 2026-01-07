@@ -87,6 +87,15 @@ namespace Tesses::Framework::Filesystem
     {
         this->parent->DeleteFile(ToParent(path));
     }
+    void SubdirFilesystem::Lock(VFSPath path)
+    {
+        this->parent->Lock(ToParent(path));
+    }
+
+    void SubdirFilesystem::Unlock(VFSPath path)
+    {
+        this->parent->Unlock(ToParent(path));
+    }
     void SubdirFilesystem::CreateSymlink(VFSPath existingFile, VFSPath symlinkFile)
     {
         this->parent->CreateSymlink(ToParent(existingFile),ToParent(symlinkFile));

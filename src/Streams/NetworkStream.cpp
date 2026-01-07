@@ -15,6 +15,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #include <network.h>
 #define NETWORK_GETSOCKNAME net_getsockname
 #define NETWORK_RECV net_recv
+#define NETWORK_POLL net_poll
 #define sockaddr_storage sockaddr_in
 #error "Not supported yet"
 #else
@@ -46,6 +47,7 @@ extern "C" {
 #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
 #include <sys/un.h>
 #endif
+#include <sys/poll.h>
 }
 #endif
 #if defined(GEKKO)
@@ -68,10 +70,13 @@ extern "C" uint32_t if_config( char *local_ip, char *netmask, char *gateway,bool
 #define NETWORK_GETADDRINFO getaddrinfo
 #define NETWORK_FREEADDRINFO freeaddrinfo
 #define NETWORK_GETSOCKNAME getsockname
+
 #if defined(_WIN32)
 #define NETWORK_CLOSE closesocket
+#define NETWORK_POLL WSAPoll
 #else
 #define NETWORK_CLOSE close
+#define NETWORK_POLL poll
 #endif
 #endif
 
@@ -288,6 +293,28 @@ namespace Tesses::Framework::Streams {
         uint32_t addr;
         uint8_t addr_parts[4];
     } my_addr_t;
+    
+    bool NetworkStream::DataAvailable(int timeout)
+    {
+        pollfd fd;
+        fd.events = POLLIN;
+        fd.fd = this->sock;
+        int res= NETWORK_POLL(&fd,1,timeout);
+        if (res == -1) {
+            if(errno == EINTR) return false;
+            throw std::runtime_error("poll() failed");
+        }
+        else if(res == 0) return false;
+        else if(fd.revents & POLLIN)
+            return true;
+        else if(fd.revents & (POLLERR | POLLNVAL))
+        {
+            this->endOfStream=true;
+            return false;
+        }
+        return false;
+    }
+   
     NetworkStream::NetworkStream(std::string unixPath,bool isServer)
     {
         this->endOfStream=false;

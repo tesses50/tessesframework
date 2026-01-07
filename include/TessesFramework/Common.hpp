@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 #include "Threading/Mutex.hpp"
+#include <optional>
    
 namespace Tesses::Framework
 {
@@ -88,8 +89,10 @@ namespace Tesses::Framework
     };
 
     extern EventList<uint64_t> OnItteraton;
+    std::optional<std::string> TF_GetCommandName();
     void TF_Init();
     void TF_InitWithConsole();
+    void TF_AllowPortable(std::string argv0);
     void TF_ConnectToSelf(uint16_t port);
     void TF_InitEventLoop();
     void TF_RunEventLoop();
@@ -101,6 +104,7 @@ namespace Tesses::Framework
     void TF_SetConsoleEventsEnabled(bool flag);
     void TF_InitConsole();
     void TF_Invoke(std::function<void()> cb);
+    std::string TF_FileSize(uint64_t bytes, bool usesBin=true);
    
     #if defined(TESSESFRAMEWORK_LOGTOFILE)
     void TF_Log(std::string dataToLog);
