@@ -538,7 +538,10 @@ namespace Tesses::Framework::Streams {
     TcpServer::~TcpServer()
     {
         if(this->valid && this->owns)
-            Close();
+        {
+            NETWORK_CLOSE(this->sock);
+        }
+        this->valid=false;
     }
     void TcpServer::Close()
     {
@@ -818,7 +821,9 @@ namespace Tesses::Framework::Streams {
     }
     NetworkStream::~NetworkStream()
     {
-        Close();
+        if(this->owns && this->success)
+            NETWORK_CLOSE(this->sock);
+        this->success=0;
     }
     void NetworkStream::SetNoDelay(bool noDelay)
     {
@@ -944,6 +949,9 @@ uint16_t NetworkStream::GetPort()
 uint16_t TcpServer::GetPort()
 {
     return 0;
+}
+bool NetworkStream::DataAvailable(int to){
+    return false;
 }
 }
 #endif

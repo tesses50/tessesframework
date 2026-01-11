@@ -2,6 +2,9 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/Lazy.hpp"
 #include "TessesFramework/Filesystem/LocalFS.hpp"
+#include "TessesFramework/Platform/Environment.hpp"
+#include "TessesFramework/Filesystem/FSHelpers.hpp"
+#include "TessesFramework/Serialization/Json.hpp"
 #include <atomic>
 #include <csignal>
 #include <iostream>
@@ -329,10 +332,390 @@ if (iResult != 0) {
     }
 
     std::optional<std::string> _argv0=std::nullopt;
+    
 
     void TF_AllowPortable(std::string argv0)
     {
+         using namespace Tesses::Framework::Serialization::Json;
+            using namespace Tesses::Framework::Platform::Environment;
+            using namespace Tesses::Framework::Filesystem;
         _argv0 = argv0;
+        VFSPath path(argv0);
+        auto realPath=path.MakeAbsolute();
+        auto dir = realPath.GetParent();
+        auto portable=dir / "portable.json";
+        if(LocalFS->FileExists(portable))
+        {
+           
+            std::string portable_str;
+            Helpers::ReadAllText(LocalFS,portable, portable_str);
+            auto jsonObj=Json::Decode(portable_str);
+            JObject dict;
+            JObject dict2;
+            if(TryGetJToken(jsonObj,dict) && dict.TryGetValueAsType("portable_data",dict2))
+            {
+
+                if(dict.TryGetValueAsType("portable_type", portable_str))
+                {
+                    if(portable_str == "PortableApps.com")
+                    {
+                        //do the special stuffs for PortableApps.com based apps
+                        auto paf_documents = GetVariable("PortableApps.comDocuments");
+                        auto paf_music = GetVariable("PortableApps.comMusic");
+                        auto paf_pictures = GetVariable("PortableApps.comPictures");
+                        auto paf_videos = GetVariable("PortableApps.comVideos");
+                        auto paf_data = GetVariable("PAL:DataDir");
+
+
+
+                        bool bV=false;
+                        if(!dict2.TryGetValueAsType("system_documents",bV) || !bV)
+                        {
+                            if(paf_documents)
+                            {
+                                portable_config.documents = LocalFS->SystemToVFSPath(*paf_documents);
+                            }
+                        }
+                        if(!dict2.TryGetValueAsType("system_pictures",bV) || !bV)
+                        {
+                            if(paf_pictures)
+                            {
+                                portable_config.pictures = LocalFS->SystemToVFSPath(*paf_pictures);
+                            }
+                        }
+                        if(!dict2.TryGetValueAsType("system_videos",bV) || !bV)
+                        {
+                            if(paf_videos)
+                            {
+                                portable_config.videos = LocalFS->SystemToVFSPath(*paf_videos);
+                            }
+                        }
+                        if(!dict2.TryGetValueAsType("system_music",bV) || !bV)
+                        {
+                            if(paf_music)
+                            {
+                                portable_config.music = LocalFS->SystemToVFSPath(*paf_music);
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("user",portable_str))
+                        {
+                            if(portable_str == "app")
+                            {
+                                if(paf_data)
+                                    portable_config.user = LocalFS->SystemToVFSPath(*paf_data) / "TF_User";
+                            } 
+                            else if(portable_str == "documents")
+                            {
+                                if(paf_documents)
+                                    portable_config.user = LocalFS->SystemToVFSPath(*paf_documents) / "TF_User";
+                            }
+                        }
+                         if(dict2.TryGetValueAsType("desktop",portable_str))
+                        {
+                            if(portable_str == "tf_user")
+                            {
+                                if(portable_config.user)
+                                    portable_config.desktop = *(portable_config.user) / "Desktop";
+                            } 
+                            else if(portable_str == "documents")
+                            {
+                                if(paf_documents)
+                                    portable_config.desktop = LocalFS->SystemToVFSPath(*paf_documents) / "Desktop";
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("downloads",portable_str))
+                        {
+                            if(portable_str == "tf_user")
+                            {
+                                if(portable_config.user)
+                                    portable_config.downloads = *(portable_config.user) / "Downloads";
+                            } 
+                            else if(portable_str == "documents")
+                            {
+                                if(paf_documents)
+                                    portable_config.downloads = LocalFS->SystemToVFSPath(*paf_documents) / "Downloads";
+                            }
+                        }
+                        if(!dict2.TryGetValueAsType("system_config",bV) || !bV)
+                        {
+                            if(portable_config.user)
+                                portable_config.config = *(portable_config.user) / "Config";
+                        }
+                        if(!dict2.TryGetValueAsType("system_cache",bV) || !bV)
+                        {
+                            if(portable_config.user)
+                                portable_config.cache = *(portable_config.user) / "Cache";
+                        }
+                        if(!dict2.TryGetValueAsType("system_data",bV) || !bV)
+                        {
+                            if(portable_config.user)
+                                portable_config.data = *(portable_config.user) / "Data";
+                        }
+                        if(!dict2.TryGetValueAsType("system_state",bV) || !bV)
+                        {
+                            if(portable_config.user)
+                                portable_config.state = *(portable_config.user) / "State";
+                        }
+                        if(!dict2.TryGetValueAsType("system_temp",bV) || !bV)
+                        {
+                            if(portable_config.user)
+                                portable_config.temp = *(portable_config.user) / "Temp";
+                        }
+                    }
+                    else if(portable_str == "relative")
+                    {
+                        if(dict2.TryGetValueAsType("user",portable_str))
+                        {
+                            if(portable_str != "system")   
+                            {
+                                auto userDir = dir / portable_str;
+                                portable_config.user = userDir.CollapseRelativeParents();
+
+                                
+                            }
+
+
+
+                        }
+                        
+                        if(dict2.TryGetValueAsType("documents", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.documents = *(portable_config.user) / "Documents";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.documents = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("downloads", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.downloads = *(portable_config.user) / "Downloads";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.downloads = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("desktop", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.desktop = *(portable_config.user) / "Desktop";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.desktop = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("pictures", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.pictures = *(portable_config.user) / "Pictures";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.pictures = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("videos", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.videos = *(portable_config.user) / "Videos";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.videos = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("music", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.music = *(portable_config.user) / "Music";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.music = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("config", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.config = *(portable_config.user) / "Config";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.config = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("cache", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.cache = *(portable_config.user) / "Cache";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.cache = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("data", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.data = *(portable_config.user) / "Data";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.data = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("state", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.state = *(portable_config.user) / "State";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.state = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("temp", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.temp = *(portable_config.user) / "Temp";
+                                    }
+                                }
+                                else 
+                                {
+                                    auto userDir = dir / portable_str;
+                                    portable_config.temp = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    }
+                }
+            }
+        }
     }
 
     std::optional<std::string> TF_GetCommandName()

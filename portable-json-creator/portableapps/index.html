@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TessesFramework portable.json creator</title>
+</head>
+<body>
+    <h1>TessesFramework portable.json creator</h1>
+    Don&apos;t want PortableApps.com click <a href="../relative/">here</a> for just having directories relative to application
+
+    <fieldset>
+        <legend>Configuration</legend>
+        
+        <label for="user">TF_User: </label>
+        <select id="user">
+            <option value="system">System&apos;s %USERPROFILE%</option>
+            <option value="app">MyApp\Data\TF_User (tied to app)</option>
+            <option value="documents" selected>PAF\Documents\TF_User (shared between all tessesframework portable apps)</option>
+        </select>
+
+        <br>
+        <label for="desktop">Desktop: </label>
+        <select id="desktop">
+            <option value="system">System&apos;s</option>
+            <option value="tf_user">TF_User\Desktop</option>
+            <option value="documents" selected>PAF\Documents\Desktop</option>
+        </select>
+         <br>
+        <label for="downloads">Downloads: </label>
+        <select id="downloads">
+            <option value="system">System&apos;s</option>
+            <option value="tf_user">TF_User\Downloads</option>
+            <option value="documents" selected>PAF\Documents\Downloads</option>
+        </select>
+        <br>
+        <input type="checkbox" id="system_documents">
+        <label for="system_documents">Use System&apos;s Documents Folder</label>
+        <br>
+        <input type="checkbox" id="system_pictures">
+        <label for="system_pictures">Use System&apos;s Pictures Folder</label>
+        <br>
+        <input type="checkbox" id="system_videos">
+        <label for="system_videos">Use System&apos;s Videos Folder</label>
+        <br>
+        <input type="checkbox" id="system_music">
+        <label for="system_music">Use System&apos;s Music Folder</label>
+        <br>
+        <input type="checkbox" id="system_config">
+        <label for="system_config">Use System&apos;s Config Folder</label>
+        <br>
+        <input type="checkbox" id="system_cache">
+        <label for="system_cache">Use System&apos;s Cache Folder</label>
+        <br>
+        <input type="checkbox" id="system_data">
+        <label for="system_data">Use System&apos;s Data Folder</label>
+        <br>
+        <input type="checkbox" id="system_state">
+        <label for="system_state">Use System&apos;s State Folder</label>
+
+        <br>
+         <input type="checkbox" id="system_temp" checked>
+        <label for="system_temp">Use System&apos;s Temp Folder</label>
+
+    </fieldset>
+    <button id="saveBtn">Save</button>
+    <script>
+        (function(){
+            saveBtn.onclick = ()=>{
+                const dict = {
+                    portable_type: "PortableApps.com",
+                    portable_data: {
+                        user: user.value,
+                        desktop: desktop.value,
+                        downloads: downloads.value,
+
+                        system_documents: system_documents.checked,
+                        system_pictures: system_pictures.checked,
+                        system_videos: system_videos.checked,
+                        system_music: system_music.checked,
+                        system_config: system_config.checked,
+                        system_cache: system_cache.checked,
+                        system_data: system_data.checked,
+                        system_state: system_state.checked,
+                        system_temp: system_temp.checked
+                    }
+                };
+
+                const json = JSON.stringify(dict,null,'\t');
+                const a = document.createElement('a');
+                a.href = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
+                a.download="portable.json";
+                a.click();
+            };
+        })();
+    </script>
+</body>
+</html>

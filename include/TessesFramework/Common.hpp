@@ -13,6 +13,7 @@
    
 namespace Tesses::Framework
 {
+    
         template<typename...TArgs>
     class Event {
         public:
@@ -90,6 +91,7 @@ namespace Tesses::Framework
 
     extern EventList<uint64_t> OnItteraton;
     std::optional<std::string> TF_GetCommandName();
+
     void TF_Init();
     void TF_InitWithConsole();
     void TF_AllowPortable(std::string argv0);

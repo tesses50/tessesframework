@@ -1,0 +1,5 @@
+services:
+  portable-json:
+    image: onedev.site.tesses.net/tesses-framework/portable-json-creator:latest
+    ports:
+      - "4999:4999"

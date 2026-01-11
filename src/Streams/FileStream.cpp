@@ -104,7 +104,12 @@ namespace Tesses::Framework::Streams
     }
     FileStream::~FileStream()
     {   
-        Close();
+        if(!f) return;
+        if(this->owns)
+        {
+            fclose(this->f);
+            f=NULL;
+        }
     }
     void FileStream::Close()
     {

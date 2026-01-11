@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TessesFramework portable.json creator</title>
+</head>
+<body>
+    <h1>TessesFramework portable.json creator</h1>
+    Want PortableApps.com click <a href="../portableapps/">here</a>
+    <br>system: don&apos;t make this folder portable, default: the default value (not portable if TF_User directory is &quot;system&quot;, otherwise it&apos;s a subdirectory in the TF_User directory), anything else is relative to executable directory (for all of these)
+    <br>Please use &quot;/&quot; and not &quot;\&quot; even if on Windows
+    <fieldset>
+        <legend>Configuration</legend>
+        <label for="user">TF_User: </label>
+        <datalist id="user_datalist">
+            <option>system</option>
+            <option>../TF_User</option>
+        </datalist>
+        <input type="text" id="user" value="../TF_User" list="user_datalist">
+        
+        <br>
+        <label for="documents">Documents: </label>
+        <datalist id="documents_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Documents</option>
+        </datalist>
+        <input type="text" id="documents" value="default" list="documents_datalist">
+
+         <br>
+        <label for="downloads">Downloads: </label>
+        <datalist id="downloads_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Downloads</option>
+        </datalist>
+        <input type="text" id="downloads" value="default" list="downloads_datalist">
+
+         <br>
+        <label for="desktop">Desktop: </label>
+        <datalist id="desktop_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Desktop</option>
+        </datalist>
+        <input type="text" id="desktop" value="default" list="desktop_datalist">
+
+
+
+        <br>
+        <label for="pictures">Pictures: </label>
+        <datalist id="pictures_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Pictures</option>
+        </datalist>
+        <input type="text" id="pictures" value="default" list="pictures_datalist">
+
+        <br>
+        <label for="videos">Videos: </label>
+        <datalist id="videos_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Videos</option>
+        </datalist>
+        <input type="text" id="videos" value="default" list="videos_datalist">
+
+        <br>
+        <label for="music">Music: </label>
+        <datalist id="music_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Music</option>
+        </datalist>
+        <input type="text" id="music" value="default" list="music_datalist">
+
+        <br>
+        <label for="config">Config: </label>
+        <datalist id="config_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Config</option>
+        </datalist>
+        <input type="text" id="config" value="default" list="config_datalist">
+
+        <br>
+        <label for="cache">Cache: </label>
+        <datalist id="cache_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Cache</option>
+        </datalist>
+        <input type="text" id="cache" value="default" list="cache_datalist">
+
+        <br>
+        <label for="data">Data: </label>
+        <datalist id="data_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Data</option>
+        </datalist>
+        <input type="text" id="data" value="default" list="data_datalist">
+
+        <br>
+        <label for="state">State: </label>
+        <datalist id="state_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/State</option>
+        </datalist>
+        <input type="text" id="state" value="default" list="state_datalist">
+
+        <br>
+        <label for="temp">Temp: </label>
+        <datalist id="temp_datalist">
+            <option>system</option>
+            <option>default</option>
+            <option>../TF_User/Temp</option>
+        </datalist>
+        <input type="text" id="temp" value="system" list="temp_datalist">
+    </fieldset>
+
+
+    <button id="saveBtn">Save</button>
+    <script>
+        (function(){
+            saveBtn.onclick = ()=>{
+                const dict = {
+                    portable_type: "relative",
+                    portable_data: {
+                        user: user.value,
+                        documents: documents.value,
+                        downloads: downloads.value,
+                        desktop: desktop.value,
+                        pictures: pictures.value,
+                        videos: videos.value,
+                        music: music.value,
+                        config: config.value,
+                        cache: cache.value,
+                        data: data.value,
+                        state: state.value,
+                        temp: temp.value
+                    }
+                };
+
+                const json = JSON.stringify(dict,null,'\t');
+                const a = document.createElement('a');
+                a.href = `data:text/json;charset=utf-8,${encodeURIComponent(json)}`;
+                a.download="portable.json";
+                a.click();
+            };
+        })();
+    </script>
+
+</body>
+</html>

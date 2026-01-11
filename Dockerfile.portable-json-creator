@@ -1,0 +1,7 @@
+FROM onedev.site.tesses.net/tesses-framework/tesses-framework:latest
+
+COPY ./portable-json-creator /wwwroot
+
+EXPOSE 4999
+
+ENTRYPOINT ["tfileserver","--port","4999","/wwwroot"]

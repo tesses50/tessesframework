@@ -210,7 +210,13 @@ namespace Tesses::Framework::Filesystem {
     }
     TempFS::~TempFS()
     {
-        Close();
+        VFSPath p;
+        p.relative = false;
+        p.path.push_back(this->tmp_str);
+        this->vfs = nullptr;
+        if(this->deleteOnDestroy && this->parent->DirectoryExists(p))
+        this->parent->DeleteDirectoryRecurse(p);
+
     }
     
 }

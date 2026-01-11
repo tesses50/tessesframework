@@ -22,15 +22,23 @@ namespace Tesses::Framework::Platform::Environment
     #else
     const char EnvPathSeperator=':';
     #endif
+    PortableAppConfig portable_config;
 
     namespace SpecialFolders 
     {
         VFSPath GetTemp()
         {
+
+            if(portable_config.temp)
+                return *portable_config.temp;
             return std::filesystem::temp_directory_path().string();
         }
         VFSPath GetHomeFolder()
         {
+
+            if(portable_config.user)
+                return *portable_config.user;
+
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getHomeDir();
             #elif defined(__EMSCRIPTEN__)
@@ -43,6 +51,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetDownloads()
         {
+            if(portable_config.downloads)
+                return *portable_config.downloads;
+
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDownloadFolder();
             #elif defined(__ANDROID__)
@@ -53,6 +64,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetMusic()
         {
+
+            if(portable_config.music)
+                return *portable_config.music;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getMusicFolder();
             #elif defined(__ANDROID__)
@@ -63,6 +77,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetPictures()
         {
+
+            if(portable_config.pictures)
+                return *portable_config.pictures;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getPicturesFolder();
             #elif defined(__ANDROID__)
@@ -73,6 +90,8 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetVideos()
         {
+            if(portable_config.videos)
+                return *portable_config.videos;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getVideoFolder();
             #elif defined(__ANDROID__)
@@ -83,6 +102,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetDocuments()
         {
+
+            if(portable_config.documents)
+                return *portable_config.documents;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDocumentsFolder();
             #elif defined(__ANDROID__)
@@ -93,6 +115,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetConfig()
         {
+
+            if(portable_config.config)
+                return *portable_config.config;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getConfigHome();
             #else
@@ -101,6 +126,8 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetDesktop()
         {
+            if(portable_config.desktop)
+                return *portable_config.desktop;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDesktopFolder();
             #else
@@ -109,6 +136,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetState()
         {
+
+            if(portable_config.state)
+                return *portable_config.state;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getStateDir();
             #else
@@ -117,6 +147,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetCache()
         {
+
+            if(portable_config.cache)
+                return *portable_config.cache;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getCacheDir();
             #else
@@ -125,6 +158,9 @@ namespace Tesses::Framework::Platform::Environment
         }
         VFSPath GetData()
         {
+
+            if(portable_config.data)
+                return *portable_config.data;
             #if defined(TESSESFRAMEWORK_ENABLE_PLATFORMFOLDERS) && !defined(SAGO_DISABLE)
             return sago::getDataHome();
             #else
