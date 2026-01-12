@@ -27,6 +27,7 @@ namespace Tesses::Framework::Http
     }
     bool HttpStream::CanWrite()
     {
+        if(this->done) return false;
         if(this->recv) return false;
         return this->strm->CanWrite();
     }
@@ -118,6 +119,7 @@ namespace Tesses::Framework::Http
     }
     size_t HttpStream::Write(const uint8_t* buff, size_t len)
     {
+        if(this->done) return 0;
         if(this->recv) return 0;
         if(this->length == 0) return 0;
         if(this->length > 0)
@@ -153,9 +155,20 @@ namespace Tesses::Framework::Http
             }
         }
     }
+    void HttpStream::Close()
+    {
+        if(this->length == -1 && this->http1_1 && !done && !this->recv) 
+        {
+            this->done=true;
+            StreamWriter writer(this->strm);
+            writer.newline = "\r\n";
+            writer.WriteLine("0");
+            writer.WriteLine();
+        }
+    }
     HttpStream::~HttpStream()
     {
-        if(this->length == -1 && this->http1_1) 
+        if(this->length == -1 && this->http1_1 && !done && !this->recv) 
         {
             StreamWriter writer(this->strm);
             writer.newline = "\r\n";

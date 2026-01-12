@@ -9,6 +9,7 @@
 #include "Http/ChangeableServer.hpp"
 #include "Http/CGIServer.hpp"
 #include "Http/BasicAuthServer.hpp"
+#include "Http/RouteServer.hpp"
 #include "Streams/FileStream.hpp"
 #include "Streams/MemoryStream.hpp"
 #include "Streams/NetworkStream.hpp"

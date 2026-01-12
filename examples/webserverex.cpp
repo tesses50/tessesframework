@@ -139,11 +139,35 @@ class MyOtherWebServer : public IHttpServer
 int main(int argc, char** argv)
 {
     TF_InitWithConsole();
+    std::shared_ptr<RouteServer> routeSvr = std::make_shared<RouteServer>();
+    routeSvr->Get("/name/{name}/greeting",[](ServerContext& ctx)->bool{
+        std::string name;
+        if(ctx.pathArguments.TryGetFirst("name",name))
+        {
+            ctx.WithMimeType("text/plain").SendText("Hello " + name);
+        }
+        else {
+            ctx.WithMimeType("text/plain").SendText("Please provide a name");
+        }
+        return true;
+    });
+    routeSvr->Get("/name/{name}/length",[](ServerContext& ctx)->bool{
+        std::string name;
+        if(ctx.pathArguments.TryGetFirst("name",name))
+        {
+            ctx.WithMimeType("text/plain").SendText("The length of the name is " + std::to_string(name.size()));
+        }
+        else {
+            ctx.WithMimeType("text/plain").SendText("Please provide a name");
+        }
+        return true;
+    });
     std::shared_ptr<MyOtherWebServer> myo = std::make_shared<MyOtherWebServer>();
     std::shared_ptr<MyWebServer> mws = std::make_shared<MyWebServer>();
 
     std::shared_ptr<MountableServer> mountable = std::make_shared<MountableServer>(myo);
     mountable->Mount("/mymount/",mws);
+    mountable->Mount("/routeSvr/", routeSvr);
     HttpServer server(10001,mountable);
     server.StartAccepting();
     TF_RunEventLoop();

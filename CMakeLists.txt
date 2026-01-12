@@ -9,6 +9,7 @@ src/Random.cpp
 src/Date/Date.cpp
 src/Http/FileServer.cpp
 src/Http/MountableServer.cpp
+src/Http/RouteServer.cpp
 src/Http/CallbackServer.cpp
 src/Http/HttpServer.cpp
 src/Http/HttpUtils.cpp

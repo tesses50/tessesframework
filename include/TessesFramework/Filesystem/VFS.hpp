@@ -35,7 +35,8 @@ namespace Tesses::Framework::Filesystem
             VFSPath(VFSPath p, std::string subent);
             VFSPath(VFSPath p, VFSPath p2);
             
-            
+            //does not check for ?
+            static VFSPath ParseUriPath(std::string path);
 
             VFSPath GetParent() const;
             VFSPath CollapseRelativeParents() const;

@@ -48,8 +48,13 @@ namespace Tesses::Framework::Streams {
             if(len < 1024)
                 read = len;
             if(read > 0)
+            {
                 read=this->Write(buffer,read);
-           
+                if(read == 0)
+                {
+                    throw std::out_of_range("Failed to write!");
+                }
+            }
         
 
             buffer += read;
@@ -109,7 +114,6 @@ namespace Tesses::Framework::Streams {
             read = (size_t)std::min(len-offset,(uint64_t)buffSize);
 
             read = this->Read(buffer,read);
-
             strm->WriteBlock(buffer, read);
 
             offset += read;

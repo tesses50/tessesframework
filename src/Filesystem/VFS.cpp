@@ -330,6 +330,35 @@ namespace Tesses::Framework::Filesystem
         this->path = p;
     }
 
+    VFSPath VFSPath::ParseUriPath(std::string path)
+    {
+        std::string builder = {};
+        VFSPath vpath;
+        vpath.relative=true;
+
+        if(!path.empty() && path[0] == '/') vpath.relative=false;
+
+        for(auto item : path)
+        {
+            if(item == '/')
+            {
+                if(!builder.empty())
+                {
+                    vpath.path.push_back(builder);
+                    builder.clear();
+                }
+            }
+            else {
+                builder.push_back(item);
+            }
+        }
+        if(!builder.empty())
+        {
+            vpath.path.push_back(builder);
+        }
+        return vpath;
+    }
+
     bool VFSPath::HasExtension() const
     {
         if(this->path.empty()) return false;
@@ -377,6 +406,9 @@ namespace Tesses::Framework::Filesystem
         if(!str.empty())
         {
             if(str.front() == '/') this->relative=false;
+            #if defined(_WIN32)
+            if(str.front() == '\\') this->relative=false;
+            #endif
             if(!this->path.empty())
             {
                 auto firstPartPath = this->path.front();

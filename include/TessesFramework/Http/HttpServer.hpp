@@ -23,6 +23,8 @@ namespace Tesses::Framework::Http
             HttpDictionary requestHeaders;
             HttpDictionary responseHeaders;
             HttpDictionary queryParams;
+            //used by path
+            HttpDictionary pathArguments;
             std::string path;
             std::string originalPath;
             std::string method;

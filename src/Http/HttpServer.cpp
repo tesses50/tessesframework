@@ -566,7 +566,12 @@ namespace Tesses::Framework::Http
             this->responseHeaders.SetValue("Transfer-Encoding","chunked");
 
         this->WriteHeaders();
-        return std::make_shared<HttpStream>(this->strm,length,false,version == "HTTP/1.1");
+        auto strm = std::make_shared<HttpStream>(this->strm,length,false,version == "HTTP/1.1");
+        if(method == "HEAD")
+        {
+            strm->Close();
+        }
+        return strm;
     }
     std::shared_ptr<Stream> ServerContext::OpenRequestStream()
     {
@@ -788,23 +793,26 @@ namespace Tesses::Framework::Http
                     this->WithSingleHeader("Content-Range","bytes " + std::to_string(begin) + "-" + std::to_string(end) + "/" + std::to_string(len));
                     this->statusCode = PartialContent;
                     this->WriteHeaders();
-                    strm->Seek(begin,SeekOrigin::Begin);
+                    if(this->method != "HEAD")
+                    {
+                        strm->Seek(begin,SeekOrigin::Begin);
 
-                    uint8_t buffer[1024];
+                        uint8_t buffer[1024];
 
-                    size_t read=0;
-                    do {
-                        read = sizeof(buffer);
-                        myLen = (end - begin)+1;
-                        if(myLen < read) read = (size_t)myLen;
-                        if(read == 0) break;
-                        read = strm->Read(buffer,read);
-                        if(read == 0) break;
-                        this->strm->WriteBlock(buffer,read);
+                        size_t read=0;
+                   
+                        do {
+                            read = sizeof(buffer);
+                            myLen = (end - begin)+1;
+                            if(myLen < read) read = (size_t)myLen;
+                            if(read == 0) break;
+                            read = strm->Read(buffer,read);
+                            if(read == 0) break;
+                            this->strm->WriteBlock(buffer,read);
 
-                        begin += read;
-                    } while(read > 0 && !this->strm->EndOfStream());
-
+                            begin += read;
+                        } while(read > 0 && !this->strm->EndOfStream());
+                    }
                     
                 }
                 else
@@ -821,6 +829,7 @@ namespace Tesses::Framework::Http
                     this->WithSingleHeader("Accept-Range","bytes");
                     this->WithSingleHeader("Content-Length",std::to_string(len));
                     this->WriteHeaders();
+                    if(this->method != "HEAD")
                     strm->CopyTo(this->strm);
                 }
             }
@@ -828,8 +837,10 @@ namespace Tesses::Framework::Http
         }
         else
         {
+            
             auto chunkedStream = this->OpenResponseStream();
 
+            if(method != "HEAD")
             strm->CopyTo(chunkedStream);
             
             

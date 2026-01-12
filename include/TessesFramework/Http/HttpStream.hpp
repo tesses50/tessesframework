@@ -25,6 +25,7 @@ namespace Tesses::Framework::Http
             int64_t GetPosition();
             size_t Read(uint8_t* buffer, size_t len);
             size_t Write(const uint8_t* buffer, size_t len);
+            void Close();
             ~HttpStream();
     };
 }
