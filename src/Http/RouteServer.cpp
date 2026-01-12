@@ -51,7 +51,7 @@ namespace Tesses::Framework::Http
         auto path = Tesses::Framework::Filesystem::VFSPath::ParseUriPath(ctx.path);
         for(auto& svr : this->routes)
         {
-            if(svr.method != ctx.method) continue;
+            if(svr.method != ctx.method && !((svr.method == "GET" && ctx.method == "HEAD") || (svr.method == "HEAD" && ctx.method == "GET"))) continue;
             ctx.pathArguments = pathArgs;
             if(svr.Equals(path, ctx.pathArguments) && svr.handler && svr.handler(ctx))
                 return true;

@@ -47,7 +47,7 @@ extern "C" {
 #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
 #include <sys/un.h>
 #endif
-#include <sys/poll.h>
+#include <poll.h>
 }
 #endif
 #if defined(GEKKO)
