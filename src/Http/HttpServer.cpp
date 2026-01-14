@@ -389,11 +389,8 @@ namespace Tesses::Framework::Http
     static bool parseUntillBoundaryEnd(std::shared_ptr<Tesses::Framework::Streams::Stream> src, std::shared_ptr<Tesses::Framework::Streams::Stream> dest, std::string boundary)
     {
         bool hasMore=true;
-        #if defined(_WIN32)
         uint8_t* checkBuffer = new uint8_t[boundary.size()];
-        #else
-        uint8_t checkBuffer[boundary.size()];
-        #endif
+        
         int b;
         size_t i = 0;
         size_t i2 = 0;
@@ -457,9 +454,8 @@ namespace Tesses::Framework::Http
         {
             dest->Write(buffer,offsetInMem);
         }
-        #if defined(_WIN32)
-        delete checkBuffer;
-        #endif
+        delete[] checkBuffer;
+        
         return hasMore;
     }
 
