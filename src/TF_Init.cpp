@@ -713,6 +713,244 @@ if (iResult != 0) {
                     
                     
                     }
+                    else if(portable_str == "absolute")
+                    {
+                        if(dict2.TryGetValueAsType("user",portable_str))
+                        {
+                            if(portable_str != "system")   
+                            {
+                                VFSPath userDir = portable_str;
+                                portable_config.user = userDir.CollapseRelativeParents();
+
+                                
+                            }
+
+
+
+                        }
+                        
+                        if(dict2.TryGetValueAsType("documents", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.documents = *(portable_config.user) / "Documents";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.documents = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("downloads", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.downloads = *(portable_config.user) / "Downloads";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.downloads = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("desktop", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.desktop = *(portable_config.user) / "Desktop";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.desktop = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("pictures", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.pictures = *(portable_config.user) / "Pictures";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.pictures = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("videos", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.videos = *(portable_config.user) / "Videos";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.videos = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("music", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.music = *(portable_config.user) / "Music";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.music = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("config", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.config = *(portable_config.user) / "Config";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.config = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("cache", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.cache = *(portable_config.user) / "Cache";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.cache = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("data", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.data = *(portable_config.user) / "Data";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.data = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("state", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.state = *(portable_config.user) / "State";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.state = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                        if(dict2.TryGetValueAsType("temp", portable_str))
+                        {
+                            
+                            if(portable_str != "system")
+                            {
+                                if(portable_str == "default")
+                                {
+                                    if(portable_config.user)
+                                    {
+                                        portable_config.temp = *(portable_config.user) / "Temp";
+                                    }
+                                }
+                                else 
+                                {
+                                    VFSPath userDir = portable_str;
+                                    portable_config.temp = userDir.CollapseRelativeParents();
+
+                                }
+                            }
+                        }
+                    
+                    }
                 }
             }
         }
