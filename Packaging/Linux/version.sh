@@ -1,2 +1,2 @@
-export BUILD=$(($BUILD_NO-163))
-export DEB_VERSION=1.0.0-$BUILD
+export BUILD=$(($BUILD_NO-185))
+export DEB_VERSION=0.0.1-$BUILD

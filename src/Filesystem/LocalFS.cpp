@@ -10,6 +10,13 @@
 #include <utime.h>
 #include <sys/statvfs.h>
 #endif
+
+#include "TessesFramework/Threading/Thread.hpp"
+#if defined(__linux__)
+#include <poll.h>
+#include <sys/inotify.h>
+#include <unistd.h>
+#endif
 namespace Tesses::Framework::Filesystem
 {
     #if defined(_WIN32)
@@ -249,8 +256,184 @@ namespace Tesses::Framework::Filesystem
         std::error_code error;
         std::filesystem::remove(VFSPathToSystem(path),error);
     }
+    #if defined(__linux__)
+
+    class INotifyWatcher : public FSWatcher {
+        std::shared_ptr<Threading::Thread> thrd;
+        static uint32_t to_linux_mask(FSWatcherEventType flags)
+        {
+            uint32_t lflags = 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Accessed) != 0) ? IN_ACCESS : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::AttributeChanged) != 0) ? IN_ATTRIB : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Writen) != 0) ? IN_CLOSE_WRITE : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Read) != 0) ? IN_CLOSE_NOWRITE : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Created) != 0) ? IN_CREATE : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Deleted) != 0) ? IN_DELETE : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::WatchEntryDeleted) != 0) ? IN_DELETE_SELF : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Modified) != 0) ? IN_MODIFY : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::WatchEntryMoved) != 0) ? IN_MOVE_SELF : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::MoveOld) != 0) ? IN_MOVED_FROM : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::MoveNew) != 0) ? IN_MOVED_TO : 0;
+            lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Opened) != 0) ? IN_OPEN : 0;
+            
+            return lflags;
+        }
+        static FSWatcherEventType from_linux_mask(uint32_t lflags)
+        {
+            uint32_t flags = 0;
+            flags |= ((lflags & IN_ACCESS) != 0) ? (uint32_t)FSWatcherEventType::Accessed : 0;
+            flags |= ((lflags & IN_ATTRIB) != 0) ? (uint32_t)FSWatcherEventType::AttributeChanged : 0;
+            flags |= ((lflags & IN_CLOSE_WRITE) != 0) ? (uint32_t)FSWatcherEventType::Writen : 0;
+            flags |= ((lflags & IN_CLOSE_NOWRITE) != 0) ? (uint32_t)FSWatcherEventType::Read : 0;
+            flags |= ((lflags & IN_CREATE) != 0) ? (uint32_t)FSWatcherEventType::Created : 0;
+            flags |= ((lflags & IN_DELETE) != 0) ? (uint32_t)FSWatcherEventType::Deleted : 0;
+            flags |= ((lflags & IN_DELETE_SELF) != 0) ? (uint32_t)FSWatcherEventType::WatchEntryDeleted : 0;
+            flags |= ((lflags & IN_MODIFY) != 0) ? (uint32_t)FSWatcherEventType::Modified : 0;
+            flags |= ((lflags & IN_MOVE_SELF) != 0) ? (uint32_t)FSWatcherEventType::WatchEntryMoved : 0;
+            flags |= ((lflags & IN_MOVED_FROM) != 0) ? (uint32_t)FSWatcherEventType::MoveOld : 0;
+            flags |= ((lflags & IN_MOVED_TO) != 0) ? (uint32_t)FSWatcherEventType::MoveNew : 0;
+            flags |= ((lflags & IN_OPEN) != 0) ? (uint32_t)FSWatcherEventType::Opened : 0;
+            
+            return (FSWatcherEventType)flags;
+        }
+        public:
+            INotifyWatcher(std::shared_ptr<VFS> vfs, VFSPath path) : FSWatcher(vfs,path)
+            {
+
+            }
+
+        protected:
+            
+            void SetEnabledImpl(bool enabled)
+            {
+                if(enabled)
+                {
+                    int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+                    if (fd == -1)
+                    {
+                        throw std::runtime_error("Cannot init inotify");
+                    }
+                    auto str =  this->GetFilesystem()->VFSPathToSystem(this->GetPath());
+
+                    int watch = inotify_add_watch(fd, str.c_str(),to_linux_mask(this->events));
+
+                    thrd = std::make_shared<Threading::Thread>([this,watch,fd]()-> void {
+                        int cnt = 0;
+                        struct pollfd pfd = {.fd = fd, .events = POLLIN};
+                        std::vector<std::pair<VFSPath,uint32_t>> mvFroms;
+                        char buf[4096]
+                            __attribute__ ((aligned(__alignof__(struct inotify_event))));
+                        const struct inotify_event *event;
+                        ssize_t size;
+                        
+                        bool fail=false;
+
+                        FSWatcherEvent evt;
+                        evt.dest = this->GetPath();
+                        while(!fail && this->enabled)
+                        {
+                            cnt = poll(&pfd,1,-1);
+                            if(cnt == -1) break;
+
+                            if(cnt > 0)
+                            {
+                                if(pfd.revents & POLLIN)
+                                {
+                                    for (;;) {
+                                        size = read(fd, buf, sizeof(buf));
+                                        if (size == -1 && errno != EAGAIN) {
+                                            fail=true;
+                                            break;
+                                        }
+
+                                        if (size <= 0)
+                                            break;
+
+                                        for (char *ptr = buf; ptr < buf + size;
+                                                                ptr += sizeof(struct inotify_event) + event->len) {
+
+                                            event = (const struct inotify_event *) ptr;
+                                            VFSPath path = this->GetPath();
+
+                                            if(event->len)
+                                                path = path / std::string(event->name, (size_t)event->len);
+
+                                            if(((uint32_t)this->events & (uint32_t)FSWatcherEventType::Moved) == (uint32_t)FSWatcherEventType::Moved && event->mask & IN_MOVED_FROM)
+                                            {
+                                                mvFroms.emplace_back(path,event->cookie);
+                                            }
+                                            else if(((uint32_t)this->events & (uint32_t)FSWatcherEventType::Moved) == (uint32_t)FSWatcherEventType::Moved && event->mask & IN_MOVED_TO)
+                                            {
+                                                for(auto ittr = mvFroms.begin(); ittr != mvFroms.end(); ittr++)
+                                                {
+                                                    if(ittr->second == event->cookie)
+                                                    {
+                                                        evt.src = ittr->first;
+                                                        mvFroms.erase(ittr);
+                                                        break;
+                                                    }
+                                                }
+                                                evt.isDir = (event->mask & IN_ISDIR);
+                                                evt.dest = path;
+                                                evt.type = FSWatcherEventType::Moved;
+                                                if(this->event)
+                                                    this->event(evt);
+                                            }
+                                            else {
+
+                                                evt.isDir = (event->mask & IN_ISDIR);
+                                                evt.src = path;
+                                                evt.type = from_linux_mask(event->mask);;
+                                                if(this->event)
+                                                    this->event(evt);
+                                            }
+                                            if(event->mask & IN_MOVE_SELF)
+                                            {
+                                                close(fd);
+                                                return;
+                                            }
+                                            if(event->mask & IN_DELETE_SELF)
+                                            {
+                                                close(fd);
+                                                return;
+                                            }
+                                        }    
+                                    }
+                                }
+                            }
+                        }
+                        
+                        close(fd);
+                    });
+
+
+                }
+                else
+                {
+                    thrd = nullptr;
+                }
+            }
+            public:
+            ~INotifyWatcher()
+            {
+                this->enabled = false;
+            }
+    };
+    #endif
+    
+    
+
+    std::shared_ptr<FSWatcher> LocalFilesystem::CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path)
+    {
+        #if defined(__linux__)
+            return std::make_shared<INotifyWatcher>(vfs, path);
+        #endif
+        return VFS::CreateWatcher(vfs,path);
+    }
 
     std::shared_ptr<LocalFilesystem> LocalFS = std::make_shared<LocalFilesystem>();
+
+
 }
 
 // C:/Users/Jim/Joel

@@ -8,6 +8,7 @@
             
 namespace Tesses::Framework::Filesystem
 {
+
     class StatVFSData {
         public:
             uint64_t BlockSize;
@@ -29,7 +30,8 @@ namespace Tesses::Framework::Filesystem
             static std::vector<std::string> SplitPath(std::string path);
             std::vector<std::string> path;  
             VFSPath();
-            
+            explicit VFSPath(const char* path) : VFSPath(std::string(path))
+            {}
             VFSPath(std::vector<std::string> path);
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
@@ -118,7 +120,74 @@ namespace Tesses::Framework::Filesystem
 
             VFSPathEnumeratorItterator end();
     };
+    enum class FSWatcherEventType {
 
+        None = 0,
+        //IN_ACCESS
+        Accessed=1,
+        //IN_ATTRIB
+        AttributeChanged =2,
+        //IN_CLOSE_WRITE
+        Writen = 4,
+        //IN_CLOSE_NOWRITE
+        Read = 8,
+        //IN_CREATE
+        Created = 16,
+        //IN_DELETE
+        Deleted = 32,
+        //IN_DELETE_SELF
+        WatchEntryDeleted = 64,
+        //IN_MODIFY
+        Modified = 128,
+        //IN_MOVE_SELF
+        WatchEntryMoved = 256,
+        //IN_MOVED_FROM
+        MoveOld = 512,
+        //IN_MOVED_TO
+        MoveNew = 1024,
+        //IN_OPEN
+        Opened = 2048,
+        //IN_CLOSE
+        Closed = Writen | Read,
+        //IN_MOVE
+        Moved = MoveOld | MoveNew,
+        //IN_ALL_EVENTS
+        All = Accessed | AttributeChanged | Created | Deleted | WatchEntryDeleted | Modified | WatchEntryMoved | Opened | Closed | Moved
+    };
+    struct FSWatcherEvent {
+        //the file or source on move
+        VFSPath src;
+        //the dest when moving
+        VFSPath dest;
+        FSWatcherEventType type;
+        bool isDir;
+
+        bool IsEvent(FSWatcherEventType e);
+
+        std::string ToString();
+    };
+    class VFS;
+
+    class FSWatcher {
+        private:
+            std::shared_ptr<VFS> vfs;
+            VFSPath path;
+        protected:
+
+            std::atomic<bool> enabled=false;
+            virtual void SetEnabledImpl(bool enabled);
+        public:
+            FSWatcher(std::shared_ptr<VFS> vfs, VFSPath path);
+            std::function<void(FSWatcherEvent&)> event;
+            FSWatcherEventType events = FSWatcherEventType::All;
+            bool GetEnabled();
+            void SetEnabled(bool val);
+            std::shared_ptr<VFS> GetFilesystem();
+            const VFSPath& GetPath();
+            virtual ~FSWatcher() = default;
+            
+            static std::shared_ptr<FSWatcher> Create(std::shared_ptr<VFS> vfs, VFSPath path); 
+    };
 
     class VFS {
         public:
@@ -156,9 +225,25 @@ namespace Tesses::Framework::Filesystem
 
             virtual void Lock(VFSPath path);
             virtual void Unlock(VFSPath path);
-
+        
+          
             virtual ~VFS();
 
             virtual void Close();
+
+        protected:
+              virtual std::shared_ptr<FSWatcher> CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path);
+        friend class FSWatcher;
     };
+
+    
+
+    namespace Literals
+    {
+        inline VFSPath operator""_tpath(const char* path)
+        {
+            return VFSPath(path);
+        }
+    }
 }
+

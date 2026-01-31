@@ -42,6 +42,9 @@ namespace Tesses::Framework::Filesystem
             void Lock(VFSPath path);
             void Unlock(VFSPath path);
 
+            protected:
+            std::shared_ptr<FSWatcher> CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path);
+
     };  
     extern std::shared_ptr<LocalFilesystem> LocalFS;
 }

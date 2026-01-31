@@ -10,6 +10,7 @@
 #include <functional>
 #include "Threading/Mutex.hpp"
 #include <optional>
+#include <atomic>
    
 namespace Tesses::Framework
 {

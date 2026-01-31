@@ -232,7 +232,8 @@ namespace Tesses::Framework::Filesystem
 
         if(i == this->path.size()-1 && i == toMakeRelativeTo.path.size()-1)
         {
-            VFSPath path({this->path[this->path.size()-1]});
+            std::vector<std::string> paths{this->path[this->path.size()-1]};
+            VFSPath path(paths);
             path.relative = true;
             return path;
         }
@@ -387,7 +388,8 @@ namespace Tesses::Framework::Filesystem
         if(ext.empty()) return;
         if(ext[0] != '.') 
         {
-            str += '.' + ext;
+            str += '.';
+            str += ext;
         }
         else
         {
@@ -560,4 +562,113 @@ namespace Tesses::Framework::Filesystem
     {
         
     }
-}
+
+
+
+    std::shared_ptr<FSWatcher> VFS::CreateWatcher(std::shared_ptr<VFS> vfs,VFSPath path)
+    {
+        return std::make_shared<FSWatcher>(vfs,path);
+    }
+    void FSWatcher::SetEnabled(bool enabled)
+    {
+        if(this->enabled == enabled) return;
+        this->enabled = enabled;
+        this->SetEnabledImpl(enabled);
+    }
+
+    bool FSWatcher::GetEnabled()
+    {
+        return this->enabled;
+    }
+
+    void FSWatcher::SetEnabledImpl(bool enabled)
+    {
+
+    }
+
+    std::shared_ptr<VFS> FSWatcher::GetFilesystem()
+    {
+        return this->vfs;
+    }
+    const VFSPath& FSWatcher::GetPath()
+    {
+        return this->path;
+    }
+
+    FSWatcher::FSWatcher(std::shared_ptr<VFS> vfs, VFSPath path): vfs(vfs), path(path)
+    {
+
+    }
+            
+    std::shared_ptr<FSWatcher> FSWatcher::Create(std::shared_ptr<VFS> vfs, VFSPath path)
+    {
+        return vfs->CreateWatcher(vfs,path);
+    }
+
+    bool FSWatcherEvent::IsEvent(FSWatcherEventType e)
+    {
+        if(e == FSWatcherEventType::All) return this->type != FSWatcherEventType::None;
+        if(e == FSWatcherEventType::Moved) return ((uint32_t)this->type & (uint32_t)FSWatcherEventType::Moved) == (uint32_t)FSWatcherEventType::Moved;
+        if(e == FSWatcherEventType::Closed) return ((uint32_t)this->type & (uint32_t)FSWatcherEventType::Closed) != 0;
+        return (uint32_t)this->type & (uint32_t)e;
+    }
+
+    std::string FSWatcherEvent::ToString()
+    {
+        if(IsEvent(FSWatcherEventType::Moved))
+        {
+            return (this->isDir ? "Moved directory " : "Moved file ") + this->src.ToString() + " -> " + this->dest.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::MoveOld))
+        {
+            return (this->isDir ? "Move source directory " : "Move source file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::MoveNew))
+        {
+            return (this->isDir ? "Move destination directory " : "Move destination file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Accessed))
+        {
+            return (this->isDir ? "Accessed directory " : "Accessed file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::AttributeChanged))
+        {
+            return (this->isDir ? "Changed attr on directory " : "Changed attr on file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Writen))
+        {
+            return (this->isDir ? "Finished changing directory " : "Finished writing to file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Read))
+        {
+            return (this->isDir ? "Finished reading directory " : "Finished reading from file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Created))
+        {
+            return (this->isDir ? "Created directory " : "Created file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Deleted))
+        {
+            return (this->isDir ? "Deleted directory " : "Deleted file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::WatchEntryDeleted))
+        {
+
+            return (this->isDir ? "Deleted watched directory " : "Deleted watched file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Modified))
+        {
+            return (this->isDir ? "Modified directory " : "Modified file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::WatchEntryMoved))
+        {
+            return (this->isDir ? "Moved watched directory " : "Moved watched file ") + this->src.ToString();
+        }
+        else if(IsEvent(FSWatcherEventType::Opened))
+        {
+            return (this->isDir ? "Opened directory " : "Opened file ") + this->src.ToString();
+        }
+
+        return "";
+    }
+}   

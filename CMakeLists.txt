@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(TessesFramework VERSION 1.0.0)
+set(TESSESFRAMEWORK_MAJOR_VERSION 0)
+set(TESSESFRAMEWORK_MINOR_VERSION 0)
+set(TESSESFRAMEWORK_PATCH_VERSION 1)
+
+project(TessesFramework VERSION ${TESSESFRAMEWORK_MAJOR_VERSION}.${TESSESFRAMEWORK_MINOR_VERSION}.${TESSESFRAMEWORK_PATCH_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -409,6 +413,11 @@ add_executable(trng apps/trng.cpp)
 
 target_link_libraries(trng PUBLIC tessesframework)
 install(TARGETS trng DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(twatch apps/twatch.cpp)
+
+target_link_libraries(twatch PUBLIC tessesframework)
+install(TARGETS twatch DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
 include(InstallRequiredSystemLibraries)
