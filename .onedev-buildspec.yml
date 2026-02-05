@@ -1,18 +1,21 @@
-version: 39
+version: 43
 jobs:
 - name: Build for x86_64
   steps:
-  - !CheckoutStep
+  - type: CheckoutStep
     name: Checkout
-    cloneCredential: !DefaultCredential {}
+    cloneCredential:
+      type: DefaultCredential
     withLfs: true
     withSubmodules: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !CommandStep
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
     name: Execute build
     runInContainer: true
     image: onedev.site.tesses.net/dependencies/dependencies:latest
-    interpreter: !DefaultInterpreter
+    interpreter:
+      type: DefaultInterpreter
       commands: |
         mkdir build
         cd build
@@ -20,72 +23,25 @@ jobs:
         make -j12
         make install DESTDIR=out
     useTTY: true
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !BuildImageStep
+    condition: SUCCESSFUL
+    optional: false
+  - type: BuildImageStep
     name: Build Docker Image
     dockerfile: Dockerfile.run
-    output: !RegistryOutput
+    output:
+      type: RegistryOutput
       tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest onedev.site.tesses.net/tesses-framework/tesses-framework:@commit_hash@
     registryLogins:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
       passwordSecret: dockersecret
     platforms: linux/amd64
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !CommandStep
-    name: Build archlinux
-    runInContainer: true
-    image: git.tesseslanguage.com/tesses50/arch-builds:2025-11-11
-    interpreter: !DefaultInterpreter
-      commands: |
-        pacman --noconfirm -Sy mbedtls curl
-        pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
-        cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
-        cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
-        chmod 755 /home/build/build-arch.sh
-        chown build:build /home/build/PKGBUILD
-        chown build:build /home/build/build-arch.sh
-        su build -c /home/build/build-arch.sh
-    envVars:
-    - name: GITEA_AUTH
-      value: '@secret:GITEA_AUTH@'
-    useTTY: true
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !CommandStep
-    name: Build and Publish Deb Package
-    runInContainer: true
-    image: onedev.site.tesses.net/dependencies/debbuilder/jammy:latest
-    interpreter: !DefaultInterpreter
-      commands: |
-        cd Packaging/Linux
-        bash build-ubuntu-jammy.sh
-        bash push-ubuntu-jammy.sh
-    envVars:
-    - name: GITEA_AUTH
-      value: '@secret:GITEA_AUTH@'
-    - name: BUILD_NO
-      value: '@build_number@'
-    useTTY: true
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !CommandStep
-    name: Build and Publish Deb Package (Plucky)
-    runInContainer: true
-    image: onedev.site.tesses.net/dependencies/debbuilder/plucky:latest
-    interpreter: !DefaultInterpreter
-      commands: |
-        cd Packaging/Linux
-        bash build-ubuntu-plucky.sh
-        bash push-ubuntu-plucky.sh
-    envVars:
-    - name: GITEA_AUTH
-      value: '@secret:GITEA_AUTH@'
-    - name: BUILD_NO
-      value: '@build_number@'
-    useTTY: true
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   triggers:
-  - !BranchUpdateTrigger
+  - type: BranchUpdateTrigger
     branches: master
+    userMatch: anyone
     projects: tesses-framework
   retryCondition: never
   maxRetries: 3
