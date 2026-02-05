@@ -11,6 +11,9 @@ jobs:
   build-arch:
     runs-on: arch-builder
     steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
       - uses: actions/checkout@v4
       - run: pacman --noconfirm -Sy mbedtls curl
       - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
@@ -23,6 +26,9 @@ jobs:
   build-jammy:
     runs-on: deb-builder-jammy
     steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
       - uses: actions/checkout@v4
       - name: Build for jammy, noble
         run: |
@@ -32,8 +38,14 @@ jobs:
   build-plucky:
     runs-on: deb-builder-plucky
     steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
       - name: Build for plucky, resolute
         run: |
           bash build-ubuntu-plucky.sh
           bash push-ubuntu-plucky.sh
         working-directory: ./Packaging/Linux
+      - uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
