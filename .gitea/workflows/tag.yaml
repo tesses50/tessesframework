@@ -11,9 +11,7 @@ jobs:
   build-arch:
     runs-on: arch-builder
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - run: pacman --noconfirm -Sy nodejs npm
       - uses: actions/checkout@v4
       - run: pacman --noconfirm -Sy mbedtls curl
       - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
@@ -26,9 +24,6 @@ jobs:
   build-jammy:
     runs-on: deb-builder-jammy
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
       - uses: actions/checkout@v4
       - name: Build for jammy, noble
         run: |
