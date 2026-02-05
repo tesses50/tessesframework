@@ -1,0 +1,39 @@
+name: Build and Deploy on Tag
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GITEA_AUTH: ${{ secrets.MY_GITEA_AUTH }}
+
+jobs:
+  build-arch:
+    runs-on: arch-builder
+    steps:
+      - uses: actions/checkout@v4
+      - run: pacman --noconfirm -Sy mbedtls curl
+      - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
+      - run: cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
+      - run: cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
+      - run: chmod 755 /home/build/build-arch.sh
+      - run: chown build:build /home/build/PKGBUILD
+      - run: chown build:build /home/build/build-arch.sh
+      - run: su build -c /home/build/build-arch.sh
+  build-jammy:
+    runs-on: deb-builder-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for jammy, noble
+        run: |
+          bash build-ubuntu-jammy.sh
+          bash push-ubuntu-jammy.sh
+        working-directory: ./Packaging/Linux
+  build-plucky:
+    runs-on: deb-builder-plucky
+    steps:
+      - name: Build for plucky, resolute
+        run: |
+          bash build-ubuntu-plucky.sh
+          bash push-ubuntu-plucky.sh
+        working-directory: ./Packaging/Linux
