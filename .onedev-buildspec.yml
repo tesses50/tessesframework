@@ -30,11 +30,14 @@ jobs:
     dockerfile: Dockerfile.run
     output:
       type: RegistryOutput
-      tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest onedev.site.tesses.net/tesses-framework/tesses-framework:@commit_hash@
+      tags: onedev.site.tesses.net/tesses-framework/tesses-framework:latest onedev.site.tesses.net/tesses-framework/tesses-framework:@commit_hash@ git.tesseslanguage.com/tesses50/tesses-framework:latest git.tesseslanguage.com/tesses50/tesses-framework:@commit_hash@
     registryLogins:
     - registryUrl: '@server_url@'
       userName: '@job_token@'
       passwordSecret: dockersecret
+    - registryUrl: git.tesseslanguage.com
+      userName: tesses50
+      passwordSecret: GITEA_AUTH
     platforms: linux/amd64
     condition: SUCCESSFUL
     optional: false
