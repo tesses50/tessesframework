@@ -157,7 +157,7 @@ namespace Tesses::Framework::Serialization
         b2[0] = (uint8_t)v;
         b2[1] = (uint8_t)(v >> 8);
     }
-    void BitConverter::FromUuidBE(uint8_t& b, const Uuid& uuid)
+    void BitConverter::FromUuid(uint8_t& b, const Uuid& uuid)
     {
         uint8_t* b2 = &b;
         FromUint32BE(b2[0], uuid.time_low);
@@ -169,35 +169,17 @@ namespace Tesses::Framework::Serialization
             b2[i+10] = uuid.node[i];
         
     }
-    void BitConverter::FromUuidMS(uint8_t& b, const Uuid& uuid)
-    {
-        uint8_t* b2 = &b;
-        FromUint32LE(b2[0], uuid.time_low);
-        FromUint32LE(b2[4], uuid.time_mid);
-        FromUint32LE(b2[6], uuid.time_hi_and_version);
-        
-        b2[8] = uuid.clock_seq_hi_and_reserved;
-        b2[9] = uuid.clock_seq_low;
-        for(size_t i = 0; i < 6; i++)
-            b2[i+10] = uuid.node[i];
-        
-    }
+  
 
-    Uuid BitConverter::ToUuidBE(uint8_t& b)
+    Uuid BitConverter::ToUuid(uint8_t& b)
     {
         Uuid uuid;
-        BitConverter::ToUuidBE(b,uuid);
+        BitConverter::ToUuid(b,uuid);
         return uuid;
     }
-    Uuid BitConverter::ToUuidMS(uint8_t& b)
-    {
-        Uuid uuid;
-        BitConverter::ToUuidMS(b,uuid);
-        return uuid;
-    }
+   
 
-
-    void BitConverter::ToUuidBE(uint8_t& b, Uuid& uuid)
+    void BitConverter::ToUuid(uint8_t& b, Uuid& uuid)
     {
         uint8_t* b2 = &b;
         uuid.time_low = ToUint32BE(b2[0]);
@@ -213,16 +195,5 @@ namespace Tesses::Framework::Serialization
 
     }
 
-    void BitConverter::ToUuidMS(uint8_t& b, Uuid& uuid)
-    {
-        uint8_t* b2 = &b;
-        uuid.time_low = ToUint32LE(b2[0]);
-        uuid.time_mid = ToUint16LE(b2[4]);
-        uuid.time_hi_and_version = ToUint16LE(b2[6]);
-       
-        uuid.clock_seq_hi_and_reserved = b2[8];
-        uuid.clock_seq_low = b2[9];
-        for(size_t i = 0; i < 6; i++)
-          uuid.node[i]=   b2[i+10];
-    }
+    
 };

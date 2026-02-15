@@ -61,39 +61,39 @@ namespace Tesses::Framework {
 
         }
         
-        uint8_t b = hex_digits[0] >> 4 | hex_digits[1];
+        uint8_t b = hex_digits[0] << 4 | hex_digits[1];
         uuid.time_low = (uint32_t)b;
-        b = hex_digits[2] >> 4 | hex_digits[3];
+        b = hex_digits[2] << 4 | hex_digits[3];
         uuid.time_low |= (uint32_t)b << 8;
-        b = hex_digits[4] >> 4 | hex_digits[5];
+        b = hex_digits[4] << 4 | hex_digits[5];
         uuid.time_low |= (uint32_t)b << 16;
-        b = hex_digits[6] >> 4 | hex_digits[7];
+        b = hex_digits[6] << 4 | hex_digits[7];
         uuid.time_low |= (uint32_t)b << 24;
 
-        b = hex_digits[8] >> 4 | hex_digits[9];
+        b = hex_digits[8] << 4 | hex_digits[9];
         uuid.time_mid = (uint16_t)b;
-        b = hex_digits[10] >> 4 | hex_digits[11];
+        b = hex_digits[10] << 4 | hex_digits[11];
         uuid.time_mid |= (uint16_t)b << 8;
 
-        b = hex_digits[12] >> 4 | hex_digits[13];
+        b = hex_digits[12] << 4 | hex_digits[13];
         uuid.time_hi_and_version = (uint16_t)b;
-        b = hex_digits[14] >> 4 | hex_digits[15];
+        b = hex_digits[14] << 4 | hex_digits[15];
         uuid.time_hi_and_version |= (uint16_t)b << 8;
 
-        uuid.clock_seq_hi_and_reserved = hex_digits[16] >> 4 | hex_digits[17];
+        uuid.clock_seq_hi_and_reserved = hex_digits[16] << 4 | hex_digits[17];
 
-        uuid.clock_seq_low = hex_digits[18] >> 4 | hex_digits[19];
+        uuid.clock_seq_low = hex_digits[18] << 4 | hex_digits[19];
 
         for(size_t i = 0; i < 6; i++)
         {
-            uuid.node[i] = hex_digits[20+(i*2)] >> 4 | hex_digits[21+(i*2)];
+            uuid.node[i] = hex_digits[20+(i*2)] << 4 | hex_digits[21+(i*2)];
         }
 
         return true;
     }
     //9c4994e7-3c82-4c30-a459-8fdcd960b4ac
 
-    std::string Uuid::ToString(UuidStringifyConfig cfg)
+    std::string Uuid::ToString(UuidStringifyConfig cfg) const
     {
         bool hasCurly = ((int)cfg & (int)UuidStringifyConfig::HasCurly) != 0;
         bool isUppercase = ((int)cfg & (int)UuidStringifyConfig::IsUppercase) != 0;
@@ -165,5 +165,50 @@ namespace Tesses::Framework {
             
             
         
+    }
+
+    bool Uuid::IsEmpty() const
+    {
+        return this->time_low == 0 && 
+            this->time_mid == 0 &&
+            this->time_hi_and_version == 0 &&
+            this->clock_seq_hi_and_reserved == 0 &&
+            this->clock_seq_low == 0 &&
+            this->node[0] == 0 &&
+            this->node[1] == 0 &&
+            this->node[2] == 0 &&
+            this->node[3] == 0 &&
+            this->node[4] == 0 &&
+            this->node[5] == 0;
+    }
+
+    bool operator==(const Uuid& left, const Uuid& right)
+    {
+        return left.time_low == right.time_low &&
+            left.time_mid == right.time_mid &&
+            left.time_hi_and_version == right.time_hi_and_version &&
+            left.clock_seq_hi_and_reserved == right.clock_seq_hi_and_reserved &&
+            left.clock_seq_low == right.clock_seq_low &&
+            left.node[0] == right.node[0] &&
+            left.node[1] == right.node[1] &&
+            left.node[2] == right.node[2] &&
+            left.node[3] == right.node[3] &&
+            left.node[4] == right.node[4] &&
+            left.node[5] == right.node[5];
+            
+    }
+    bool operator!=(const Uuid& left, const Uuid& right)
+    {
+        return left.time_low != right.time_low &&
+            left.time_mid != right.time_mid &&
+            left.time_hi_and_version != right.time_hi_and_version &&
+            left.clock_seq_hi_and_reserved != right.clock_seq_hi_and_reserved &&
+            left.clock_seq_low != right.clock_seq_low &&
+            left.node[0] != right.node[0] &&
+            left.node[1] != right.node[1] &&
+            left.node[2] != right.node[2] &&
+            left.node[3] != right.node[3] &&
+            left.node[4] != right.node[4] &&
+            left.node[5] != right.node[5];
     }
 }

@@ -46,13 +46,11 @@ class BitConverter {
         static uint32_t ToUint32LE(uint8_t& b);
         static uint16_t ToUint16LE(uint8_t& b);
 
-        static Uuid ToUuidBE(uint8_t& b);
+        static Uuid ToUuid(uint8_t& b);
 
-        static Uuid ToUuidMS(uint8_t& b);
 
-        static void ToUuidBE(uint8_t& b, Uuid& uuid);
+        static void ToUuid(uint8_t& b, Uuid& uuid);
 
-        static void ToUuidMS(uint8_t& b, Uuid& uuid);
 
         static void FromDoubleBE(uint8_t& b, double v);
         static void FromUint64BE(uint8_t& b, uint64_t v);
@@ -63,9 +61,8 @@ class BitConverter {
         static void FromUint32LE(uint8_t& b, uint32_t v);
         static void FromUint16LE(uint8_t& b, uint16_t v);
         
-        static void FromUuidBE(uint8_t& b, const Uuid& uuid);
+        static void FromUuid(uint8_t& b, const Uuid& uuid);
 
-        static void FromUuidMS(uint8_t& b, const Uuid& uuid);
 
 
         static inline bool IsLittleEndian()

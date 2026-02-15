@@ -27,6 +27,11 @@ namespace Tesses::Framework {
 
         static bool TryParse(std::string text, Uuid& uuid);
 
-        std::string ToString(UuidStringifyConfig cfg = UuidStringifyConfig::UppercaseCurly);
+        std::string ToString(UuidStringifyConfig cfg = UuidStringifyConfig::UppercaseCurly) const;
+
+        bool IsEmpty() const;
     };
+
+    bool operator==(const Uuid& left, const Uuid& right);
+    bool operator!=(const Uuid& left, const Uuid& right);
 }

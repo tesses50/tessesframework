@@ -151,32 +151,19 @@ namespace Tesses::Framework::Streams
         return *(double*)&v;
     }
     
-    Uuid ByteReader::ReadUuidBE()
+    Uuid ByteReader::ReadUuid()
     {
         uint8_t data[16];
         if(this->strm->ReadBlock(data, 16) != 16)
             throw std::runtime_error("End of file");
-        return Serialization::BitConverter::ToUuidBE(data[0]);
+        return Serialization::BitConverter::ToUuid(data[0]);
     }
-    Uuid ByteReader::ReadUuidMS()
+    void ByteReader::ReadUuid(Uuid& uuid)
     {
         uint8_t data[16];
         if(this->strm->ReadBlock(data, 16) != 16)
             throw std::runtime_error("End of file");
-        return Serialization::BitConverter::ToUuidMS(data[0]);
+        Serialization::BitConverter::ToUuid(data[0],uuid);
     }
-    void ByteReader::ReadUuidBE(Uuid& uuid)
-    {
-        uint8_t data[16];
-        if(this->strm->ReadBlock(data, 16) != 16)
-            throw std::runtime_error("End of file");
-        Serialization::BitConverter::ToUuidBE(data[0],uuid);
-    }
-    void ByteReader::ReadUuidMS(Uuid& uuid)
-    {
-        uint8_t data[16];
-        if(this->strm->ReadBlock(data, 16) != 16)
-            throw std::runtime_error("End of file");
-        Serialization::BitConverter::ToUuidMS(data[0],uuid);
-    }
+    
 }
