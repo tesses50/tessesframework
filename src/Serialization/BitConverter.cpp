@@ -4,15 +4,39 @@ namespace Tesses::Framework::Serialization
 {
     double BitConverter::ToDoubleBits(uint64_t v)
     {
-        return *(double*)&v;
+        static_assert(sizeof(double) == sizeof(uint64_t), "double is not the same size as uint64_t");
+        double dest=0;
+        memcpy(&dest,&v, sizeof(uint64_t));
+        return dest;
     }
     uint64_t BitConverter::ToUintBits(double v)
     {
-        return *(uint64_t*)&v;
+        //as static_assert is compile time we don't need it here
+        uint64_t dest = 0;
+        memcpy(&dest,&v, sizeof(uint64_t));
+        return dest;
+    }
+    float BitConverter::ToFloatBits(uint32_t v)
+    {
+        static_assert(sizeof(float) == sizeof(uint32_t), "float is not the same size as uint32_t");
+        float dest=0;
+        memcpy(&dest,&v, sizeof(uint32_t));
+        return dest;
+    }
+    uint32_t BitConverter::ToUint32Bits(float v)
+    {
+        //as static_assert is compile time we don't need it here
+        uint32_t dest = 0;
+        memcpy(&dest,&v, sizeof(uint32_t));
+        return dest;
     }
     double BitConverter::ToDoubleBE(uint8_t& b)
     {
         return ToDoubleBits(ToUint64BE(b));
+    }
+    float BitConverter::ToFloatBE(uint8_t& b)
+    {
+        return ToFloatBits(ToUint32BE(b));
     }
     uint64_t BitConverter::ToUint64BE(uint8_t& b)
     {
@@ -52,6 +76,10 @@ namespace Tesses::Framework::Serialization
     double BitConverter::ToDoubleLE(uint8_t& b)
     {
         return ToDoubleBits(ToUint64LE(b));
+    }
+    float BitConverter::ToFloatLE(uint8_t& b)
+    {
+        return ToFloatBits(ToUint32LE(b));
     }
      uint64_t BitConverter::ToUint64LE(uint8_t& b)
     {
@@ -126,6 +154,10 @@ namespace Tesses::Framework::Serialization
     {
         FromUint64BE(b,ToUintBits(v));
     }
+    void BitConverter::FromFloatLE(uint8_t& b, float v)
+    {
+        FromUint32BE(b,ToUint32Bits(v));
+    }
     void BitConverter::FromUint64LE(uint8_t& b, uint64_t v)
     {
         uint8_t* b2 = &b;
@@ -195,5 +227,52 @@ namespace Tesses::Framework::Serialization
 
     }
 
+    int64_t BitConverter::ToSint64BE(uint8_t& b)
+    {
+        uint64_t src = ToUint64BE(b);
+        int64_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint64_t));
+        return dest;
+    }
+    int64_t BitConverter::ToSint64LE(uint8_t& b)
+    {
+        uint64_t src = ToUint64LE(b);
+        int64_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint64_t));
+        return dest;
+    }
+
+
+    int32_t BitConverter::ToSint32BE(uint8_t& b)
+    {
+        uint32_t src = ToUint32BE(b);
+        int32_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint32_t));
+        return dest;
+    }
+    int32_t BitConverter::ToSint32LE(uint8_t& b)
+    {
+        uint32_t src = ToUint32LE(b);
+        int32_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint32_t));
+        return dest;
+    }
+
+
+    int16_t BitConverter::ToSint16BE(uint8_t& b)
+    {
+        uint16_t src = ToUint16BE(b);
+        int16_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint16_t));
+        return dest;
+    }
+    int16_t BitConverter::ToSint16LE(uint8_t& b)
+    {
+        uint16_t src = ToUint16LE(b);
+        int16_t dest = 0;
+        memcpy(&dest,&src,sizeof(uint16_t));
+        return dest;
+    }
     
+
 };
