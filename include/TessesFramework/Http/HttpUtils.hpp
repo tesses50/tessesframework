@@ -143,10 +143,14 @@ struct CaseInsensitiveLess {
     class HttpUtils
     {
         public:
+        static char NibbleToHex(uint8_t b, bool isUppercase);
         static char NibbleToHex(uint8_t nibble);
         static uint8_t HexToNibble(char c);
         static std::string BytesToHex(const std::vector<uint8_t>& data);
         static void BytesToHex(std::string& text,const std::vector<uint8_t>& data);
+
+        static std::string BytesToHex(const std::vector<uint8_t>& data,bool isUppercase);
+        static void BytesToHex(std::string& text,const std::vector<uint8_t>& data, bool isUppercase);
         static std::vector<uint8_t> HexToBytes(const std::string& text);
         static void HexToBytes(std::vector<uint8_t>& data,const std::string& text);
         static std::string MimeType(std::filesystem::path p);

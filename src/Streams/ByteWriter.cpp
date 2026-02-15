@@ -1,4 +1,5 @@
 #include "TessesFramework/Streams/ByteWriter.hpp"
+#include "TessesFramework/Serialization/BitConverter.hpp"
 namespace Tesses::Framework::Streams
 {
     std::shared_ptr<Stream> ByteWriter::GetStream()
@@ -129,5 +130,16 @@ namespace Tesses::Framework::Streams
         uint64_t data = *(uint64_t*)&v;
         WriteU64LE(data);
     }
-    
+    void ByteWriter::WriteUuidBE(const Uuid& uuid)
+    {
+        uint8_t data[16];
+        Serialization::BitConverter::FromUuidBE(data[0], uuid);
+        this->strm->WriteBlock(data, 16);
+    }
+    void ByteWriter::WriteUuidMS(const Uuid& uuid)
+    {
+        uint8_t data[16];
+        Serialization::BitConverter::FromUuidMS(data[0], uuid);
+        this->strm->WriteBlock(data, 16);
+    }
 }

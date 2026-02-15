@@ -1,5 +1,6 @@
 #pragma once
 #include "Stream.hpp"
+#include "../Uuid.hpp"
 
 namespace Tesses::Framework::Streams
 {
@@ -26,5 +27,9 @@ namespace Tesses::Framework::Streams
             float ReadF32LE();
             double ReadF64BE();
             double ReadF64LE();
+            Uuid ReadUuidBE();
+            Uuid ReadUuidMS();
+            void ReadUuidBE(Uuid& uuid);
+            void ReadUuidMS(Uuid& uuid);
     };
 }

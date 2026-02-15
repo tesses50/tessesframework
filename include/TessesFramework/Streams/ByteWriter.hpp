@@ -1,6 +1,6 @@
 #pragma once
 #include "Stream.hpp"
-
+#include "../Uuid.hpp"
 namespace Tesses::Framework::Streams
 {
     class ByteWriter {
@@ -27,5 +27,7 @@ namespace Tesses::Framework::Streams
             void WriteF32LE(float v);
             void WriteF64BE(double v);
             void WriteF64LE(double v);
+            void WriteUuidBE(const Uuid& uuid);
+            void WriteUuidMS(const Uuid& uuid);
     };
 }

@@ -1,4 +1,5 @@
 #include "TessesFramework/Streams/ByteReader.hpp"
+#include "TessesFramework/Serialization/BitConverter.hpp"
 namespace Tesses::Framework::Streams
 {
     std::shared_ptr<Stream> ByteReader::GetStream()
@@ -149,5 +150,33 @@ namespace Tesses::Framework::Streams
         auto v=ReadU64LE();
         return *(double*)&v;
     }
-   
+    
+    Uuid ByteReader::ReadUuidBE()
+    {
+        uint8_t data[16];
+        if(this->strm->ReadBlock(data, 16) != 16)
+            throw std::runtime_error("End of file");
+        return Serialization::BitConverter::ToUuidBE(data[0]);
+    }
+    Uuid ByteReader::ReadUuidMS()
+    {
+        uint8_t data[16];
+        if(this->strm->ReadBlock(data, 16) != 16)
+            throw std::runtime_error("End of file");
+        return Serialization::BitConverter::ToUuidMS(data[0]);
+    }
+    void ByteReader::ReadUuidBE(Uuid& uuid)
+    {
+        uint8_t data[16];
+        if(this->strm->ReadBlock(data, 16) != 16)
+            throw std::runtime_error("End of file");
+        Serialization::BitConverter::ToUuidBE(data[0],uuid);
+    }
+    void ByteReader::ReadUuidMS(Uuid& uuid)
+    {
+        uint8_t data[16];
+        if(this->strm->ReadBlock(data, 16) != 16)
+            throw std::runtime_error("End of file");
+        Serialization::BitConverter::ToUuidMS(data[0],uuid);
+    }
 }

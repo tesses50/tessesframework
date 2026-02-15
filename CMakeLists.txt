@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(TESSESFRAMEWORK_MAJOR_VERSION 0)
 set(TESSESFRAMEWORK_MINOR_VERSION 0)
-set(TESSESFRAMEWORK_PATCH_VERSION 1)
+set(TESSESFRAMEWORK_PATCH_VERSION 2)
 
 project(TessesFramework VERSION ${TESSESFRAMEWORK_MAJOR_VERSION}.${TESSESFRAMEWORK_MINOR_VERSION}.${TESSESFRAMEWORK_PATCH_VERSION})
 
@@ -65,6 +65,7 @@ src/Crypto/MbedTLS/Crypto.cpp
 src/Args.cpp
 src/TF_Init.cpp
 src/HiddenField.cpp
+src/Uuid.cpp
 src/BitTorrent/TorrentFile.cpp
 src/BitTorrent/TorrentStream.cpp
 )
@@ -418,6 +419,11 @@ add_executable(twatch apps/twatch.cpp)
 
 target_link_libraries(twatch PUBLIC tessesframework)
 install(TARGETS twatch DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tuuid apps/tuuid.cpp)
+
+target_link_libraries(tuuid PUBLIC tessesframework)
+install(TARGETS tuuid DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
 include(InstallRequiredSystemLibraries)

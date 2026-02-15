@@ -198,6 +198,19 @@ namespace Tesses::Framework::Http {
         strm << std::setfill(c) << std::setw(count) << text;
         return strm.str();
     }
+    char HttpUtils::NibbleToHex(uint8_t b, bool isUppercase)
+    {
+        if(isUppercase)
+        {
+            b %= 16;
+            if(b >= 0 && b <= 9)
+                return b + '0';
+            if(b >= 10 && b <= 15)
+                return b + ('A' - 10);
+            return 0;
+        }
+        return NibbleToHex(b);
+    }
     char HttpUtils::NibbleToHex(uint8_t b)
     {
         b %= 16;
@@ -971,6 +984,12 @@ namespace Tesses::Framework::Http {
         BytesToHex(text,data);
         return text;
     }
+    std::string HttpUtils::BytesToHex(const std::vector<uint8_t>& data, bool isUpper)
+    {
+        std::string text;
+        BytesToHex(text,data, isUpper);
+        return text;
+    }
     void HttpUtils::BytesToHex(std::string& text,const std::vector<uint8_t>& data)
     {
         if(data.empty()) {
@@ -982,6 +1001,20 @@ namespace Tesses::Framework::Http {
         {
             text[i*2] = NibbleToHex(data[i] >> 4);
             text[i*2+1] += NibbleToHex(data[i]);
+        }
+    }
+    
+    void HttpUtils::BytesToHex(std::string& text,const std::vector<uint8_t>& data, bool isUpper)
+    {
+        if(data.empty()) {
+            text.clear();
+            return;
+        }
+        text.resize(data.size()*2);
+        for(size_t i = 0; i < data.size(); i++)
+        {
+            text[i*2] = NibbleToHex(data[i] >> 4, isUpper);
+            text[i*2+1] += NibbleToHex(data[i], isUpper);
         }
     }
     std::vector<uint8_t> HttpUtils::HexToBytes(const std::string& text)

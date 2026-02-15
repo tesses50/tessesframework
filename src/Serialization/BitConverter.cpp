@@ -49,6 +49,46 @@ namespace Tesses::Framework::Serialization
         v |= (uint16_t)b2[1];
         return v;
     }
+    double BitConverter::ToDoubleLE(uint8_t& b)
+    {
+        return ToDoubleBits(ToUint64LE(b));
+    }
+     uint64_t BitConverter::ToUint64LE(uint8_t& b)
+    {
+        uint8_t* b2 = &b;
+        uint64_t v = 0;
+        v |= (uint64_t)b2[0];
+        v |= ((uint64_t)b2[1] << 8);
+        v |= ((uint64_t)b2[2] << 16);
+        v |= ((uint64_t)b2[3] << 24);
+        v |= ((uint64_t)b2[4] << 32);
+        v |= ((uint64_t)b2[5] << 40);
+        v |= ((uint64_t)b2[6] << 48);
+        v |= ((uint64_t)b2[7] << 56);
+        
+        return v;
+    }
+    uint32_t BitConverter::ToUint32LE(uint8_t& b)
+    {
+        uint8_t* b2 = &b;
+        uint32_t v = 0;
+        v |= (uint32_t)b2[0];
+        v |= ((uint32_t)b2[1] << 8);
+        v |= ((uint32_t)b2[2] << 16);
+        v |= ((uint32_t)b2[3] << 24);
+        
+        return v;
+    }
+    uint16_t BitConverter::ToUint16LE(uint8_t& b)
+    {
+        uint8_t* b2 = &b;
+        uint16_t v = 0;
+       
+        v |= (uint16_t)b2[0];
+        v |= ((uint16_t)b2[1] << 8);
+        
+        return v;
+    }
     void BitConverter::FromDoubleBE(uint8_t& b, double v)
     {
         FromUint64BE(b,ToUintBits(v));
@@ -82,4 +122,107 @@ namespace Tesses::Framework::Serialization
         b2[1] = (uint8_t)v;
     }
 
+    void BitConverter::FromDoubleLE(uint8_t& b, double v)
+    {
+        FromUint64BE(b,ToUintBits(v));
+    }
+    void BitConverter::FromUint64LE(uint8_t& b, uint64_t v)
+    {
+        uint8_t* b2 = &b;
+        b2[0] = (uint8_t)v;
+        b2[1] = (uint8_t)(v >> 8);
+        b2[2] = (uint8_t)(v >> 16);
+        b2[3] = (uint8_t)(v >> 24);
+        b2[4] = (uint8_t)(v >> 32);
+        b2[5] = (uint8_t)(v >> 40);
+        b2[6] = (uint8_t)(v >> 48);
+        b2[7] = (uint8_t)(v >> 56);
+       
+    }
+    void BitConverter::FromUint32LE(uint8_t& b, uint32_t v)
+    {
+        uint8_t* b2 = &b;
+        
+        b2[0] = (uint8_t)v;
+        b2[1] = (uint8_t)(v >> 8);
+        b2[2] = (uint8_t)(v >> 16);
+        b2[3] = (uint8_t)(v >> 24);
+       
+    }
+    void BitConverter::FromUint16LE(uint8_t& b, uint16_t v)
+    {
+        uint8_t* b2 = &b;
+        
+
+        b2[0] = (uint8_t)v;
+        b2[1] = (uint8_t)(v >> 8);
+    }
+    void BitConverter::FromUuidBE(uint8_t& b, const Uuid& uuid)
+    {
+        uint8_t* b2 = &b;
+        FromUint32BE(b2[0], uuid.time_low);
+        FromUint32BE(b2[4], uuid.time_mid);
+        FromUint32BE(b2[6], uuid.time_hi_and_version);
+        b2[8] = uuid.clock_seq_hi_and_reserved;
+        b2[9] = uuid.clock_seq_low;
+        for(size_t i = 0; i < 6; i++)
+            b2[i+10] = uuid.node[i];
+        
+    }
+    void BitConverter::FromUuidMS(uint8_t& b, const Uuid& uuid)
+    {
+        uint8_t* b2 = &b;
+        FromUint32LE(b2[0], uuid.time_low);
+        FromUint32LE(b2[4], uuid.time_mid);
+        FromUint32LE(b2[6], uuid.time_hi_and_version);
+        
+        b2[8] = uuid.clock_seq_hi_and_reserved;
+        b2[9] = uuid.clock_seq_low;
+        for(size_t i = 0; i < 6; i++)
+            b2[i+10] = uuid.node[i];
+        
+    }
+
+    Uuid BitConverter::ToUuidBE(uint8_t& b)
+    {
+        Uuid uuid;
+        BitConverter::ToUuidBE(b,uuid);
+        return uuid;
+    }
+    Uuid BitConverter::ToUuidMS(uint8_t& b)
+    {
+        Uuid uuid;
+        BitConverter::ToUuidMS(b,uuid);
+        return uuid;
+    }
+
+
+    void BitConverter::ToUuidBE(uint8_t& b, Uuid& uuid)
+    {
+        uint8_t* b2 = &b;
+        uuid.time_low = ToUint32BE(b2[0]);
+
+        uuid.time_mid = ToUint16BE(b2[4]);
+
+        uuid.time_hi_and_version = ToUint16BE(b2[6]);
+       
+        uuid.clock_seq_hi_and_reserved = b2[8];
+        uuid.clock_seq_low = b2[9];
+        for(size_t i = 0; i < 6; i++)
+          uuid.node[i]=   b2[i+10];
+
+    }
+
+    void BitConverter::ToUuidMS(uint8_t& b, Uuid& uuid)
+    {
+        uint8_t* b2 = &b;
+        uuid.time_low = ToUint32LE(b2[0]);
+        uuid.time_mid = ToUint16LE(b2[4]);
+        uuid.time_hi_and_version = ToUint16LE(b2[6]);
+       
+        uuid.clock_seq_hi_and_reserved = b2[8];
+        uuid.clock_seq_low = b2[9];
+        for(size_t i = 0; i < 6; i++)
+          uuid.node[i]=   b2[i+10];
+    }
 };
