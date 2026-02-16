@@ -156,6 +156,10 @@ namespace Tesses::Framework::Serialization
     }
     void BitConverter::FromFloatLE(uint8_t& b, float v)
     {
+        FromUint32LE(b,ToUint32Bits(v));
+    }
+    void BitConverter::FromFloatBE(uint8_t& b, float v)
+    {
         FromUint32BE(b,ToUint32Bits(v));
     }
     void BitConverter::FromUint64LE(uint8_t& b, uint64_t v)
@@ -193,8 +197,8 @@ namespace Tesses::Framework::Serialization
     {
         uint8_t* b2 = &b;
         FromUint32BE(b2[0], uuid.time_low);
-        FromUint32BE(b2[4], uuid.time_mid);
-        FromUint32BE(b2[6], uuid.time_hi_and_version);
+        FromUint16BE(b2[4], uuid.time_mid);
+        FromUint16BE(b2[6], uuid.time_hi_and_version);
         b2[8] = uuid.clock_seq_hi_and_reserved;
         b2[9] = uuid.clock_seq_low;
         for(size_t i = 0; i < 6; i++)
@@ -275,4 +279,41 @@ namespace Tesses::Framework::Serialization
     }
     
 
-};
+    void BitConverter::FromSint64BE(uint8_t& b, int64_t v)
+    {
+        uint64_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint64_t));
+        FromUint64BE(b, dest);
+    }
+    void BitConverter::FromSint32BE(uint8_t& b, int32_t v)
+    {
+        uint32_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint32_t));
+        FromUint32BE(b, dest);
+    }
+    void BitConverter::FromSint16BE(uint8_t& b, int16_t v)
+    {
+        uint16_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint16_t));
+        FromUint16BE(b, dest);
+    }
+        
+    void BitConverter::FromSint64LE(uint8_t& b, int64_t v)
+    {
+        uint64_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint64_t));
+        FromUint64LE(b, dest);
+    }
+    void BitConverter::FromSint32LE(uint8_t& b, int32_t v)
+    {
+        uint32_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint32_t));
+        FromUint32LE(b, dest);
+    }
+    void BitConverter::FromSint16LE(uint8_t& b, int16_t v)
+    {
+        uint16_t dest = 0;
+        memcpy(&dest,&v,sizeof(uint16_t));
+        FromUint16LE(b, dest);
+    }
+}
