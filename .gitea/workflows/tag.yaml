@@ -5,7 +5,7 @@ on:
       - "v*"
 
 env:
-  GITEA_AUTH: ${{ secrets.MY_GITEA_AUTH }}
+  PACKAGE_AND_BREW: ${{ secrets.PACKAGE_AND_BREW }}
 
 jobs:
   build-arch:

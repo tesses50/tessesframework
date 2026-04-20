@@ -4,7 +4,7 @@ mkdir x86_64
 cd x86_64
 cp ../PKGBUILD .
 makepkg
-curl --user tesses50:$GITEA_AUTH \
+curl --user tesses50:$PACKAGE_AND_BREW \
      --upload-file *.pkg.tar.zst \
      https://git.tesses.org/api/packages/tesses50/arch/core
 cd ..
@@ -12,6 +12,6 @@ mkdir powerpc
 cd powerpc
 cp ../PKGBUILD .
 CARCH=powerpc CMAKE_TOOLCHAIN=/opt/cross/ppc/toolchain.cmake makepkg
-curl --user tesses50:$GITEA_AUTH \
+curl --user tesses50:$PACKAGE_AND_BREW \
      --upload-file *.pkg.tar.zst \
      https://git.tesses.org/api/packages/tesses50/arch/core
