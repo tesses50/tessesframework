@@ -1,6 +1,7 @@
 #include "TessesFramework/Filesystem/VFS.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Filesystem/LocalFS.hpp"
+#include <TessesFramework/Filesystem/FSHelpers.hpp>
 namespace Tesses::Framework::Filesystem
 {
     VFSPathEnumeratorItterator::VFSPathEnumeratorItterator()
@@ -21,12 +22,12 @@ namespace Tesses::Framework::Filesystem
         enumerator->MoveNext();
         return *this;
     }
-    
-    
+
+
     VFSPath& VFSPathEnumeratorItterator::operator*()
     {
         std::filesystem::directory_iterator i;
-        
+
         if(enumerator != nullptr)
             return enumerator->Current;
         return this->e;
@@ -46,7 +47,7 @@ namespace Tesses::Framework::Filesystem
         if(right.enumerator == nullptr)
         {
             auto r = !enumerator->IsDone();
-           
+
             return r;
         }
         return true;
@@ -88,7 +89,7 @@ namespace Tesses::Framework::Filesystem
     }
     bool VFSPathEnumerator::IsDone()
     {
-        
+
         if(this->data)
         {
             return data->eof;
@@ -132,7 +133,7 @@ namespace Tesses::Framework::Filesystem
         {
             mid.append(p.path.back());
         }
-        
+
         if(!p2.path.empty())
         {
             mid.append(p2.path.front());
@@ -169,7 +170,7 @@ namespace Tesses::Framework::Filesystem
         for(size_t i = 0; i < p.path.size(); i++)
             if(p.path[i] != p2.path[i]) return true;
         return false;
-    
+
     }
     bool operator==(std::string p,VFSPath p2)
     {
@@ -216,13 +217,98 @@ namespace Tesses::Framework::Filesystem
     {
         return MakeRelative(GetAbsoluteCurrentDirectory());
     }
+    FIFOCreationResult VFS::CreateFIFO(VFSPath path, uint32_t mode)
+    {
+        return FIFOCreationResult::Unsupported;
+    }
+    bool VFS::DirectoryExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsDirectory();
+        }
+        return false;
+    }
+    bool VFS::RegularFileExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsRegularFile();
+        }
+        return false;
+    }
+    bool VFS::SymlinkExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsSymlink();
+        }
+        return false;
+    }
+    bool VFS::CharacterDeviceExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsCharDevice();
+        }
+        return false;
+    }
+    bool VFS::BlockDeviceExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsBlockDevice();
+        }
+        return false;
+    }
+    bool VFS::SocketFileExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsSocket();
+        }
+        return false;
+    }
+    bool VFS::FIFOFileExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsFIFO();
+        }
+        return false;
+    }
+    bool VFS::FileExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return !data.IsDirectory();
+        }
+        return false;
+    }
+    bool VFS::SpecialFileExists(VFSPath path)
+    {
+        StatData data;
+        if(this->Stat(path, data))
+        {
+            return data.IsSpecial();
+        }
+        return false;
+    }
     VFSPath VFSPath::MakeRelative(VFSPath toMakeRelativeTo) const
     {
 
         if(this->relative) return *this;
-        
-        
-        
+
+
+
         size_t i;
         size_t len = std::min(toMakeRelativeTo.path.size(),this->path.size());
         for(i = 0; i < len; i++)
@@ -239,7 +325,7 @@ namespace Tesses::Framework::Filesystem
         }
 
         std::vector<std::string> parts(this->path.begin()+i, this->path.end());
-        
+
         if(i < toMakeRelativeTo.path.size())
         {
             for(; i < toMakeRelativeTo.path.size();i++)
@@ -264,7 +350,7 @@ namespace Tesses::Framework::Filesystem
                     parts.erase(parts.end()-1);
                 }
             }
-            else if(item == ".") 
+            else if(item == ".")
             {
                 //do nothing but don't emit this
             }
@@ -284,7 +370,7 @@ namespace Tesses::Framework::Filesystem
         path.relative=true;
         return path;
     }
-    
+
     std::vector<std::string> VFSPath::SplitPath(std::string path)
     {
         std::vector<std::string> parts;
@@ -386,7 +472,7 @@ namespace Tesses::Framework::Filesystem
             str = str.substr(0,index);
         }
         if(ext.empty()) return;
-        if(ext[0] != '.') 
+        if(ext[0] != '.')
         {
             str += '.';
             str += ext;
@@ -400,7 +486,7 @@ namespace Tesses::Framework::Filesystem
     {
         ChangeExtension({});
     }
-    
+
     VFSPath::VFSPath(std::string str)
     {
         this->path = SplitPath(str);
@@ -419,12 +505,20 @@ namespace Tesses::Framework::Filesystem
             }
         }
     }
+    void VFS::CreateDirectory(VFSPath path)
+    {
+
+    }
+    void VFS::DeleteDirectory(VFSPath path)
+    {
+
+    }
     VFSPath::VFSPath(VFSPath p1, VFSPath p2)
     {
         this->relative = p1.relative;
         this->path.insert(this->path.end(),p1.path.begin(),p1.path.end());
         this->path.insert(this->path.end(),p2.path.begin(),p2.path.end());
-    }   
+    }
     VFSPath::VFSPath(VFSPath p1, std::string subpath) : VFSPath(p1, VFSPath(subpath))
     {
 
@@ -462,20 +556,30 @@ namespace Tesses::Framework::Filesystem
         }
         return p;
     }
+    void VFS::DeleteFile(VFSPath path)
+    {
 
+    }
+    void VFS::MoveFile(VFSPath src, VFSPath dest)
+    {
+        {
+            auto srcStrm = this->OpenFile(src, "rb");
+            if(!srcStrm->CanRead()) return;
+            auto destStrm = this->OpenFile(dest, "wb");
+            if(!destStrm->CanWrite()) return;
+            srcStrm->CopyTo(destStrm);
+        }
+
+        VFS::DeleteFile(src);
+    }
     VFS::~VFS()
     {
 
     }
 
-    bool VFS::FIFOFileExists(VFSPath path) {return false;}
-    bool VFS::SocketFileExists(VFSPath path) {return false;}
-    bool VFS::CharacterDeviceExists(VFSPath path) {return false;}
-    bool VFS::BlockDeviceExists(VFSPath path) {return false;}
-    bool VFS::SymlinkExists(VFSPath path) {return false;}
     void VFS::MoveDirectory(VFSPath src, VFSPath dest)
     {
-        
+
         for(auto item : EnumeratePaths(src))
         {
             if(DirectoryExists(item))
@@ -488,7 +592,7 @@ namespace Tesses::Framework::Filesystem
             }
         }
 
-        DeleteDirectory(src); 
+        DeleteDirectory(src);
     }
     void VFS::CreateSymlink(VFSPath existingFile, VFSPath symlinkFile)
     {
@@ -496,22 +600,14 @@ namespace Tesses::Framework::Filesystem
     }
     void VFS::CreateHardlink(VFSPath existingFile, VFSPath newName)
     {
-        
+
     }
-    
-    bool VFS::SpecialFileExists(VFSPath path)
-    {
-        return SymlinkExists(path) || BlockDeviceExists(path) || CharacterDeviceExists(path) || SocketFileExists(path) || FIFOFileExists(path);
-    }
-    bool VFS::FileExists(VFSPath path)
-    {
-        return RegularFileExists(path) || SpecialFileExists(path);
-    }
+
 
     void VFS::DeleteDirectoryRecurse(VFSPath path)
     {
         if(!DirectoryExists(path)) return;
-       
+
         for(auto item : EnumeratePaths(path))
         {
             if(DirectoryExists(item))
@@ -527,7 +623,12 @@ namespace Tesses::Framework::Filesystem
     }
     void VFS::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
     {
-
+        StatData data;
+        if(Stat(path, data))
+        {
+            lastWrite = data.LastModified;
+            lastAccess = data.LastAccess;
+        }
     }
     void VFS::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
@@ -551,8 +652,11 @@ namespace Tesses::Framework::Filesystem
     void VFS::Chmod(VFSPath path, uint32_t mode) {
 
     }
+    void VFS::Chown(VFSPath path, uint32_t uid, uint32_t gid) {
+
+    }
     void VFS::Close() {
-        
+
     }
     void VFS::Lock(VFSPath path)
     {
@@ -560,7 +664,7 @@ namespace Tesses::Framework::Filesystem
     }
     void VFS::Unlock(VFSPath path)
     {
-        
+
     }
 
 
@@ -599,7 +703,7 @@ namespace Tesses::Framework::Filesystem
     {
 
     }
-            
+
     std::shared_ptr<FSWatcher> FSWatcher::Create(std::shared_ptr<VFS> vfs, VFSPath path)
     {
         return vfs->CreateWatcher(vfs,path);
@@ -671,4 +775,4 @@ namespace Tesses::Framework::Filesystem
 
         return "";
     }
-}   
+}

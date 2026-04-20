@@ -21,9 +21,9 @@ int main(int argc, char** argv)
             .SendText(
                 "<!DOCTYPE html>"
                 "<html>"
-                "<head><meta charset=\"UTF-8\"><title>AnonyDump</title></head>"
+                "<head><meta charset=\"UTF-8\"><title>AnonyDrop</title><meta name=\"color-scheme\" content=\"dark light\"></head>"
                 "<body>"
-                "<h1>AnonyDump</h1>"
+                "<h1>AnonyDrop</h1>"
                 "<a href=\"./files/\">Files</a>"
                 "<form action=\"./upload\" method=\"post\" enctype=\"multipart/form-data\" accept-charset=\"UTF-8\">"
                 "<input type=\"file\" name=\"file\" multiple>"
@@ -43,19 +43,18 @@ int main(int argc, char** argv)
                     if(name != "file") return nullptr;
                     VFSPath path("/"+filename);
                     auto strm = vfs->OpenFile(path,"wb");
-                    
+
                     return strm;
                 });
                 ctx.WithMimeType("text/html")
                 .SendText(
                     "<!DOCTYPE html>"
                     "<html>"
-                    "<head><title>AnonyDump - Uploaded successfully</title>"
+                    "<head><title>AnonyDrop - Uploaded successfully</title>"
                     "<body>"
                     "<h1>Uploaded successfully</h1>"
                     "<a href=\"./\">Back</a>"
-                    
-                    "</form>"
+
                     "</body>"
                     "</html>"
                 );
@@ -71,7 +70,7 @@ int main(int argc, char** argv)
                     "<body>"
                     "<h1>Error: Must contain multipart and POST</h1>"
                     "<a href=\"./\">Back</a>"
-                    
+
                     "</form>"
                     "</body>"
                     "</html>"

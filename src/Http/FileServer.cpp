@@ -24,7 +24,7 @@ namespace Tesses::Framework::Http
     }
     FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing,bool spa) : FileServer(fs,allowListing,spa,{"index.html","default.html","index.htm","default.htm"})
     {
-        
+
     }
     FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing, bool spa, std::vector<std::string> defaultNames)
     {
@@ -44,7 +44,7 @@ namespace Tesses::Framework::Http
             this->vfs->GetDate(path,lw,la);
             ctx.WithLastModified(lw).WithMimeType(HttpUtils::MimeType(path.GetFileName())).SendStream(strm);
             retVal = true;
-           
+
         }
         return retVal;
     }
@@ -52,8 +52,8 @@ namespace Tesses::Framework::Http
     bool FileServer::Handle(ServerContext& ctx)
     {
         auto path = ((VFSPath)HttpUtils::UrlPathDecode(ctx.path)).CollapseRelativeParents();
-        
-        
+
+
         if(this->vfs->DirectoryExists(path))
         {
             TF_LOG("Directory exists");
@@ -73,10 +73,10 @@ namespace Tesses::Framework::Http
                 std::string p = HttpUtils::HtmlEncode(ctx.originalPath);
                 std::string html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Index of ";
                 html.append(p);
-                html.append("</title></head><body><h1>Index of ");
+                html.append("</title><meta name=\"color-scheme\" content=\"dark light\"></head><body><h1>Index of ");
                 html.append(p);
                 html.append("</h1><hr><pre><a href=\"../\">../</a>\r\n");
-                
+
 
                 for(auto item : vfs->EnumeratePaths(path))
                 {
@@ -103,7 +103,7 @@ namespace Tesses::Framework::Http
                 }
 
                 html.append("</pre><hr></body></html>");
-                
+
                 ctx.WithMimeType("text/html").SendText(html);
                 return true;
             }
@@ -126,6 +126,6 @@ namespace Tesses::Framework::Http
     }
     FileServer::~FileServer()
     {
-       
+
     }
 }

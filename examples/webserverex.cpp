@@ -1,5 +1,8 @@
 #include "TessesFramework/TessesFramework.hpp"
+#include <TessesFramework/Platform/Environment.hpp>
+#include <exception>
 #include <iostream>
+#include <stdexcept>
 using namespace Tesses::Framework;
 using namespace Tesses::Framework::Http;
 using namespace Tesses::Framework::Streams;
@@ -26,7 +29,7 @@ class MyWebServer : public IHttpServer {
             if(ctx.path == "/")
             {
                 std::shared_ptr<FileStream> fs = std::make_shared<FileStream>("index.html","rb");
-                
+
                 ctx
                 .WithMimeType("text/html")
                 .SendStream(fs);
@@ -62,7 +65,7 @@ class MyWebServer : public IHttpServer {
                 for(size_t i=0;i<10000; i++)
                 {
                     writer.WriteLine("<li>" + std::to_string(i) + "</li>");
-                    
+
                 }
 
                 writer.WriteLine("</ul>");
@@ -75,7 +78,7 @@ class MyWebServer : public IHttpServer {
             {
 
                 std::shared_ptr<FileStream> fs = std::make_shared<FileStream>("main.js","rb");
-                
+
                 ctx
                 .WithMimeType("text/js")
                 .SendStream(fs);
@@ -92,10 +95,10 @@ class MyWebServer : public IHttpServer {
                 Johnny* data = ctx.GetServerContentData<Johnny>("mytag");
                 data->text = "Demi Lovato";
             }
-            
+
             return false;
         }
-        
+
 };
 class MyOtherWebServer : public IHttpServer
 {
@@ -115,9 +118,29 @@ class MyOtherWebServer : public IHttpServer
                 .WithContentDisposition(HttpUtils::Sanitise(name) + ".txt",false)
                 .SendText(name + " is cool.");
                 //do something with q
-                
+
                 return true;
             }
+            }
+            else if(ctx.path == "/status")
+            {
+                int64_t num;
+                if(ctx.queryParams.TryGetFirstInt("code", num))
+                {
+                    ctx.statusCode = (StatusCode)num;
+                }
+
+                ctx.SendErrorPage(true);
+                return true;
+            }
+            else if(ctx.path == "/error")
+            {
+                throw std::runtime_error("This is a error");
+            }
+            else if(ctx.path == "/error-debug")
+            {
+                ctx.WithDebug(true);
+                throw std::runtime_error("Platform is " + Tesses::Framework::Platform::Environment::GetPlatform());
             }
             else if(ctx.path == "/mymount/steve")
             {
@@ -131,7 +154,7 @@ class MyOtherWebServer : public IHttpServer
                 ctx.WithMimeType("text/html").SendText(txt);
                 return true;
             }
-            
+
             return false;
         }
 };

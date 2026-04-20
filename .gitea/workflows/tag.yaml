@@ -2,7 +2,7 @@ name: Build and Deploy on Tag
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   GITEA_AUTH: ${{ secrets.MY_GITEA_AUTH }}
@@ -20,24 +20,3 @@ jobs:
       - run: chown build:build /home/build/PKGBUILD
       - run: chown build:build /home/build/build-arch.sh
       - run: su build -c /home/build/build-arch.sh
-  build-jammy:
-    runs-on: deb-builder-jammy
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build for jammy, noble
-        run: |
-          bash build-ubuntu-jammy.sh
-          bash push-ubuntu-jammy.sh
-        working-directory: ./Packaging/Linux
-  build-plucky:
-    runs-on: deb-builder-plucky
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build for plucky, resolute
-        run: |
-          bash build-ubuntu-plucky.sh
-          bash push-ubuntu-plucky.sh
-        working-directory: ./Packaging/Linux
-      - uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18

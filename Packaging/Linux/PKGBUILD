@@ -1,16 +1,16 @@
 # Maintainer: Mike Nolan <tesses@tesses.net>
-pkgname=tesses-framework # '-bzr', '-git', '-hg' or '-svn'
-pkgver=0.0.2
+pkgname=tessesframework # '-bzr', '-git', '-hg' or '-svn'
+pkgver=0.0.3
 pkgrel=1
 pkgdesc=""
 arch=('x86_64' 'powerpc')
-url="https://onedev.site.tesses.net/tesses-framework"
+url="https://git.tesses.org/tessesframework"
 license=('MIT')
 groups=()
 depends=('mbedtls')
 makedepends=('git' 'cmake' 'make' 'base-devel' 'wget') # 'bzr', 'git', 'mercurial' or 'subversion'
 install=
-source=('tesses-framework::git+https://onedev.site.tesses.net/tesses-framework')
+source=('tessesframework::git+https://git.tesses.org/tesses-framework')
 noextract=()
 sha256sums=('SKIP')
 if [[ -z "$CMAKE_TOOLCHAIN" ]]; then
@@ -22,22 +22,21 @@ fi
 
 prepare() {
 	cd "$srcdir/${pkgname}"
-	wget https://downloads.tesses.net/ShellPackage.crvm
 }
 
 build() {
 	cd "$srcdir/${pkgname}"
 	mkdir build
-	
+
 	if [[ -z "$CMAKE_TOOLCHAIN" ]]; then
- 	cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
+ 	cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_BUILD_TYPE=Release
   	else
-	cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN"
+	cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DTESSESFRAMEWORK_VENDERCERTCHAIN=OFF -DTESSESFRAMEWORK_FETCHCONTENT=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN"
 	fi
- 
+
 	cd build
 	make -j`nproc`
-	
+
 }
 
 
@@ -47,4 +46,3 @@ package() {
 	cd "$srcdir/${pkgname}/build"
 	make install DESTDIR="$pkgdir/"
 }
-

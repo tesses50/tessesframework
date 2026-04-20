@@ -2,7 +2,7 @@ set(PKGCONFIG_INCLUDEDIR "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
 set(PKGCONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
 
 set(PKGCONFIG_PROJECT_DESCRIPTION "A cross platform wrapper library")
-set(PKGCONFIG_PROJECT_HOMEPAGE_URL "https://onedev.site.tesses.net/tesses-framework")
+set(PKGCONFIG_PROJECT_HOMEPAGE_URL "https://git.tesses.org/tessesframework")
 
 if(TESSESFRAMEWORK_ENABLE_MBED)
 set(PKGCONFIG_DEPS "Requires: mbedtls")

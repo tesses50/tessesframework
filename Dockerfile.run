@@ -1,3 +1,0 @@
-FROM onedev.site.tesses.net/dependencies/dependencies:latest
-COPY build/out /
-

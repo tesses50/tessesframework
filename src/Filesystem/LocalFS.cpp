@@ -1,7 +1,10 @@
 #include "TessesFramework/Filesystem/LocalFS.hpp"
 #include "TessesFramework/Streams/FileStream.hpp"
+#include <cerrno>
+#include <filesystem>
 #include <iostream>
 #include <sys/stat.h>
+#include <sys/types.h>
 #if defined(_WIN32)
 #include <windows.h>
 #include "TessesFramework/Filesystem/VFSFix.hpp"
@@ -27,16 +30,31 @@ namespace Tesses::Framework::Filesystem
         pft->dwHighDateTime = time_value.HighPart;
     }
     #endif
-    void LocalFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
+    bool LocalFilesystem::Stat(VFSPath path, StatData& sfs)
     {
         std::string s = VFSPathToSystem(path);
         struct stat st;
         if(stat(s.c_str(),&st) == 0)
         {
-            lastAccess = Date::DateTime((int64_t)st.st_atime);
-            lastWrite = Date::DateTime((int64_t)st.st_mtime);
+
+            sfs.Device = (uint64_t)st.st_dev;
+            sfs.Inode = (uint64_t)st.st_ino;
+            sfs.Mode = (uint32_t)st.st_mode;
+            sfs.HardLinks = (uint64_t)st.st_nlink;
+            sfs.UserId = (uint32_t)st.st_uid;
+            sfs.GroupId = (uint32_t)st.st_gid;
+            sfs.DeviceId = (uint64_t)st.st_rdev;
+            sfs.Size = (uint64_t)st.st_size;
+            sfs.BlockSize = (uint64_t)st.st_blksize;
+            sfs.BlockCount = (uint64_t)st.st_blocks;
+            sfs.LastAccess = Date::DateTime((int64_t)st.st_atime);
+            sfs.LastModified = Date::DateTime((int64_t)st.st_mtime);
+            sfs.LastStatus = Date::DateTime((int64_t)st.st_ctime);
+            return true;
         }
+        return false;
     }
+
     void LocalFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
         std::string s = VFSPathToSystem(path);
@@ -44,7 +62,7 @@ namespace Tesses::Framework::Filesystem
 	#if defined(_WIN32)
         FILETIME lastWriteF;
         FILETIME lastAccessF;
-        
+
         TimetToFileTime((time_t)lastWrite.ToEpoch(),&lastWriteF);
         TimetToFileTime((time_t)lastAccess.ToEpoch(),&lastAccessF);
         HANDLE hFile = CreateFileA(
@@ -95,34 +113,6 @@ namespace Tesses::Framework::Filesystem
     void LocalFilesystem::CreateDirectory(VFSPath path)
     {
         std::filesystem::create_directories(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::DirectoryExists(VFSPath path)
-    {
-        return std::filesystem::is_directory(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::RegularFileExists(VFSPath path)
-    {
-        return std::filesystem::is_regular_file(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::SymlinkExists(VFSPath path)
-    {
-        return std::filesystem::is_symlink(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::BlockDeviceExists(VFSPath path)
-    {
-        return std::filesystem::is_block_file(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::CharacterDeviceExists(VFSPath path)
-    {
-        return std::filesystem::is_character_file(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::SocketFileExists(VFSPath path)
-    {
-        return std::filesystem::is_socket(VFSPathToSystem(path));
-    }
-    bool LocalFilesystem::FIFOFileExists(VFSPath path)
-    {
-        return std::filesystem::is_fifo(VFSPathToSystem(path));
     }
     void LocalFilesystem::CreateSymlink(VFSPath existingFile, VFSPath symlinkFile)
     {
@@ -182,10 +172,13 @@ namespace Tesses::Framework::Filesystem
         }
         return p;
     }
-    
+
     VFSPathEnumerator LocalFilesystem::EnumeratePaths(VFSPath path)
     {
-        auto dir = new std::filesystem::directory_iterator(VFSPathToSystem(path));
+        std::filesystem::path sysPath = VFSPathToSystem(path);
+        if(!std::filesystem::is_directory(sysPath)) return VFSPathEnumerator();
+
+        auto dir = new std::filesystem::directory_iterator(sysPath);
         return VFSPathEnumerator([dir,path](VFSPath& path0)->bool {
             std::filesystem::directory_iterator& ittr = *dir;
             if(ittr != std::filesystem::directory_iterator())
@@ -236,8 +229,47 @@ namespace Tesses::Framework::Filesystem
             chmod(pathStr.c_str(), (mode_t)mode);
         #endif
     }
+    void LocalFilesystem::Chown(VFSPath path, uint32_t uid, uint32_t gid)
+    {
+        auto pathStr = this->VFSPathToSystem(path);
+        #if defined(_WIN32)
 
-    
+        #else
+            chown(pathStr.c_str(), (uid_t)uid, (gid_t)gid);
+        #endif
+    }
+
+
+    FIFOCreationResult LocalFilesystem::CreateFIFO(VFSPath path, uint32_t mod)
+    {
+        auto pathStr = this->VFSPathToSystem(path);
+        #if defined(_WIN32)
+            return FIFOCreationResult::Unsupported;
+        #else
+            int res = mkfifo(pathStr.c_str(), (mode_t)mod);
+            if(res == 0) return FIFOCreationResult::Success;
+            else if(res == -1)
+            {
+                switch(res)
+                {
+                    case EEXIST:
+                        return FIFOCreationResult::Exists;
+                    case ENOTSUP:
+                        return FIFOCreationResult::Unsupported;
+                    case EACCES:
+                        return FIFOCreationResult::Denied;
+                    case ENOSPC:
+                        return FIFOCreationResult::OutOfInodes;
+                    case EROFS:
+                        return FIFOCreationResult::ReadOnlyFS;
+                }
+            }
+
+            return FIFOCreationResult::UnknownError;
+        #endif
+    }
+
+
     void LocalFilesystem::Lock(VFSPath path)
     {
         auto p2 = VFSPathToSystem(path);
@@ -275,7 +307,7 @@ namespace Tesses::Framework::Filesystem
             lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::MoveOld) != 0) ? IN_MOVED_FROM : 0;
             lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::MoveNew) != 0) ? IN_MOVED_TO : 0;
             lflags |= (((uint32_t)flags & (uint32_t)FSWatcherEventType::Opened) != 0) ? IN_OPEN : 0;
-            
+
             return lflags;
         }
         static FSWatcherEventType from_linux_mask(uint32_t lflags)
@@ -293,7 +325,7 @@ namespace Tesses::Framework::Filesystem
             flags |= ((lflags & IN_MOVED_FROM) != 0) ? (uint32_t)FSWatcherEventType::MoveOld : 0;
             flags |= ((lflags & IN_MOVED_TO) != 0) ? (uint32_t)FSWatcherEventType::MoveNew : 0;
             flags |= ((lflags & IN_OPEN) != 0) ? (uint32_t)FSWatcherEventType::Opened : 0;
-            
+
             return (FSWatcherEventType)flags;
         }
         public:
@@ -303,7 +335,7 @@ namespace Tesses::Framework::Filesystem
             }
 
         protected:
-            
+
             void SetEnabledImpl(bool enabled)
             {
                 if(enabled)
@@ -325,7 +357,7 @@ namespace Tesses::Framework::Filesystem
                             __attribute__ ((aligned(__alignof__(struct inotify_event))));
                         const struct inotify_event *event;
                         ssize_t size;
-                        
+
                         bool fail=false;
 
                         FSWatcherEvent evt;
@@ -397,12 +429,12 @@ namespace Tesses::Framework::Filesystem
                                                 close(fd);
                                                 return;
                                             }
-                                        }    
+                                        }
                                     }
                                 }
                             }
                         }
-                        
+
                         close(fd);
                     });
 
@@ -420,8 +452,8 @@ namespace Tesses::Framework::Filesystem
             }
     };
     #endif
-    
-    
+
+
 
     std::shared_ptr<FSWatcher> LocalFilesystem::CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path)
     {

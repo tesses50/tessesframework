@@ -6,6 +6,7 @@
 #include "../Date/Date.hpp"
 #include <unordered_map>
 #include "WebSocket.hpp"
+#include <queue>
 namespace Tesses::Framework::Http
 {
     class ServerContextData {
@@ -13,12 +14,14 @@ namespace Tesses::Framework::Http
             virtual ~ServerContextData();
     };
 
-  
+
 
     class ServerContext {
         bool sent;
+        bool debug;
         std::shared_ptr<Tesses::Framework::Streams::Stream> strm;
         std::map<std::string,ServerContextData*> data;
+        std::queue<std::function<bool(ServerContext& ctx)>> headerhandlers;
         public:
             HttpDictionary requestHeaders;
             HttpDictionary responseHeaders;
@@ -34,7 +37,7 @@ namespace Tesses::Framework::Http
             uint16_t serverPort;
             std::string version;
             bool encrypted;
-            ServerContext(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
+            ServerContext(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, bool debug=false);
             ~ServerContext();
             std::shared_ptr<Tesses::Framework::Streams::Stream> GetStream();
             std::string GetOriginalPathWithQuery();
@@ -53,6 +56,7 @@ namespace Tesses::Framework::Http
             void SendException(std::exception& ex);
             std::shared_ptr<Tesses::Framework::Streams::Stream> OpenResponseStream();
             std::shared_ptr<Tesses::Framework::Streams::Stream> OpenRequestStream();
+            ServerContext& WithStatusCode(StatusCode code);
             ServerContext& WithLastModified(Date::DateTime time);
             ServerContext& WithHeader(std::string key, std::string value);
             ServerContext& WithSingleHeader(std::string key, std::string value);
@@ -61,6 +65,9 @@ namespace Tesses::Framework::Http
             ServerContext& WriteHeaders();
             ServerContext& WithLocationHeader(std::string url);
             ServerContext& WithLocationHeader(std::string url,StatusCode sc);
+            ServerContext& WithHeaderIntercepter(std::function<bool(ServerContext&)> cb);
+            ServerContext& WithDebug(bool debug=true);
+            bool Debug();
             void StartWebSocketSession(std::function<void(std::function<void(WebSocketMessage&)>,std::function<void()>,std::function<void()>)> onOpen, std::function<void(WebSocketMessage&)> onReceive, std::function<void(bool)> onClose);
             void StartWebSocketSession(std::shared_ptr<WebSocketConnection> connection);
             std::string GetServerRoot();
@@ -68,7 +75,7 @@ namespace Tesses::Framework::Http
             void SendRedirect(std::string url);
             void SendRedirect(std::string url, StatusCode sc);
 
-            
+
             template<class T>
             T* GetServerContentData(std::string tag)
             {
@@ -95,14 +102,15 @@ namespace Tesses::Framework::Http
 
         bool showIPs;
         bool showARTL;
-    
+        bool debug;
+
         public:
-            HttpServer(std::shared_ptr<Tesses::Framework::Streams::TcpServer> tcpServer, std::shared_ptr<IHttpServer> http, bool showIPs=true);
-            HttpServer(uint16_t port, std::shared_ptr<IHttpServer> http, bool showIPs=true);
-            HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http);
+            HttpServer(std::shared_ptr<Tesses::Framework::Streams::TcpServer> tcpServer, std::shared_ptr<IHttpServer> http, bool showIPs=true, bool debug=false);
+            HttpServer(uint16_t port, std::shared_ptr<IHttpServer> http, bool showIPs=true, bool debug=false);
+            HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http, bool debug=false);
             uint16_t GetPort();
             void StartAccepting();
-            static void Process(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted);
+            static void Process(std::shared_ptr<Tesses::Framework::Streams::Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted, bool debug=false);
             ~HttpServer();
     };
-}   
+}

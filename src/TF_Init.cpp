@@ -6,11 +6,15 @@
 #include "TessesFramework/Filesystem/FSHelpers.hpp"
 #include "TessesFramework/Serialization/Json.hpp"
 #include <atomic>
+#include <chrono>
 #include <csignal>
+#include <functional>
 #include <iostream>
+#include <memory>
 #include <queue>
+#include <ratio>
 
-#if defined(TESSESFRAMEWORK_ENABLE_SQLITE) 
+#if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
 extern "C" {
 #include "Serialization/sqlite/sqlite3.h"
 }
@@ -52,8 +56,6 @@ static GXRModeObj *rmode = NULL;
 
 namespace Tesses::Framework
 {
-   
-    EventList<uint64_t> OnItteraton;
     #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
     namespace Threading
     {
@@ -64,13 +66,14 @@ namespace Tesses::Framework
     volatile static bool isRunningSig=true;
     volatile static std::atomic<bool> isRunning;
     volatile static std::atomic<bool> gaming_console_events=true;
-    
+
     #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    Threading::Mutex timers_mtx;
     Threading::Mutex invokings_mtx;
 
     std::queue<std::function<void()>> invokings;
     #endif
-    
+
 
     void TF_Invoke(std::function<void()> cb)
     {
@@ -86,7 +89,7 @@ namespace Tesses::Framework
     void TF_ConnectToSelf(uint16_t port)
     {
         Tesses::Framework::Streams::NetworkStream ns("127.0.0.1",port,false,false,false);
-        
+
     }
     bool TF_IsRunning()
     {
@@ -106,16 +109,142 @@ namespace Tesses::Framework
     }
     #if defined(__SWITCH__)
     bool initedConsole=false;
-    PadState default_pad;        
+    PadState default_pad;
     #endif
     uint64_t ittr=0;
+
+
+    static std::shared_ptr<TF_Timer_Handler> timer_handler = std::make_shared<TF_Timer_Handler>();
+
+    std::shared_ptr<TF_Timer_Handle> TF_Timer_Handler::Make(std::shared_ptr<TF_Timer_Handler> handler)
+    {
+        auto timer = new TF_Timer_Handle(handler);
+        std::shared_ptr<TF_Timer_Handle> handle(timer);
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Lock();
+        #endif
+        handler->handles.push_back(handle);
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Unlock();
+        #endif
+        return handle;
+    }
+
+
+    std::shared_ptr<TF_Timer_Handle> TF_Timer()
+    {
+        return TF_Timer_Handler::Make(timer_handler);
+    }
+    std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, int64_t interval, bool enabled)
+    {
+        auto handle = TF_Timer();
+        handle->SetCallback(cb);
+        handle->SetIntervalFromMilliseconds(interval);
+
+        handle->SetEnabled(enabled);
+        return handle;
+    }
+    std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, std::chrono::duration<int64_t,std::milli> interval, bool enabled)
+    {
+        auto handle = TF_Timer();
+        handle->SetCallback(cb);
+        handle->SetIntervalFromDuration(interval);
+
+        handle->SetEnabled(enabled);
+        return handle;
+    }
+
+    void TF_Timer_Handler::Update()
+    {
+        std::chrono::time_point<std::chrono::steady_clock,std::chrono::milliseconds> cur = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now());
+        std::vector<std::function<void()>> cbs;
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Lock();
+        #endif
+
+        for(auto index = this->handles.begin(); index != this->handles.end(); index++)
+        {
+            if(index->expired())
+            {
+                this->handles.erase(index);
+                index--;
+            }
+            else {
+                auto handle =  index->lock();
+                if(handle && handle->enabled && (handle->last + handle->interval) <= cur && handle->cb)
+                {
+                    handle->last = cur;
+                    cbs.push_back(handle->cb);
+                }
+            }
+        }
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Unlock();
+        #endif
+        for(auto item : cbs)
+        {
+            item();
+        }
+    }
+    void TF_Timer_Handle::SetCallback(std::function<void()> cb)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Lock();
+        #endif
+        this->cb = cb;
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Unlock();
+        #endif
+    }
+    TF_Timer_Handle::TF_Timer_Handle(std::shared_ptr<TF_Timer_Handler> handler) : timerHandler(handler)
+    {
+
+    }
+    void TF_Timer_Handle::SetEnabled(bool enabled)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Lock();
+        #endif
+        this->enabled = enabled;
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Unlock();
+        #endif
+    }
+    bool TF_Timer_Handle::GetEnabled()
+    {
+        return this->enabled;
+    }
+    void TF_Timer_Handle::SetIntervalFromDuration(std::chrono::milliseconds ms)
+    {
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Lock();
+        #endif
+        this->interval = ms;
+        #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+        timers_mtx.Unlock();
+        #endif
+    }
+    void TF_Timer_Handle::SetIntervalFromMilliseconds(int64_t ms)
+    {
+        SetIntervalFromDuration(std::chrono::milliseconds(ms));
+    }
+    std::chrono::duration<int64_t,std::milli> TF_Timer_Handle::GetIntervalDuration()
+    {
+        return this->interval;
+    }
+    int64_t TF_Timer_Handle::GetIntervalMilliseconds()
+    {
+        return this->interval.count();
+    }
+
+
+
+
     void TF_RunEventLoopItteration()
     {
-        
-        OnItteraton.Invoke(ittr++);
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(GEKKO) || defined(__SWITCH__))
         Tesses::Framework::Threading::LookForFinishedThreads();
-        
+
         #endif
         #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
         invokings_mtx.Lock();
@@ -125,10 +254,10 @@ namespace Tesses::Framework
         {
             invokes.front()();
             invokes.pop();
-            
+
         }
         #endif
-    
+
         if(!isRunningSig) isRunning=false;
         #if defined(GEKKO)
         if(gaming_console_events)
@@ -140,7 +269,7 @@ namespace Tesses::Framework
         if(gaming_console_events)
         {
             if(!appletMainLoop()) isRunning=false;
-            
+
             padUpdate(&default_pad);
 
             u64 kDown = padGetButtonsDown(&default_pad);
@@ -163,7 +292,9 @@ namespace Tesses::Framework
             isRunning = false;
         }
         #endif
-        
+
+
+        timer_handler->Update();
 
     }
     void TF_SetIsRunning(bool _isRunning)
@@ -200,7 +331,7 @@ namespace Tesses::Framework
         signal(SIGINT, _sigInt);
         signal(SIGTERM, _sigInt);
         #endif
-        
+
         isRunning=true;
         #if defined(_WIN32)
             WSADATA wsaData;
@@ -230,9 +361,9 @@ if (iResult != 0) {
         // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
         #else
         signal(SIGPIPE,SIG_IGN);
-       
+
         #endif
- 
+
     }
     bool TF_GetConsoleEventsEnabled()
     {
@@ -332,7 +463,7 @@ if (iResult != 0) {
     }
 
     std::optional<std::string> _argv0=std::nullopt;
-    
+
 
     void TF_AllowPortable(std::string argv0)
     {
@@ -346,7 +477,7 @@ if (iResult != 0) {
         auto portable=dir / "portable.json";
         if(LocalFS->FileExists(portable))
         {
-           
+
             std::string portable_str;
             Helpers::ReadAllText(LocalFS,portable, portable_str);
             auto jsonObj=Json::Decode(portable_str);
@@ -403,7 +534,7 @@ if (iResult != 0) {
                             {
                                 if(paf_data)
                                     portable_config.user = LocalFS->SystemToVFSPath(*paf_data) / "TF_User";
-                            } 
+                            }
                             else if(portable_str == "documents")
                             {
                                 if(paf_documents)
@@ -416,7 +547,7 @@ if (iResult != 0) {
                             {
                                 if(portable_config.user)
                                     portable_config.desktop = *(portable_config.user) / "Desktop";
-                            } 
+                            }
                             else if(portable_str == "documents")
                             {
                                 if(paf_documents)
@@ -429,7 +560,7 @@ if (iResult != 0) {
                             {
                                 if(portable_config.user)
                                     portable_config.downloads = *(portable_config.user) / "Downloads";
-                            } 
+                            }
                             else if(portable_str == "documents")
                             {
                                 if(paf_documents)
@@ -466,21 +597,21 @@ if (iResult != 0) {
                     {
                         if(dict2.TryGetValueAsType("user",portable_str))
                         {
-                            if(portable_str != "system")   
+                            if(portable_str != "system")
                             {
                                 auto userDir = dir / portable_str;
                                 portable_config.user = userDir.CollapseRelativeParents();
 
-                                
+
                             }
 
 
 
                         }
-                        
+
                         if(dict2.TryGetValueAsType("documents", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -490,7 +621,7 @@ if (iResult != 0) {
                                         portable_config.documents = *(portable_config.user) / "Documents";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.documents = userDir.CollapseRelativeParents();
@@ -500,7 +631,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("downloads", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -510,7 +641,7 @@ if (iResult != 0) {
                                         portable_config.downloads = *(portable_config.user) / "Downloads";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.downloads = userDir.CollapseRelativeParents();
@@ -520,7 +651,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("desktop", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -530,7 +661,7 @@ if (iResult != 0) {
                                         portable_config.desktop = *(portable_config.user) / "Desktop";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.desktop = userDir.CollapseRelativeParents();
@@ -540,7 +671,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("pictures", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -550,7 +681,7 @@ if (iResult != 0) {
                                         portable_config.pictures = *(portable_config.user) / "Pictures";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.pictures = userDir.CollapseRelativeParents();
@@ -560,7 +691,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("videos", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -570,7 +701,7 @@ if (iResult != 0) {
                                         portable_config.videos = *(portable_config.user) / "Videos";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.videos = userDir.CollapseRelativeParents();
@@ -580,7 +711,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("music", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -590,7 +721,7 @@ if (iResult != 0) {
                                         portable_config.music = *(portable_config.user) / "Music";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.music = userDir.CollapseRelativeParents();
@@ -600,7 +731,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("config", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -610,7 +741,7 @@ if (iResult != 0) {
                                         portable_config.config = *(portable_config.user) / "Config";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.config = userDir.CollapseRelativeParents();
@@ -620,7 +751,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("cache", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -630,7 +761,7 @@ if (iResult != 0) {
                                         portable_config.cache = *(portable_config.user) / "Cache";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.cache = userDir.CollapseRelativeParents();
@@ -640,7 +771,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("data", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -650,7 +781,7 @@ if (iResult != 0) {
                                         portable_config.data = *(portable_config.user) / "Data";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.data = userDir.CollapseRelativeParents();
@@ -660,7 +791,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("state", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -670,7 +801,7 @@ if (iResult != 0) {
                                         portable_config.state = *(portable_config.user) / "State";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.state = userDir.CollapseRelativeParents();
@@ -680,7 +811,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("temp", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -690,7 +821,7 @@ if (iResult != 0) {
                                         portable_config.temp = *(portable_config.user) / "Temp";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     auto userDir = dir / portable_str;
                                     portable_config.temp = userDir.CollapseRelativeParents();
@@ -698,40 +829,40 @@ if (iResult != 0) {
                                 }
                             }
                         }
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     }
                     else if(portable_str == "absolute")
                     {
                         if(dict2.TryGetValueAsType("user",portable_str))
                         {
-                            if(portable_str != "system")   
+                            if(portable_str != "system")
                             {
                                 VFSPath userDir = portable_str;
                                 portable_config.user = userDir.CollapseRelativeParents();
 
-                                
+
                             }
 
 
 
                         }
-                        
+
                         if(dict2.TryGetValueAsType("documents", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -741,7 +872,7 @@ if (iResult != 0) {
                                         portable_config.documents = *(portable_config.user) / "Documents";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.documents = userDir.CollapseRelativeParents();
@@ -751,7 +882,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("downloads", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -761,7 +892,7 @@ if (iResult != 0) {
                                         portable_config.downloads = *(portable_config.user) / "Downloads";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.downloads = userDir.CollapseRelativeParents();
@@ -771,7 +902,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("desktop", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -781,7 +912,7 @@ if (iResult != 0) {
                                         portable_config.desktop = *(portable_config.user) / "Desktop";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.desktop = userDir.CollapseRelativeParents();
@@ -791,7 +922,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("pictures", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -801,7 +932,7 @@ if (iResult != 0) {
                                         portable_config.pictures = *(portable_config.user) / "Pictures";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.pictures = userDir.CollapseRelativeParents();
@@ -811,7 +942,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("videos", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -821,7 +952,7 @@ if (iResult != 0) {
                                         portable_config.videos = *(portable_config.user) / "Videos";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.videos = userDir.CollapseRelativeParents();
@@ -831,7 +962,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("music", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -841,7 +972,7 @@ if (iResult != 0) {
                                         portable_config.music = *(portable_config.user) / "Music";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.music = userDir.CollapseRelativeParents();
@@ -851,7 +982,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("config", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -861,7 +992,7 @@ if (iResult != 0) {
                                         portable_config.config = *(portable_config.user) / "Config";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.config = userDir.CollapseRelativeParents();
@@ -871,7 +1002,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("cache", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -881,7 +1012,7 @@ if (iResult != 0) {
                                         portable_config.cache = *(portable_config.user) / "Cache";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.cache = userDir.CollapseRelativeParents();
@@ -891,7 +1022,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("data", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -901,7 +1032,7 @@ if (iResult != 0) {
                                         portable_config.data = *(portable_config.user) / "Data";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.data = userDir.CollapseRelativeParents();
@@ -911,7 +1042,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("state", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -921,7 +1052,7 @@ if (iResult != 0) {
                                         portable_config.state = *(portable_config.user) / "State";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.state = userDir.CollapseRelativeParents();
@@ -931,7 +1062,7 @@ if (iResult != 0) {
                         }
                         if(dict2.TryGetValueAsType("temp", portable_str))
                         {
-                            
+
                             if(portable_str != "system")
                             {
                                 if(portable_str == "default")
@@ -941,7 +1072,7 @@ if (iResult != 0) {
                                         portable_config.temp = *(portable_config.user) / "Temp";
                                     }
                                 }
-                                else 
+                                else
                                 {
                                     VFSPath userDir = portable_str;
                                     portable_config.temp = userDir.CollapseRelativeParents();
@@ -949,7 +1080,7 @@ if (iResult != 0) {
                                 }
                             }
                         }
-                    
+
                     }
                 }
             }

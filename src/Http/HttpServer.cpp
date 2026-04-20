@@ -13,6 +13,7 @@
 #include "TessesFramework/Filesystem/VFSFix.hpp"
 #include "TessesFramework/Filesystem/VFS.hpp"
 
+#include <TessesFramework/Http/HttpUtils.hpp>
 #include <iostream>
 using FileStream = Tesses::Framework::Streams::FileStream;
 using Stream = Tesses::Framework::Streams::Stream;
@@ -26,7 +27,7 @@ using namespace Tesses::Framework::TextStreams;
 
 namespace Tesses::Framework::Http
 {
-    class WSServer 
+    class WSServer
     {
         public:
         Threading::Mutex mtx;
@@ -43,9 +44,9 @@ namespace Tesses::Framework::Http
             uint8_t firstByte= finField | 0x8;
             strm->WriteByte(firstByte);
             strm->WriteByte(0);
-           
+
             this->strm = nullptr;
-            mtx.Unlock(); 
+            mtx.Unlock();
             this->conn->OnClose(true);
         }
         void write_len_bytes(uint64_t len)
@@ -84,7 +85,7 @@ namespace Tesses::Framework::Http
         {
             uint8_t buff[8];
             if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
-            
+
             uint64_t v = 0;
             v |= (uint64_t)buff[0] << 56;
             v |= (uint64_t)buff[1] << 48;
@@ -100,7 +101,7 @@ namespace Tesses::Framework::Http
         {
             uint8_t buff[2];
             if(strm->ReadBlock(buff,sizeof(buff)) != sizeof(buff)) return 0;
-            
+
             uint16_t v = 0;
             v |= (uint16_t)buff[0] << 8;
             v |= (uint16_t)buff[1];
@@ -110,7 +111,7 @@ namespace Tesses::Framework::Http
         {
             while(!hasInit);
             mtx.Lock();
-          
+
             uint8_t opcode = msg->isBinary ? 0x2 : 0x1;
 
             size_t lengthLastByte = msg->data.size() % 4096;
@@ -123,21 +124,21 @@ namespace Tesses::Framework::Http
                 uint8_t finField =  fin ?  0b10000000 : 0;
                 uint8_t opcode2 = i == 0 ? opcode : 0;
                 uint8_t firstByte = finField | (opcode2 & 0xF);
-                
+
                 size_t len = std::min((size_t)4096,msg->data.size()- offset);
-                
+
                 strm->WriteByte(firstByte);
                 write_len_bytes((uint64_t)len);
                 strm->WriteBlock(msg->data.data() + offset,len);
                 offset += len;
-            }   
+            }
             mtx.Unlock();
         }
         void ping_send(std::vector<uint8_t>& pData)
         {
-            
+
             mtx.Lock();
-          
+
             uint8_t finField = 0b10000000 ;
             uint8_t firstByte= finField | 0x9;
             strm->WriteByte(firstByte);
@@ -148,7 +149,7 @@ namespace Tesses::Framework::Http
         void pong_send(std::vector<uint8_t>& pData)
         {
             mtx.Lock();
-           
+
             uint8_t finField = 0b10000000 ;
             uint8_t firstByte= finField | 0xA;
             strm->WriteByte(firstByte);
@@ -158,7 +159,7 @@ namespace Tesses::Framework::Http
         }
         bool read_packet(uint8_t len,std::vector<uint8_t>& data)
         {
-           
+
             uint8_t realLen=len & 127;
             bool masked=(len & 0b10000000) > 0;
             uint64_t reallen2 = realLen >= 126 ? realLen > 126 ? get_long() : get_short() : realLen;
@@ -180,7 +181,7 @@ namespace Tesses::Framework::Http
             }
             return true;
         }
-        
+
             WSServer(ServerContext* ctx,std::shared_ptr<WebSocketConnection> conn)
             {
                 this->ctx = ctx;
@@ -188,7 +189,7 @@ namespace Tesses::Framework::Http
                 this->strm = this->ctx->GetStream();
                 this->hasInit=false;
 
-                
+
             }
             void Start()
             {
@@ -198,7 +199,7 @@ namespace Tesses::Framework::Http
                 {
                     key.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
                     auto res = Crypto::Sha1::ComputeHash((const uint8_t*)key.c_str(),key.size());
-                    
+
                     if(res.empty()) return;
                     key = Crypto::Base64_Encode(res);
 
@@ -206,7 +207,7 @@ namespace Tesses::Framework::Http
 
                     return;
                 }
-                
+
                 if(!ctx->requestHeaders.AnyEquals("Upgrade","websocket"))
                 {
 
@@ -221,7 +222,7 @@ namespace Tesses::Framework::Http
                 ctx->responseHeaders.SetValue("Connection","Upgrade");
                 ctx->responseHeaders.SetValue("Upgrade","websocket");
                 ctx->responseHeaders.SetValue("Sec-WebSocket-Accept",key);
-        
+
                 ctx->WriteHeaders();
                 bool hasMessage =false;
 
@@ -232,11 +233,11 @@ namespace Tesses::Framework::Http
 
                 while( !strm->EndOfStream())
                 {
-                
+
                     uint8_t frame_start[2];
                     if( strm->ReadBlock(frame_start,2) != 2) return;
-                    
-                    
+
+
                     uint8_t opcode = frame_start[0] & 0xF;
                     bool fin = (frame_start[0] & 0b10000000) > 0;
                     switch(opcode)
@@ -250,7 +251,7 @@ namespace Tesses::Framework::Http
                             hasMessage=true;
                             message.data = {};
                             message.isBinary = opcode == 0x2;
-                            
+
                             read_packet(frame_start[1], message.data);
                             break;
                         case 0x8:
@@ -280,7 +281,7 @@ namespace Tesses::Framework::Http
                 }
                 this->conn->OnClose(false);
             }
-    }; 
+    };
     /*
     static int _header_field(multipart_parser* p, const char *at, size_t length)
     {
@@ -362,7 +363,7 @@ namespace Tesses::Framework::Http
             strm2->CopyTo(strm);
         }
    }
-   
+
    std::string ServerContext::ReadString()
    {
         if(strm == nullptr) return {};
@@ -390,7 +391,7 @@ namespace Tesses::Framework::Http
     {
         bool hasMore=true;
         uint8_t* checkBuffer = new uint8_t[boundary.size()];
-        
+
         int b;
         size_t i = 0;
         size_t i2 = 0;
@@ -429,21 +430,21 @@ namespace Tesses::Framework::Http
                 {
                     dest->Write(buffer, sizeof(buffer));
                     offsetInMem=0;
-                    
+
                 }
 
                     buffer[offsetInMem++] = checkBuffer[idx];
-                        
+
                         idx++;
                 }
 
                 i = 0;
-                
+
                 if(offsetInMem >= sizeof(buffer))
                 {
                     dest->Write(buffer, sizeof(buffer));
                     offsetInMem=0;
-                    
+
                 }
 
                 buffer[offsetInMem++] = (uint8_t)b;
@@ -455,7 +456,7 @@ namespace Tesses::Framework::Http
             dest->Write(buffer,offsetInMem);
         }
         delete[] checkBuffer;
-        
+
         return hasMore;
     }
 
@@ -466,7 +467,7 @@ namespace Tesses::Framework::Http
         std::string line;
         while(reader.ReadLineHttp(line))
         {
-            auto v = HttpUtils::SplitString(line,": ", 2);    
+            auto v = HttpUtils::SplitString(line,": ", 2);
             if(v.size() == 2)
                 req.AddValue(v[0],v[1]);
             line.clear();
@@ -475,7 +476,7 @@ namespace Tesses::Framework::Http
         std::string cd0;
         ContentDisposition cd1;
         std::string ct;
-       
+
         if(!req.TryGetFirst("Content-Type",ct))
             ct = "application/octet-stream";
         if(req.TryGetFirst("Content-Disposition", cd0) && ContentDisposition::TryParse(cd0,cd1))
@@ -494,10 +495,10 @@ namespace Tesses::Framework::Http
             }
             else
             {
-                auto strm = cb(ct, cd1.filename, cd1.fieldName); 
+                auto strm = cb(ct, cd1.filename, cd1.fieldName);
                 if(strm == nullptr) strm = std::make_shared<Stream>();
                 bool retVal = parseUntillBoundaryEnd(ctx->GetStream(),strm,boundary);
-               
+
                 return retVal;
             }
         }
@@ -521,9 +522,9 @@ namespace Tesses::Framework::Http
         parseUntillBoundaryEnd(this->strm,nullStrm, ct);
 
         while(parseSection(this, ct, cb));
-    }   
+    }
 
-    HttpServer::HttpServer(std::shared_ptr<Tesses::Framework::Streams::TcpServer> tcpServer, std::shared_ptr<IHttpServer> http, bool showIPs)
+    HttpServer::HttpServer(std::shared_ptr<Tesses::Framework::Streams::TcpServer> tcpServer, std::shared_ptr<IHttpServer> http, bool showIPs, bool debug)
     {
         this->server = tcpServer;
         this->http = http;
@@ -531,19 +532,20 @@ namespace Tesses::Framework::Http
         this->showIPs = showIPs;
         this->thrd=nullptr;
         this->showARTL = showIPs;
+        this->debug = debug;
     }
-   
-            
-    HttpServer::HttpServer(uint16_t port, std::shared_ptr<IHttpServer> http, bool showIPs) : HttpServer(std::make_shared<TcpServer>(port,10),http,showIPs)
+
+
+    HttpServer::HttpServer(uint16_t port, std::shared_ptr<IHttpServer> http, bool showIPs, bool debug) : HttpServer(std::make_shared<TcpServer>(port,10),http,showIPs, debug)
     {
-        
+
     }
-    
-    HttpServer::HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http) : HttpServer(std::make_shared<TcpServer>(unixPath,10),http,false)
+
+    HttpServer::HttpServer(std::string unixPath, std::shared_ptr<IHttpServer> http, bool debug) : HttpServer(std::make_shared<TcpServer>(unixPath,10),http,false, debug)
     {
         this->showARTL=true;
     }
-   
+
 
     uint16_t HttpServer::GetPort()
     {
@@ -557,7 +559,7 @@ namespace Tesses::Framework::Http
         int64_t length = -1;
         if(!this->responseHeaders.TryGetFirstInt("Content-Length",length))
             length = -1;
-        
+
         if(this->version == "HTTP/1.1" && length == -1)
             this->responseHeaders.SetValue("Transfer-Encoding","chunked");
 
@@ -584,27 +586,29 @@ namespace Tesses::Framework::Http
         auto serverPort = this->server->GetPort();
         auto http = this->http;
         TF_LOG("Before Creating Thread");
-        thrd = new Threading::Thread([svr,http,serverPort]()->void {
+        bool debug = this->debug;
+        thrd = new Threading::Thread([svr,http,serverPort,debug]()->void {
             while(TF_IsRunning())
             {
                 TF_LOG("after TF_IsRunning");
                 std::string ip;
                 uint16_t port;
                 auto sock =svr->GetStream(ip,port);
-                
+
                 TF_LOG("New Host IP: " + ip + ":" + std::to_string(port));
-                
-                if(sock == nullptr) 
+
+                if(sock == nullptr)
                 {
                     std::cout << "STREAM ERROR" << std::endl;
                     return;
                 }
                 TF_LOG("Before entering socket thread");
-                Threading::Thread thrd2([sock,http,ip,port,serverPort]()->void {
+
+                Threading::Thread thrd2([sock,http,ip,port,serverPort,debug]()->void {
                     TF_LOG("In thread to process");
-                    HttpServer::Process(sock,http,ip,port,serverPort,false);
+                    HttpServer::Process(sock,http,ip,port,serverPort,false, debug);
                     TF_LOG("In thread after process");
-                    
+
                 });
                 TF_LOG("Before attach");
                 thrd2.Detach();
@@ -614,7 +618,7 @@ namespace Tesses::Framework::Http
         if(this->showIPs)
         {
             TF_LOG("Before printing interfaces");
-        
+
             StdOut() << "\x1B[34mInterfaces:" << NewLine();
             for(auto _ip : NetworkStream::GetIPs())
             {
@@ -623,15 +627,15 @@ namespace Tesses::Framework::Http
                 << "\x1B[35mhttp://"
                 << _ip.second << ":" << (uint64_t)this->GetPort() << "/" << NewLine();
             }
-            
-            
+
+
         }
         if(this->showARTL)
         {
             if(!svr->IsValid()) std::cout << "\x1B[31mError, we failed to bind or something\x1B[39m\n" << std::endl;
             StdOut() << "\x1B[31mAlmost Ready to Listen\x1B[39m" << NewLine();
         }
-        
+
         TF_LOG("After printing interfaces");
     }
     HttpServer::~HttpServer()
@@ -644,18 +648,20 @@ namespace Tesses::Framework::Http
             this->thrd->Join();
             delete this->thrd;
         }
-        
+
     }
     IHttpServer::~IHttpServer()
     {
-    
+
     }
-    ServerContext::ServerContext(std::shared_ptr<Stream> strm)
+    ServerContext::ServerContext(std::shared_ptr<Stream> strm, bool debug)
     {
         this->statusCode = OK;
         this->strm = strm;
+        this->debug = debug;
         this->sent = false;
         this->queryParams.SetCaseSensitive(true);
+        this->pathArguments.SetCaseSensitive(true);
         this->responseHeaders.AddValue("Server","TessesFrameworkWebServer");
     }
     std::shared_ptr<Stream> ServerContext::GetStream()
@@ -677,7 +683,7 @@ namespace Tesses::Framework::Http
     void ServerContext::SendText(std::string text)
     {
         std::shared_ptr<MemoryStream> strm=std::make_shared<MemoryStream>(false);
-        
+
         auto& buff= strm->GetBuffer();
         buff.insert(buff.end(),text.begin(),text.end());
         SendStream(strm);
@@ -685,11 +691,13 @@ namespace Tesses::Framework::Http
     void ServerContext::SendErrorPage(bool showPath)
     {
         if(sent) return;
-        std::string errorHtml = showPath ? ("<html><head><title>File " + HttpUtils::HtmlEncode(this->originalPath) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</title></head><body><h1>" + std::to_string((int)this->statusCode) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</h1><h4>" + HttpUtils::HtmlEncode(this->originalPath) + "</h4></body></html>") : "";
+        std::string errorHtml = showPath ? ("<html><head><title>File " + HttpUtils::HtmlEncode(this->originalPath) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</title><meta name=\"color-scheme\" content=\"dark light\"></head><body><h1>" + std::to_string((int)this->statusCode) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</h1><h4>" + HttpUtils::HtmlEncode(this->originalPath) + "</h4></body></html>") : (
+            "<html><head><title>" + std::to_string(this->statusCode) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</title><meta name=\"color-scheme\" content=\"dark light\"></head><body><h1>" + std::to_string((int)this->statusCode) + " " + HttpUtils::StatusCodeString(this->statusCode) + "</h1></body></html>"
+        );
 
         WithMimeType("text/html").SendText(errorHtml);
     }
-    
+
     ServerContext::~ServerContext()
     {
         for(auto item : this->data)
@@ -699,7 +707,7 @@ namespace Tesses::Framework::Http
     }
     ServerContextData::~ServerContextData()
     {
-        
+
     }
     void ServerContext::SendStream(std::shared_ptr<Stream> strm)
     {
@@ -722,7 +730,7 @@ namespace Tesses::Framework::Http
                         return;
                     }
                     res = HttpUtils::SplitString(res[1],", ",2);
-                    if(res.size() != 1) 
+                    if(res.size() != 1)
                     {
                         this->statusCode = BadRequest;
                         this->WriteHeaders();
@@ -764,7 +772,7 @@ namespace Tesses::Framework::Http
 
                     if(end == -1)
                     {
-                        end = len-1; 
+                        end = len-1;
                     }
 
                     if(end > len-1)
@@ -796,7 +804,7 @@ namespace Tesses::Framework::Http
                         uint8_t buffer[1024];
 
                         size_t read=0;
-                   
+
                         do {
                             read = sizeof(buffer);
                             myLen = (end - begin)+1;
@@ -809,7 +817,7 @@ namespace Tesses::Framework::Http
                             begin += read;
                         } while(read > 0 && !this->strm->EndOfStream());
                     }
-                    
+
                 }
                 else
                 {
@@ -833,19 +841,19 @@ namespace Tesses::Framework::Http
         }
         else
         {
-            
+
             auto chunkedStream = this->OpenResponseStream();
 
             if(method != "HEAD")
             strm->CopyTo(chunkedStream);
-            
-            
+
+
         }
     }
     ServerContext& ServerContext::WithHeader(std::string key, std::string value)
     {
         this->responseHeaders.AddValue(key, value);
-        return *this;    
+        return *this;
     }
     ServerContext& ServerContext::WithSingleHeader(std::string key, std::string value)
     {
@@ -900,24 +908,40 @@ namespace Tesses::Framework::Http
         statusCode = StatusCode::BadRequest;
         SendErrorPage(false);
     }
+    ServerContext& ServerContext::WithStatusCode(StatusCode code)
+    {
+        this->statusCode = code;
+        return *this;
+    }
     void ServerContext::SendException(std::exception& ex)
     {
-        /*<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internal Server Error at /</title>
-</head>
-<body>
-    <h1>Internal Server Error at /</h1>
-    <p>what():  std::exception</p>
-</body>
-</html>*/
-       this->WithMimeType("text/html").SendText("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Internal Server Error at " + HttpUtils::HtmlEncode(this->originalPath) + "</title></head><body><h1>Internal Server Error at " + HttpUtils::HtmlEncode(this->originalPath) + "</h1><p>what(): " + HttpUtils::HtmlEncode(ex.what()) + "</p></body></html>");
+        if(this->debug)
+        {
+
+            this->WithMimeType("text/html").WithStatusCode(StatusCode::InternalServerError).SendText("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Internal Server Error at " + HttpUtils::HtmlEncode(this->originalPath) + "</title><meta name=\"color-scheme\" content=\"dark light\"></head><body><h1>Internal Server Error at " + HttpUtils::HtmlEncode(this->originalPath) + "</h1><p>what(): " + HttpUtils::HtmlEncode(ex.what()) + "</p></body></html>");
+        }
+        else {
+            this->WithStatusCode(StatusCode::InternalServerError).SendErrorPage(true);
+        }
     }
+
+    ServerContext& ServerContext::WithHeaderIntercepter(std::function<bool(ServerContext&)> cb)
+    {
+        this->headerhandlers.push(cb);
+        return *this;
+    }
+
     ServerContext& ServerContext::WriteHeaders()
     {
+        if(this->sent) return *this;
+        while(!this->headerhandlers.empty())
+        {
+            auto header = this->headerhandlers.front();
+            this->headerhandlers.pop();
+            if(header(*this)) {
+                break;
+            }
+        }
         if(this->sent) return *this;
         this->sent = true;
 
@@ -933,22 +957,20 @@ namespace Tesses::Framework::Http
             }
         }
         writer.WriteLine();
-        
+
         return *this;
     }
-    void HttpServer::Process(std::shared_ptr<Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted)
+    void HttpServer::Process(std::shared_ptr<Stream> strm, std::shared_ptr<IHttpServer> server, std::string ip, uint16_t port,uint16_t serverPort, bool encrypted, bool debug)
     {
         TF_LOG("In process");
-        while(true)
-        {
-            std::shared_ptr<BufferedStream> bStrm = std::make_shared<BufferedStream>(strm);
-            StreamReader reader(bStrm);
-            ServerContext ctx(bStrm);
-            ctx.ip = ip;
-            ctx.port = port;
-            ctx.encrypted = encrypted;
-            ctx.serverPort = serverPort;
-            try{
+        std::shared_ptr<BufferedStream> bStrm = std::make_shared<BufferedStream>(strm);
+        StreamReader reader(bStrm);
+        ServerContext ctx(bStrm);
+        ctx.ip = ip;
+        ctx.port = port;
+        ctx.encrypted = encrypted;
+        ctx.serverPort = serverPort;
+        try{
             bool firstLine = true;
             std::string line;
             while(reader.ReadLineHttp(line))
@@ -987,9 +1009,9 @@ namespace Tesses::Framework::Http
                         ctx.WithMimeType("text/plain").SendText("Header line is not 2 elements");
                         return;
                     }
-                  
+
                     ctx.requestHeaders.AddValue(v[0],v[1]);
-                    
+
                 }
                 line.clear();
                 firstLine=false;
@@ -1009,12 +1031,15 @@ namespace Tesses::Framework::Http
                 delete[] buffer;
                 HttpUtils::QueryParamsDecode(ctx.queryParams, query);
             }
-            
-                if(!server->Handle(ctx)) 
+
+                if(!server->Handle(ctx))
                 {
-                    ctx.SendNotFound();
+                    if((int)ctx.statusCode < 400)
+                        ctx.SendNotFound();
+                    else
+                        ctx.SendErrorPage(true);
                 }
-            } 
+            }
 
             catch(std::exception& ex)
             {
@@ -1033,26 +1058,23 @@ namespace Tesses::Framework::Http
             catch(...)
             {
                 std::runtime_error ex("An unknown error occurred");
-                ctx.SendException(ex);   
+                ctx.SendException(ex);
             }
 
-            if(ctx.version != "HTTP/1.1" ) return;
 
-            std::string connection;
-            if(ctx.requestHeaders.TryGetFirst("Connection", connection))
-            {
-                if(HttpUtils::ToLower(connection) != "keep-alive") return;
-            }
 
-            if(ctx.responseHeaders.TryGetFirst("Connection", connection))
-            {
-                if(HttpUtils::ToLower(connection) != "keep-alive") return;
-            }
 
-            if(bStrm->EndOfStream()) {
-                return;
-            }
-        }
+    }
+
+    bool ServerContext::Debug()
+    {
+        return this->debug;
+    }
+
+    ServerContext& ServerContext::WithDebug(bool debug)
+    {
+        this->debug = debug;
+        return *this;
     }
 
     WebSocketConnection::~WebSocketConnection()
@@ -1064,7 +1086,7 @@ namespace Tesses::Framework::Http
         std::shared_ptr<CallbackWebSocketConnection> wsc = std::make_shared<CallbackWebSocketConnection>(onOpen,onReceive,onClose);
         StartWebSocketSession(wsc);
     }
-            
+
     void ServerContext::StartWebSocketSession(std::shared_ptr<WebSocketConnection> connection)
     {
         WSServer svr(this,connection);
@@ -1080,7 +1102,7 @@ namespace Tesses::Framework::Http
 
             }
         });
-        
+
         svr.Start();
         thrd.Join();
     }
@@ -1105,4 +1127,3 @@ namespace Tesses::Framework::Http
 
 
 }
-

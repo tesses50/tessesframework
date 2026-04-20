@@ -7,68 +7,7 @@ set(TESSESFRAMEWORK_PATCH_VERSION 2)
 project(TessesFramework VERSION ${TESSESFRAMEWORK_MAJOR_VERSION}.${TESSESFRAMEWORK_MINOR_VERSION}.${TESSESFRAMEWORK_PATCH_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
-
-list(APPEND TESSESFRAMEWORK_SOURCE 
-src/Random.cpp
-src/Date/Date.cpp
-src/Http/FileServer.cpp
-src/Http/MountableServer.cpp
-src/Http/RouteServer.cpp
-src/Http/CallbackServer.cpp
-src/Http/HttpServer.cpp
-src/Http/HttpUtils.cpp
-src/Http/HttpClient.cpp
-src/Http/HttpStream.cpp
-src/Http/ContentDisposition.cpp
-src/Http/WebSocket.cpp
-src/Http/ChangeableServer.cpp
-src/Http/BasicAuthServer.cpp
-src/Http/CGIServer.cpp
-src/Mail/Smtp.cpp
-src/Serialization/Json.cpp
-src/Serialization/SQLite.cpp
-src/Serialization/BitConverter.cpp
-src/Serialization/Bencode.cpp
-src/Platform/Environment.cpp
-src/Platform/Process.cpp
-src/Streams/FileStream.cpp
-src/Streams/MemoryStream.cpp
-src/Streams/NetworkStream.cpp
-src/Streams/Stream.cpp
-src/Streams/BufferedStream.cpp
-src/Streams/ByteReader.cpp
-src/Streams/ByteWriter.cpp
-src/Streams/PtyStream.cpp
-src/Text/StringConverter.cpp
-src/Text/HeaderGenerator.cpp
-src/TextStreams/StreamReader.cpp
-src/TextStreams/StreamWriter.cpp
-src/TextStreams/TextReader.cpp
-src/TextStreams/TextWriter.cpp
-src/TextStreams/StdIOReader.cpp
-src/TextStreams/StdIOWriter.cpp
-src/TextStreams/StringReader.cpp
-src/TextStreams/StringWriter.cpp
-src/Threading/Thread.cpp
-src/Threading/Mutex.cpp
-src/Threading/ThreadPool.cpp
-src/Filesystem/VFS.cpp
-src/Filesystem/LocalFS.cpp
-src/Filesystem/MemoryFilesystem.cpp
-src/Filesystem/SubdirFilesystem.cpp
-src/Filesystem/NullFilesystem.cpp
-src/Filesystem/MountableFilesystem.cpp
-src/Filesystem/FSHelpers.cpp
-src/Filesystem/TempFS.cpp
-src/Crypto/MbedTLS/ClientTLSStream.cpp
-src/Crypto/MbedTLS/Crypto.cpp
-src/Args.cpp
-src/TF_Init.cpp
-src/HiddenField.cpp
-src/Uuid.cpp
-src/BitTorrent/TorrentFile.cpp
-src/BitTorrent/TorrentStream.cpp
-)
+include(cmake/sources.cmake)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 
@@ -82,7 +21,7 @@ option(TESSESFRAMEWORK_ENABLE_PROCESS "Enable process api" ON)
 option(TESSESFRAMEWORK_ENABLE_RPATH "Enable RPATH" ON)
 
 if(TESSESFRAMEWORK_ENABLE_SQLITE)
-list(APPEND TESSESFRAMEWORK_SOURCE 
+list(APPEND TESSESFRAMEWORK_SOURCE
     src/Serialization/sqlite/sqlite3-mod.c
     src/Serialization/sqlite/vfs.c
 )
@@ -145,12 +84,12 @@ endif()
 FetchContent_Declare(
     mbedtls
     URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.4.tar.bz2
-    
+
 )
 
 FetchContent_MakeAvailable(mbedtls)
 else()
-set(MBEDTLS_DIR "" CACHE PATH "Mbed tls directory")
+find_package(MbedTLS REQUIRED)
 endif()
 
 endif()
@@ -280,7 +219,7 @@ if(TESSESFRAMEWORK_FETCHCONTENT)
 target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto everest p256m)
 
 else()
-target_link_libraries(tessesframework_shared PUBLIC mbedtls mbedx509 mbedcrypto)
+target_link_libraries(tessesframework_shared PUBLIC  MbedTLS::mbedcrypto MbedTLS::mbedtls MbedTLS::mbedx509)
 
 endif()
 endif()
@@ -300,7 +239,7 @@ endif()
 
 
 if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
-install(TARGETS ${TessesFrameworkLibs} 
+install(TARGETS ${TessesFrameworkLibs}
     EXPORT TessesFrameworkTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -329,6 +268,8 @@ DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TessesFramework)
 endif()
 
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
+        add_executable(timer examples/timer.cpp)
+        target_link_libraries(timer PUBLIC tessesframework)
 
         add_executable(copyfile examples/copyfile.cpp)
         target_link_libraries(copyfile PUBLIC tessesframework)
@@ -351,8 +292,6 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
          add_executable(wsecho examples/wsecho.cpp)
         target_link_libraries(wsecho PUBLIC tessesframework)
 
-         add_executable(runevent examples/runevent.cpp)
-        target_link_libraries(runevent PUBLIC tessesframework)
 
          add_executable(tests examples/tests.cpp)
         target_link_libraries(tests PUBLIC tessesframework)

@@ -1,16 +1,18 @@
 #pragma once
 #include "../Common.hpp"
 #include "../Streams/Stream.hpp"
+#include <TessesFramework/Common.hpp>
+#include <TessesFramework/Date/Date.hpp>
 #include <functional>
 #include <memory>
 #include "../Date/Date.hpp"
 #include "VFSFix.hpp"
-            
+
 namespace Tesses::Framework::Filesystem
 {
 
-    class StatVFSData {
-        public:
+    struct StatVFSData {
+
             uint64_t BlockSize;
             uint64_t FragmentSize;
             uint64_t Blocks;
@@ -23,12 +25,94 @@ namespace Tesses::Framework::Filesystem
             uint64_t Flags;
             uint64_t MaxNameLength;
     };
+
+    constexpr uint32_t MODE_USER_READ = 0400;
+    constexpr uint32_t MODE_USER_WRITE = 0200;
+    constexpr uint32_t MODE_USER_EXEC = 0100;
+
+    constexpr uint32_t MODE_GROUP_READ = (MODE_USER_READ >> 3);
+    constexpr uint32_t MODE_GROUP_WRITE = (MODE_USER_WRITE >> 3);
+    constexpr uint32_t MODE_GROUP_EXEC = (MODE_USER_EXEC >> 3);
+
+    constexpr uint32_t MODE_OTHER_READ = (MODE_GROUP_READ >> 3);
+    constexpr uint32_t MODE_OTHER_WRITE = (MODE_GROUP_WRITE >> 3);
+    constexpr uint32_t MODE_OTHER_EXEC = (MODE_GROUP_EXEC >> 3);
+
+    constexpr uint32_t MODE_REGULAR = 0100000;
+    constexpr uint32_t MODE_DIRECTORY = 0040000;
+    constexpr uint32_t MODE_CHAR_DEVICE = 0020000;
+    constexpr uint32_t MODE_BLOCK_DEVICE = 0060000;
+    constexpr uint32_t MODE_SOCKET = 0140000;
+    constexpr uint32_t MODE_FIFO = 0010000;
+    constexpr uint32_t MODE_SYMLINK = 0120000;
+
+
+    struct StatData {
+        uint64_t Device;
+        uint64_t Inode;
+        uint32_t Mode;
+        uint64_t HardLinks;
+        uint32_t UserId;
+        uint32_t GroupId;
+        uint64_t DeviceId;
+        uint64_t Size;
+        uint64_t BlockSize;
+        uint64_t BlockCount;
+        Date::DateTime LastAccess;
+        Date::DateTime LastModified;
+        Date::DateTime LastStatus;
+
+        bool IsRegularFile()
+        {
+            return (Mode & MODE_REGULAR) > 0;
+        }
+        bool IsDirectory()
+        {
+            return (Mode & MODE_DIRECTORY) > 0;
+        }
+
+        bool IsCharDevice()
+        {
+            return (Mode & MODE_CHAR_DEVICE) > 0;
+        }
+
+        bool IsBlockDevice()
+        {
+            return (Mode & MODE_BLOCK_DEVICE) > 0;
+        }
+
+        bool IsSocket()
+        {
+            return (Mode & MODE_SOCKET) > 0;
+        }
+        bool IsFIFO()
+        {
+            return (Mode & MODE_FIFO) > 0;
+        }
+
+        bool IsSymlink()
+        {
+            return (Mode & MODE_SYMLINK) > 0;
+        }
+
+        bool IsSpecial()
+        {
+            if(IsRegularFile()) return false;
+            if(IsDirectory()) return false;
+            return true;
+        }
+
+        std::string ToSizeString(bool usesBin=true)
+        {
+            return TF_FileSize(this->Size, usesBin);
+        }
+    };
     class VFSPath {
         public:
             static VFSPath CurrentDirectoryAsRelative();
             bool relative;
             static std::vector<std::string> SplitPath(std::string path);
-            std::vector<std::string> path;  
+            std::vector<std::string> path;
             VFSPath();
             explicit VFSPath(const char* path) : VFSPath(std::string(path))
             {}
@@ -36,7 +120,7 @@ namespace Tesses::Framework::Filesystem
             VFSPath(std::string path);
             VFSPath(VFSPath p, std::string subent);
             VFSPath(VFSPath p, VFSPath p2);
-            
+
             //does not check for ?
             static VFSPath ParseUriPath(std::string path);
 
@@ -52,7 +136,7 @@ namespace Tesses::Framework::Filesystem
             static VFSPath GetAbsoluteCurrentDirectory();
             static void SetAbsoluteCurrentDirectory(VFSPath path);
             VFSPath MakeAbsolute() const;
-    
+
             VFSPath MakeAbsolute(VFSPath curDir) const;
             VFSPath MakeRelative() const;
             VFSPath MakeRelative(VFSPath toMakeRelativeTo) const;
@@ -98,10 +182,10 @@ namespace Tesses::Framework::Filesystem
 
             VFSPathEnumeratorItterator& operator++();
             VFSPathEnumeratorItterator& operator++(int);
-            
+
             VFSPath& operator*();
             VFSPath* operator->();
-            
+
             bool operator!=(VFSPathEnumeratorItterator right);
             bool operator==(VFSPathEnumeratorItterator right);
     };
@@ -185,48 +269,60 @@ namespace Tesses::Framework::Filesystem
             std::shared_ptr<VFS> GetFilesystem();
             const VFSPath& GetPath();
             virtual ~FSWatcher() = default;
-            
-            static std::shared_ptr<FSWatcher> Create(std::shared_ptr<VFS> vfs, VFSPath path); 
+
+            static std::shared_ptr<FSWatcher> Create(std::shared_ptr<VFS> vfs, VFSPath path);
+    };
+
+    enum class FIFOCreationResult {
+        Success=0,
+        Exists = 1,
+        ReadOnlyFS = 2,
+        Denied = 3,
+        OutOfInodes = 4,
+        UnknownError = 5,
+        Unsupported = 255
     };
 
     class VFS {
         public:
-            
+
             virtual std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode)=0;
-            virtual void CreateDirectory(VFSPath path)=0;
-            virtual void DeleteDirectory(VFSPath path)=0;
-            virtual bool RegularFileExists(VFSPath path)=0;
-            virtual bool SymlinkExists(VFSPath path);
-            virtual bool CharacterDeviceExists(VFSPath path);
-            virtual bool BlockDeviceExists(VFSPath path);
-            virtual bool SocketFileExists(VFSPath path);
-            virtual bool FIFOFileExists(VFSPath path);
-            virtual bool FileExists(VFSPath path);
-            virtual bool SpecialFileExists(VFSPath path);
+            virtual void CreateDirectory(VFSPath path);
+            virtual void DeleteDirectory(VFSPath path);
+            bool DirectoryExists(VFSPath path);
+            bool RegularFileExists(VFSPath path);
+            bool SymlinkExists(VFSPath path);
+            bool CharacterDeviceExists(VFSPath path);
+            bool BlockDeviceExists(VFSPath path);
+            bool SocketFileExists(VFSPath path);
+            bool FIFOFileExists(VFSPath path);
+            bool FileExists(VFSPath path);
+            bool SpecialFileExists(VFSPath path);
             virtual void CreateSymlink(VFSPath existingFile, VFSPath symlinkFile);
             virtual void CreateHardlink(VFSPath existingFile, VFSPath newName);
-            virtual bool DirectoryExists(VFSPath path)=0;
-            virtual void DeleteFile(VFSPath path)=0;
+            virtual void DeleteFile(VFSPath path);
             virtual void DeleteDirectoryRecurse(VFSPath path);
             virtual VFSPathEnumerator EnumeratePaths(VFSPath path) = 0;
-            virtual void MoveFile(VFSPath src, VFSPath dest)=0;
+            virtual void MoveFile(VFSPath src, VFSPath dest);
             virtual void MoveDirectory(VFSPath src, VFSPath dest);
             virtual VFSPath ReadLink(VFSPath path);
             virtual std::string VFSPathToSystem(VFSPath path)=0;
             virtual VFSPath SystemToVFSPath(std::string path)=0;
 
 
-            virtual void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
+            void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
             virtual void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
 
+            virtual bool Stat(VFSPath path, StatData& data) = 0;
             virtual bool StatVFS(VFSPath path, StatVFSData& data);
 
             virtual void Chmod(VFSPath path, uint32_t mode);
+            virtual void Chown(VFSPath path, uint32_t userId, uint32_t groupId);
 
             virtual void Lock(VFSPath path);
             virtual void Unlock(VFSPath path);
-        
-          
+            virtual FIFOCreationResult CreateFIFO(VFSPath path, uint32_t mode);
+
             virtual ~VFS();
 
             virtual void Close();
@@ -236,7 +332,6 @@ namespace Tesses::Framework::Filesystem
         friend class FSWatcher;
     };
 
-    
 
     namespace Literals
     {
@@ -246,4 +341,3 @@ namespace Tesses::Framework::Filesystem
         }
     }
 }
-

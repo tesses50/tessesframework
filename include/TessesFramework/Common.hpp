@@ -1,8 +1,11 @@
 #pragma once
 
+#include <chrono>
 #include <cstring>
 #include <cstdint>
 #include <cstddef>
+#include <memory>
+#include <ratio>
 #include <string>
 #include <filesystem>
 #include <map>
@@ -15,83 +18,55 @@
 namespace Tesses::Framework
 {
     
-        template<typename...TArgs>
-    class Event {
-        public:
-            virtual void Invoke(TArgs... args)=0;
-            virtual ~Event()
-            {}
-    };
-    template<typename...TArgs>
-    class FunctionalEvent : public Event<TArgs...> {
-        std::function<void(TArgs...)> cb;
-        public:
-            FunctionalEvent(std::function<void(TArgs...)> cb)
-            {
-                this->cb = cb;
-            }
-            void Invoke(TArgs... args)
-            {
-                this->cb(args...);
-            }
-    };
-
-    template<typename...TArgs>
-    class EventList : public Event<TArgs...> {
-        Threading::Mutex mtx;
-        std::vector<std::shared_ptr<Event<TArgs...>>> items;
-        public:
-            void operator+=(std::shared_ptr<Event<TArgs...>> event)
-            {
-                mtx.Lock();
-                for(std::shared_ptr<Event<TArgs...>>& item : this->items)
-                {
-                    if(item.get() == event.get()) {
-                        mtx.Unlock();
-                        return;
-                    }
-                }
-                this->items.push_back(event);
-                mtx.Unlock();
-            }
-            void operator-=(std::shared_ptr<Event<TArgs...>> event)
-            {
-                mtx.Lock();
-                for(auto i = this->items.begin(); i != this->items.end(); i++)
-                {
-                    if(i->get() == event.get())
-                    {
-                        this->items.erase(i);
-                        mtx.Unlock();
-                        return;
-                    }
-                }
-                mtx.Unlock();
-            }
-            void Invoke(TArgs... args)
-            {
-                mtx.Lock();
-                for(auto& item : this->items)
-                {
-                    item->Invoke(args...);
-                }
-                mtx.Unlock();
-            }
-            void Remove(std::function<bool(std::shared_ptr<Event<TArgs...>>)> cb)
-            {
-                for(auto index = this->items.begin(); index != this->items.end(); index++)
-                {
-                    if(cb(*index)) 
-                    {
-                        this->items.erase(index);
-                        index--;
-                    }
-                }
-            }
-    };
-
-    extern EventList<uint64_t> OnItteraton;
+       
     std::optional<std::string> TF_GetCommandName();
+    class TF_Timer_Handle;
+    //Used for internal purposes, don't use unless you want to run timer events on another thread
+   
+    class TF_Timer_Handler {
+        private:
+            std::vector<std::weak_ptr<TF_Timer_Handle>> handles;
+        public:
+            void Update();
+
+            
+            static std::shared_ptr<TF_Timer_Handle> Make(std::shared_ptr<TF_Timer_Handler> handler);
+        friend class TF_Timer_Handle;
+    };
+
+    class TF_Timer_Handle {
+        
+        private:
+            std::shared_ptr<TF_Timer_Handler> timerHandler;
+            std::function<void()> cb;
+            std::chrono::milliseconds interval;
+            std::chrono::time_point<std::chrono::steady_clock, std::chrono::milliseconds> last;
+            bool enabled;
+            TF_Timer_Handle() = delete;
+
+            TF_Timer_Handle(std::shared_ptr<TF_Timer_Handler> timerHandler);
+
+        public:
+        
+            void SetCallback(std::function<void()> cb);
+
+            int64_t GetIntervalMilliseconds();
+            std::chrono::duration<int64_t,std::milli> GetIntervalDuration();
+
+            void SetIntervalFromMilliseconds(int64_t ms);
+            
+            void SetIntervalFromDuration(std::chrono::milliseconds dur);
+            
+
+            void SetEnabled(bool enabled);
+            bool GetEnabled();
+            friend class TF_Timer_Handler;
+    };
+
+
+    std::shared_ptr<TF_Timer_Handle> TF_Timer();
+    std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, int64_t interval=1000, bool enabled=true);
+    std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, std::chrono::milliseconds interval, bool enabled=true);
 
     void TF_Init();
     void TF_InitWithConsole();

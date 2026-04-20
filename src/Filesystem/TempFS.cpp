@@ -7,12 +7,12 @@ namespace Tesses::Framework::Filesystem {
     Tesses::Framework::Threading::Mutex umtx;
     int64_t uidx=0;
     void UniqueString(std::string& text)
-    {   
+    {
         umtx.Lock();
         text += std::to_string((int64_t)time(NULL));
         text += "_";
         text += std::to_string(uidx);
-        
+
         uidx++;
 
         umtx.Unlock();
@@ -54,56 +54,7 @@ namespace Tesses::Framework::Filesystem {
         if(this->vfs == nullptr) return;
         this->vfs->DeleteDirectory(path);
     }
-    bool TempFS::SpecialFileExists(VFSPath path)
-    {
 
-        if(this->vfs == nullptr) return false;
-        return this->vfs->SpecialFileExists(path);
-    }
-    bool TempFS::FileExists(VFSPath path)
-    {
-
-        if(this->vfs == nullptr) return false;
-        return this->vfs->FileExists(path);
-    }
-    bool TempFS::RegularFileExists(VFSPath path)
-    {
-
-        if(this->vfs == nullptr) return false;
-        return this->vfs->RegularFileExists(path);
-    }
-    bool TempFS::SymlinkExists(VFSPath path)
-    {
-
-        if(this->vfs == nullptr) return false;
-        return this->vfs->SymlinkExists(path);
-    }
-    bool TempFS::CharacterDeviceExists(VFSPath path)
-    {
-
-        if(this->vfs == nullptr) return false;
-        return this->vfs->CharacterDeviceExists(path);
-    }
-    bool TempFS::BlockDeviceExists(VFSPath path)
-    {
-        if(this->vfs == nullptr) return false;
-        return this->vfs->BlockDeviceExists(path);
-    }
-    bool TempFS::SocketFileExists(VFSPath path)
-    {
-        if(this->vfs == nullptr) return false;
-        return this->vfs->SocketFileExists(path);
-    }
-    bool TempFS::FIFOFileExists(VFSPath path)
-    {
-        if(this->vfs == nullptr) return false;
-        return this->vfs->FIFOFileExists(path);
-    }
-    bool TempFS::DirectoryExists(VFSPath path)
-    {
-        if(this->vfs == nullptr) return false;
-        return this->vfs->DirectoryExists(path);
-    }
     void TempFS::DeleteFile(VFSPath path)
     {
         if(this->vfs == nullptr) return;
@@ -126,7 +77,7 @@ namespace Tesses::Framework::Filesystem {
     }
     VFSPathEnumerator TempFS::EnumeratePaths(VFSPath path)
     {
-        
+
         if(this->vfs == nullptr) return VFSPathEnumerator();
 
         return this->vfs->EnumeratePaths(path);
@@ -172,13 +123,7 @@ namespace Tesses::Framework::Filesystem {
         if(this->vfs == nullptr) return VFSPath();
         return this->vfs->SystemToVFSPath(path);
     }
-            
-    void TempFS::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
-    {
 
-        if(this->vfs == nullptr) return;
-        this->vfs->GetDate(path,lastWrite,lastAccess);
-    }
     void TempFS::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
 
@@ -187,9 +132,15 @@ namespace Tesses::Framework::Filesystem {
     }
     bool TempFS::StatVFS(VFSPath path, StatVFSData& vfsData)
     {
-        
+
         if(this->vfs == nullptr) return false;
         return this->vfs->StatVFS(path, vfsData);
+    }
+    bool TempFS::Stat(VFSPath path, StatData& data)
+    {
+
+        if(this->vfs == nullptr) return false;
+        return this->vfs->Stat(path, data);
     }
 
     void TempFS::Chmod(VFSPath path, uint32_t mode)
@@ -197,6 +148,17 @@ namespace Tesses::Framework::Filesystem {
 
         if(this->vfs == nullptr) return;
         this->vfs->Chmod(path,mode);
+    }
+    void TempFS::Chown(VFSPath path, uint32_t uid, uint32_t gid)
+    {
+
+        if(this->vfs == nullptr) return;
+        this->vfs->Chown(path,uid, gid);
+    }
+    FIFOCreationResult TempFS::CreateFIFO(VFSPath path, uint32_t mod)
+    {
+        if(this->vfs == nullptr) return FIFOCreationResult::UnknownError;
+        return this->vfs->CreateFIFO(path, mod);
     }
     void TempFS::Close()
     {
@@ -218,5 +180,5 @@ namespace Tesses::Framework::Filesystem {
         this->parent->DeleteDirectoryRecurse(p);
 
     }
-    
+
 }

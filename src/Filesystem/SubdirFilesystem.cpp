@@ -13,7 +13,7 @@ namespace Tesses::Framework::Filesystem
         // /a/b/c
         VFSPath newPath;
         newPath.relative=false;
-      
+
         if(path.path.size() >= this->path.path.size())
         {
             newPath.path.reserve(path.path.size()-this->path.path.size());
@@ -41,7 +41,7 @@ namespace Tesses::Framework::Filesystem
         }
         else
         this->path = path;
-        
+
     }
     std::shared_ptr<Tesses::Framework::Streams::Stream> SubdirFilesystem::OpenFile(VFSPath path, std::string mode)
     {
@@ -54,34 +54,6 @@ namespace Tesses::Framework::Filesystem
     void SubdirFilesystem::DeleteDirectory(VFSPath path)
     {
         this->parent->DeleteDirectory(ToParent(path));
-    }
-    bool SubdirFilesystem::RegularFileExists(VFSPath path)
-    {
-        return this->parent->RegularFileExists(ToParent(path));
-    }
-    bool SubdirFilesystem::SymlinkExists(VFSPath path)
-    {
-        return this->parent->SymlinkExists(ToParent(path));
-    }
-    bool SubdirFilesystem::CharacterDeviceExists(VFSPath path)
-    {
-        return this->parent->CharacterDeviceExists(ToParent(path));
-    }
-    bool SubdirFilesystem::BlockDeviceExists(VFSPath path)
-    {
-        return this->parent->BlockDeviceExists(ToParent(path));
-    }
-    bool SubdirFilesystem::SocketFileExists(VFSPath path)
-    {
-        return this->parent->SocketFileExists(ToParent(path));
-    }
-    bool SubdirFilesystem::FIFOFileExists(VFSPath path)
-    {
-        return this->parent->FIFOFileExists(ToParent(path));
-    }
-    bool SubdirFilesystem::DirectoryExists(VFSPath path)
-    {
-        return this->parent->DirectoryExists(ToParent(path));
     }
     void SubdirFilesystem::DeleteFile(VFSPath path)
     {
@@ -116,15 +88,12 @@ namespace Tesses::Framework::Filesystem
             delete enumerator;
         });
     }
-    void SubdirFilesystem::GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess)
-    {
-        this->parent->GetDate(ToParent(path),lastWrite,lastAccess);
-    }
+
     void SubdirFilesystem::SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess)
     {
         this->parent->SetDate(ToParent(path),lastWrite,lastAccess);
     }
-   
+
     void SubdirFilesystem::CreateHardlink(VFSPath existingFile, VFSPath newName)
     {
         this->parent->CreateHardlink(ToParent(existingFile),ToParent(newName));
@@ -142,34 +111,39 @@ namespace Tesses::Framework::Filesystem
         return this->parent->VFSPathToSystem(ToParent(path));
     }
     VFSPath SubdirFilesystem::SystemToVFSPath(std::string path)
-    {   
+    {
         return FromParent(this->parent->SystemToVFSPath(path));
     }
     void SubdirFilesystem::DeleteDirectoryRecurse(VFSPath path)
     {
         this->parent->DeleteDirectoryRecurse(ToParent(path));
     }
-    bool SubdirFilesystem::SpecialFileExists(VFSPath path)
-    {
-        return this->parent->SpecialFileExists(ToParent(path));
-    }
-    bool SubdirFilesystem::FileExists(VFSPath path)
-    {
-        return this->parent->FileExists(ToParent(path));
-    }
-            
+
+
     SubdirFilesystem::~SubdirFilesystem()
     {
-     
+
     }
     bool SubdirFilesystem::StatVFS(VFSPath path, StatVFSData& vfsData)
     {
         return this->parent->StatVFS(ToParent(path), vfsData);
     }
-
+    bool SubdirFilesystem::Stat(VFSPath path, StatData& data)
+    {
+        return this->parent->Stat(ToParent(path), data);
+    }
     void SubdirFilesystem::Chmod(VFSPath path, uint32_t mode)
     {
         return this->parent->Chmod(ToParent(path), mode);
     }
+    void SubdirFilesystem::Chown(VFSPath path, uint32_t uid, uint32_t gid)
+    {
+        return this->parent->Chown(ToParent(path), uid, gid);
+    }
 
+
+    FIFOCreationResult SubdirFilesystem::CreateFIFO(VFSPath path, uint32_t mod)
+    {
+        return this->parent->CreateFIFO(path, mod);
+    }
 }

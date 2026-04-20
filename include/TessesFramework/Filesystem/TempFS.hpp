@@ -2,7 +2,7 @@
 #include "../Common.hpp"
 #include "VFS.hpp"
 #include "VFSFix.hpp"
-namespace Tesses::Framework::Filesystem 
+namespace Tesses::Framework::Filesystem
 {
     void UniqueString(std::string& text);
 
@@ -20,15 +20,6 @@ namespace Tesses::Framework::Filesystem
             std::shared_ptr<Tesses::Framework::Streams::Stream> OpenFile(VFSPath path, std::string mode);
             void CreateDirectory(VFSPath path);
             void DeleteDirectory(VFSPath path);
-            bool SpecialFileExists(VFSPath path);
-            bool FileExists(VFSPath path);
-            bool RegularFileExists(VFSPath path);
-            bool SymlinkExists(VFSPath path);
-            bool CharacterDeviceExists(VFSPath path);
-            bool BlockDeviceExists(VFSPath path);
-            bool SocketFileExists(VFSPath path);
-            bool FIFOFileExists(VFSPath path);
-            bool DirectoryExists(VFSPath path);
             void DeleteFile(VFSPath path);
             void CreateSymlink(VFSPath existingFile, VFSPath symlinkFile);
             VFSPathEnumerator EnumeratePaths(VFSPath path);
@@ -39,12 +30,15 @@ namespace Tesses::Framework::Filesystem
             VFSPath ReadLink(VFSPath path);
             std::string VFSPathToSystem(VFSPath path);
             VFSPath SystemToVFSPath(std::string path);
-            
-            void GetDate(VFSPath path, Date::DateTime& lastWrite, Date::DateTime& lastAccess);
+
             void SetDate(VFSPath path, Date::DateTime lastWrite, Date::DateTime lastAccess);
              bool StatVFS(VFSPath path, StatVFSData& vfsData);
+             bool Stat(VFSPath path, StatData& data);
 
             void Chmod(VFSPath path, uint32_t mode);
+
+            void Chown(VFSPath path, uint32_t uid, uint32_t gid);
+            FIFOCreationResult CreateFIFO(VFSPath path, uint32_t mode);
             void Close();
 
             void Lock(VFSPath path);
