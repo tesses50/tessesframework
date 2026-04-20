@@ -373,4 +373,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "${TessesFramework_VERSION_MINOR}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libmbedtls-dev (>= 2.28.8)")
 
 include(CPack)
+if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
 add_subdirectory(pkgconfig)
+endif()

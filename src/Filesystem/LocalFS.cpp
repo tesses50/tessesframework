@@ -12,6 +12,7 @@
 #else
 #include <utime.h>
 #include <sys/statvfs.h>
+#include <unistd.h>
 #endif
 
 #include "TessesFramework/Threading/Thread.hpp"
