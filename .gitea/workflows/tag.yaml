@@ -6,7 +6,8 @@ on:
 
 env:
   PACKAGE_AND_BREW: ${{ secrets.PACKAGE_AND_BREW }}
-
+  VERSION: ${{ gitea.ref_name }}
+  
 jobs:
   build-arch:
     runs-on: arch-builder
@@ -20,3 +21,22 @@ jobs:
       - run: chown build:build /home/build/PKGBUILD
       - run: chown build:build /home/build/build-arch.sh
       - run: su build -c /home/build/build-arch.sh
+  
+  update-tap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: "master"
+          path: "tapdir"
+          repository: "tesses50/tesses-tap.git"
+          token: ${{ env.PACKAGE_AND_BREW }}
+      - run: |
+          cd tapdir
+          bash ../Packaging/edit-formula.sh
+          git config user.name "Tesses Gitea Bot"
+          git config user.email "noreply@tesses.net"
+          git add .
+          git commit -m "Push tesses-framework=${{ env.VERSION }}"
+          git push

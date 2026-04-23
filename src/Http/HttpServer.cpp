@@ -27,6 +27,79 @@ using namespace Tesses::Framework::TextStreams;
 
 namespace Tesses::Framework::Http
 {
+
+    void ServerSentEvents::SendEventRaw(const std::string& evt)
+    {
+        this->mtx.Lock();
+        for(auto& item : this->strms)
+        {
+            try {
+                    StreamWriter writer(item);
+                    writer.newline = "\r\n";
+                    writer.WriteLine(evt);
+                   
+                
+            }catch(...) {
+                
+            }
+        }
+        this->mtx.Unlock();
+    }
+
+    void ServerSentEvents::SendId(const std::string& id)
+    {
+        SendCustomEvent("id",id);
+    }
+
+    void ServerSentEvents::SendData(const std::string& message)
+    {
+        SendCustomEvent("data", message);
+    }
+    void ServerSentEvents::SendComment(const std::string& comment)
+    {
+        SendCustomEvent("", comment);
+    }
+    void ServerSentEvents::SendCustomEvent(const std::string& etype, const std::string& message)
+    {
+        std::string text = etype + ": ";
+        for(auto item : message)
+        {
+            if(item == '\r') continue;
+            if(item == '\n') {
+                text += "\r\n" + etype + ": ";
+            }
+            else text += item;
+        }
+
+        SendEventRaw(text);
+    }
+    void ServerSentEvents::SendData(const std::string& message, const std::string& mtype)
+    {
+        std::string text = "event: " + mtype + "\r\ndata: ";
+        for(auto item : message)
+        {
+            if(item == '\r') continue;
+            if(item == '\n') {
+                text += "\r\ndata: ";
+            }
+            else text += item;
+        }
+
+        SendEventRaw(text);
+    }
+    void ServerSentEvents::SendRetry(uint32_t ms)
+    {
+        SendCustomEvent("retry", std::to_string(ms));
+    }
+    void ServerSentEvents::SendRetry(std::chrono::milliseconds ms)
+    {
+        SendCustomEvent("retry", std::to_string(ms.count()));
+    }
+    void ServerSentEvents::SendRetry(Tesses::Framework::Date::TimeSpan ts)
+    {
+        SendRetry((uint32_t)ts.TotalSeconds() * 1000);
+    }
+    
     class WSServer
     {
         public:
@@ -282,6 +355,7 @@ namespace Tesses::Framework::Http
                 this->conn->OnClose(false);
             }
     };
+    
     /*
     static int _header_field(multipart_parser* p, const char *at, size_t length)
     {
@@ -344,6 +418,7 @@ namespace Tesses::Framework::Http
         data->currentHeaders.Clear();
         return 0;
     }*/
+    
     std::string ServerContext::GetUrlWithQuery()
    {
         if(this->queryParams.kvp.empty()) return this->path;
@@ -363,6 +438,34 @@ namespace Tesses::Framework::Http
             strm2->CopyTo(strm);
         }
    }
+
+
+    void ServerContext::SendServerSentEvents(std::shared_ptr<ServerSentEvents> sse)
+    {
+        this->responseHeaders.SetValue("X-Accel-Buffering","no");
+        this->responseHeaders.SetValue("Content-Type","text/event-stream");
+        this->responseHeaders.SetValue("Cache-Control","no-cache");
+        auto strm = this->OpenResponseStream();
+        if(strm == nullptr || this->method == "HEAD") return;
+        sse->mtx.Lock();
+        sse->strms.push_back(strm);
+        sse->mtx.Unlock();
+        while(!this->strm->EndOfStream())
+        {
+            TF_Sleep(10);
+        }
+        sse->mtx.Lock();
+        for(auto index = sse->strms.begin(); index != sse->strms.end(); index++)
+        {
+            if(*index == strm)
+            {
+                sse->strms.erase(index);
+                break;
+            }
+        }
+
+        sse->mtx.Unlock();
+    }
 
    std::string ServerContext::ReadString()
    {

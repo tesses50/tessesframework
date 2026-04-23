@@ -160,20 +160,30 @@ namespace Tesses::Framework::Http
         if(this->length == -1 && this->http1_1 && !done && !this->recv) 
         {
             this->done=true;
-            StreamWriter writer(this->strm);
-            writer.newline = "\r\n";
-            writer.WriteLine("0");
-            writer.WriteLine();
+            try {
+                
+                StreamWriter writer(this->strm);
+                writer.newline = "\r\n";
+                writer.WriteLine("0");
+                writer.WriteLine();
+            }catch(...){
+
+            }
         }
     }
     HttpStream::~HttpStream()
     {
         if(this->length == -1 && this->http1_1 && !done && !this->recv) 
         {
+            try {
+                
             StreamWriter writer(this->strm);
             writer.newline = "\r\n";
             writer.WriteLine("0");
             writer.WriteLine();
+            }catch(...) {
+                
+            }
         }
     }
 }

@@ -49,7 +49,9 @@ namespace Tesses::Framework::Streams {
                 read = len;
             if(read > 0)
             {
+                size_t r0=read;
                 read=this->Write(buffer,read);
+                
                 if(read == 0)
                 {
                     throw std::out_of_range("Failed to write!");

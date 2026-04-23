@@ -8,6 +8,9 @@ using namespace Tesses::Framework::Http;
 using namespace Tesses::Framework::Streams;
 using namespace Tesses::Framework::TextStreams;
 using namespace Tesses::Framework::Threading;
+
+std::shared_ptr<ServerSentEvents> sse = std::make_shared<ServerSentEvents>();
+
 class Johnny : public ServerContextData
 {
     public:
@@ -65,13 +68,22 @@ class MyWebServer : public IHttpServer {
                 for(size_t i=0;i<10000; i++)
                 {
                     writer.WriteLine("<li>" + std::to_string(i) + "</li>");
-
+                    TF_Sleep(10);
                 }
 
                 writer.WriteLine("</ul>");
 
                 writer.WriteLine("</body>");
                 writer.WriteLine("</html>");
+                return true;
+            }
+            else if(ctx.path == "/ssetest.html")
+            {
+                
+            }
+            else if(ctx.path == "/sse")
+            {
+                ctx.SendServerSentEvents(sse);
                 return true;
             }
             else if(ctx.path == "/main.js")
@@ -162,6 +174,13 @@ class MyOtherWebServer : public IHttpServer
 int main(int argc, char** argv)
 {
     TF_InitWithConsole();
+    int64_t timer = 0;
+    auto timerHDL= TF_Timer([&timer]()->void{
+        timer++;
+
+        sse->SendData("Timer has ticked " + std::to_string(timer) + " times now");
+    });
+
     std::shared_ptr<RouteServer> routeSvr = std::make_shared<RouteServer>();
     routeSvr->Get("/name/{name}/greeting",[](ServerContext& ctx)->bool{
         std::string name;

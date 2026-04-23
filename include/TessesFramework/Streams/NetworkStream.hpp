@@ -4,7 +4,7 @@
 namespace Tesses::Framework::Streams
 {
     class NetworkStream;
-   
+
     class TcpServer {
         int32_t sock;
         bool owns;
@@ -20,7 +20,7 @@ namespace Tesses::Framework::Streams
             ~TcpServer();
             bool IsValid();
             void Close();
-    };  
+    };
     enum class SocketType {
         ST_IPv4_TCP,
         ST_IPv4_UDP,
@@ -46,12 +46,17 @@ namespace Tesses::Framework::Streams
         void Listen(int32_t backlog);
         void Bind(std::string ip, uint16_t port);
         void SetBroadcast(bool bC);
+        void SetReuseAddress(bool reuse);
+        void SetReusePort(bool reuse);
+        void SetMulticastTTL(uint8_t ttl);
+        void SetMulticastMembership(std::string multicastAddress, std::string ifaceIP="0.0.0.0");
         std::shared_ptr<NetworkStream> Accept(std::string& ip, uint16_t& port);
         size_t Read(uint8_t* buff, size_t sz);
         size_t Write(const uint8_t* buff, size_t sz);
         size_t ReadFrom(uint8_t* buff, size_t sz, std::string& ip, uint16_t& port);
         size_t WriteTo(const uint8_t* buff, size_t sz, std::string ip, uint16_t port);
         static std::vector<std::pair<std::string,std::string>> GetIPs(bool ipV6=false);
+
         ~NetworkStream();
         void SetNoDelay(bool noDelay);
         void Close();

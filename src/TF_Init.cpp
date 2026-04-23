@@ -53,6 +53,10 @@ static GXRModeObj *rmode = NULL;
 
 #endif
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 
 namespace Tesses::Framework
 {
@@ -85,7 +89,19 @@ namespace Tesses::Framework
         cb();
         #endif
     }
+    void TF_Sleep(uint32_t sleepMS)
+    {
+        #if defined(_WIN32)
+        Sleep((DWORD)sleepMS);
+        #else
+        struct timespec ts;
+        
+        ts.tv_sec = (time_t)(sleepMS / 1000);
+        ts.tv_nsec = (sleepMS % 1000) * 1000000;
 
+        nanosleep(&ts,NULL);
+        #endif
+    }
     void TF_ConnectToSelf(uint16_t port)
     {
         Tesses::Framework::Streams::NetworkStream ns("127.0.0.1",port,false,false,false);

@@ -67,7 +67,7 @@ namespace Tesses::Framework
     std::shared_ptr<TF_Timer_Handle> TF_Timer();
     std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, int64_t interval=1000, bool enabled=true);
     std::shared_ptr<TF_Timer_Handle> TF_Timer(std::function<void()> cb, std::chrono::milliseconds interval, bool enabled=true);
-
+    
     void TF_Init();
     void TF_InitWithConsole();
     void TF_AllowPortable(std::string argv0);
@@ -76,6 +76,7 @@ namespace Tesses::Framework
     void TF_RunEventLoop();
     void TF_RunEventLoopItteration();
     bool TF_IsRunning();
+    void TF_Sleep(uint32_t sleepMS);
     void TF_SetIsRunning(bool _isRunning);
     void TF_Quit();
     bool TF_GetConsoleEventsEnabled();

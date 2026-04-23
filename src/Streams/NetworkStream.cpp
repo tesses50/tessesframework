@@ -1,8 +1,10 @@
 #include "TessesFramework/Streams/NetworkStream.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
+#include <TessesFramework/Streams/NetworkStream.hpp>
 #include <iostream>
 #include <cstring>
 using HttpUtils = Tesses::Framework::Http::HttpUtils;
+
 #if defined(TESSESFRAMEWORK_ENABLE_NETWORKING)
 
 
@@ -11,7 +13,7 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 
 #define ss_family sin_family
 #endif
-#if defined(GEKKO) && !(defined(TESSESFRAMEWORK_USE_WII_SOCKET) && defined(HW_RVL)) 
+#if defined(GEKKO) && !(defined(TESSESFRAMEWORK_USE_WII_SOCKET) && defined(HW_RVL))
 #include <network.h>
 #define NETWORK_GETSOCKNAME net_getsockname
 #define NETWORK_RECV net_recv
@@ -34,6 +36,8 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #endif
 #undef min
 #pragma comment(lib, "ws2_32.lib")
+
+
 #else
 
 extern "C" {
@@ -47,6 +51,7 @@ extern "C" {
 #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__SWITCH__) && !defined(__PS2__)
 #include <sys/un.h>
 #endif
+
 #include <poll.h>
 }
 #endif
@@ -88,7 +93,7 @@ namespace Tesses::Framework::Streams {
     std::vector<std::pair<std::string,std::string>> NetworkStream::GetIPs(bool ipV6)
     {
         std::vector<std::pair<std::string, std::string>> ipConfig;
-        
+
         #if defined(GEKKO)
         //if_config( char *local_ip, char *netmask, char *gateway,bool use_dhcp, int max_retries);
         char localIp[16];
@@ -103,7 +108,7 @@ namespace Tesses::Framework::Streams {
         ULONG size = 15000;
         PIP_ADAPTER_ADDRESSES addresses = NULL;
         addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
-        
+
         int retval = GetAdaptersAddresses(family, flags, 0, addresses, &size);
         if(retval != 0) {
             free(addresses);
@@ -145,15 +150,15 @@ namespace Tesses::Framework::Streams {
             if (ifa->ifa_addr == NULL)
                    continue;
             if (ifa->ifa_addr->sa_family == AF_INET) { // IPv4
-                
+
                 ipConfig.push_back(std::pair<std::string,std::string>(ifa->ifa_name, StringifyIP(ifa->ifa_addr)));
-                
+
             }
             #if defined(AF_INET6)
             if (ifa->ifa_addr->sa_family == AF_INET6 && ipV6) { // IPv6
-                
+
                 ipConfig.push_back(std::pair<std::string,std::string>(ifa->ifa_name, StringifyIP(ifa->ifa_addr)));
-                
+
             }
             #endif
         }
@@ -161,7 +166,7 @@ namespace Tesses::Framework::Streams {
         freeifaddrs(ifAddrStruct);
         #endif
         return ipConfig;
-        
+
     }
     void SetPort(struct sockaddr* addr, uint16_t port)
     {
@@ -175,10 +180,10 @@ namespace Tesses::Framework::Streams {
         {
             struct sockaddr_in6* a = (struct sockaddr_in6*)addr;\
             a->sin6_port = htons(port);
-            
+
         }
         #endif
-        
+
     }
     static uint16_t getPort(struct sockaddr* addr)
     {
@@ -192,13 +197,13 @@ namespace Tesses::Framework::Streams {
         {
             struct sockaddr_in6* a = (struct sockaddr_in6*)addr;\
             return ntohs(a->sin6_port);
-            
+
         }
         #endif
         return 0;
     }
     bool IPParse(std::string str,struct sockaddr_storage* addr)
-    {    
+    {
         memset(addr,0,sizeof(struct sockaddr_storage));
         uint8_t ip[16];
 
@@ -218,7 +223,7 @@ namespace Tesses::Framework::Streams {
         {
 
             struct sockaddr_in6* inAddr = (struct sockaddr_in6*)addr;
-            
+
             inAddr->sin6_family = AF_INET6;
             memcpy(&inAddr->sin6_addr,ip,16);
             return 6;
@@ -281,9 +286,9 @@ namespace Tesses::Framework::Streams {
             HttpUtils::NibbleToHex(ip[15] & 0x0F),
             });
 
-            
-            
-            
+
+
+
         }
         #endif
         return "";
@@ -293,7 +298,7 @@ namespace Tesses::Framework::Streams {
         uint32_t addr;
         uint8_t addr_parts[4];
     } my_addr_t;
-    
+
     bool NetworkStream::DataAvailable(int timeout)
     {
         pollfd fd;
@@ -314,7 +319,7 @@ namespace Tesses::Framework::Streams {
         }
         return false;
     }
-   
+
     NetworkStream::NetworkStream(std::string unixPath,bool isServer)
     {
         this->endOfStream=false;
@@ -328,12 +333,12 @@ namespace Tesses::Framework::Streams {
             return;
         }
         struct sockaddr_un unx;
-        
+
         memset(&unx, 0, sizeof(unx));
         unx.sun_family = AF_UNIX;
-        
+
         strncpy(unx.sun_path, unixPath.c_str(),sizeof(unx.sun_path)-1);
-    
+
         if(isServer)
         {
             unlink(unixPath.c_str());
@@ -344,7 +349,7 @@ namespace Tesses::Framework::Streams {
                 return;
             }
         }
-        else 
+        else
         {
             if(NETWORK_CONNECT(this->sock,(const sockaddr*)&unx, (socklen_t)sizeof(unx)) != 0)
             {
@@ -360,7 +365,7 @@ namespace Tesses::Framework::Streams {
     TcpServer::TcpServer(std::string unixPath,int32_t backlog)
     {
 
-        
+
         this->owns=true;
         this->valid=false;
         #if defined(AF_UNIX) && !defined(GEKKO) && !defined(__PS2__) &&  !defined(__SWITCH__) && ((defined(_WIN32) && defined(HAS_AFUNIX) ) || !defined(_WIN32))
@@ -372,7 +377,7 @@ namespace Tesses::Framework::Streams {
             return;
         }
         struct sockaddr_un unx;
-        
+
         memset(&unx, 0, sizeof(unx));
         unx.sun_family = AF_UNIX;
         unlink(unixPath.c_str());
@@ -384,7 +389,7 @@ namespace Tesses::Framework::Streams {
             return;
         }
 
-        if(NETWORK_LISTEN(this->sock, backlog) != 0) 
+        if(NETWORK_LISTEN(this->sock, backlog) != 0)
         {
             std::cout << "FAILED TO LISTEN FOR SOME REASON" << std::endl;
             this->valid = false;
@@ -397,14 +402,14 @@ namespace Tesses::Framework::Streams {
     TcpServer::TcpServer(uint16_t port, int32_t backlog)
     {
         this->owns=true;
-        this->sock = NETWORK_SOCKET(AF_INET, SOCK_STREAM, 0);   
-       
-        if(this->sock < 0) 
+        this->sock = NETWORK_SOCKET(AF_INET, SOCK_STREAM, 0);
+
+        if(this->sock < 0)
         {
             std::cout << "FAILED TO CREATE SOCKET FOR SOME REASON" << std::endl;
             this->valid=false;
             return;
-        }    
+        }
 
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
@@ -436,7 +441,7 @@ namespace Tesses::Framework::Streams {
             return;
         }
 
-        if(NETWORK_LISTEN(this->sock, backlog) != 0) 
+        if(NETWORK_LISTEN(this->sock, backlog) != 0)
         {
             std::cout << "FAILED TO LISTEN FOR SOME REASON" << std::endl;
             this->valid = false;
@@ -496,24 +501,24 @@ namespace Tesses::Framework::Streams {
 
         uint8_t ipBytes[16];
         bool success = IPParse(ip, &addr);
-        if(!success) 
+        if(!success)
         {
             this->valid=false;
             return;
         }
-       
+
         SetPort((struct sockaddr*)&addr, port);
 
-        this->sock = NETWORK_SOCKET((int)addr.ss_family, SOCK_STREAM, 0);    
-        if(this->sock < 0) 
+        this->sock = NETWORK_SOCKET((int)addr.ss_family, SOCK_STREAM, 0);
+        if(this->sock < 0)
         {
             this->valid=false;
             return;
-        }    
-        
-        
-    
-        
+        }
+
+
+
+
         if(NETWORK_BIND(this->sock, (const sockaddr*)&addr, (socklen_t)sizeof(addr)) != 0)
         {
 
@@ -522,7 +527,7 @@ namespace Tesses::Framework::Streams {
             return;
         }
 
-        if(NETWORK_LISTEN(this->sock, backlog) != 0) 
+        if(NETWORK_LISTEN(this->sock, backlog) != 0)
         {
             this->valid = false;
             return;
@@ -554,7 +559,7 @@ namespace Tesses::Framework::Streams {
         struct sockaddr_storage storage;
         memset(&storage,0, sizeof(storage));
         socklen_t addrlen=(socklen_t)sizeof(storage);
-        
+
         int s = NETWORK_ACCEPT(this->sock, (struct sockaddr*)&storage, &addrlen);
         if(s < 0)
         {
@@ -563,7 +568,7 @@ namespace Tesses::Framework::Streams {
 
         ip = StringifyIP((struct sockaddr*)&storage);
         port = getPort((struct sockaddr*)&storage);
-        
+
         return std::make_shared<NetworkStream>(s,true);
     }
     bool NetworkStream::CanRead()
@@ -584,32 +589,32 @@ namespace Tesses::Framework::Streams {
             case SocketType::ST_IPv4_TCP:
                 #if defined(AF_INET)
                     this->sock = NETWORK_SOCKET(AF_INET,SOCK_STREAM, 0);
-           
+
                 #endif
                 break;
             case SocketType::ST_IPv4_UDP:
                 #if defined(AF_INET)
                     this->sock = NETWORK_SOCKET(AF_INET,SOCK_DGRAM, 0);
-           
+
                 #endif
             break;
 
             case SocketType::ST_IPv6_TCP:
                 #if defined(AF_INET6)
                     this->sock = NETWORK_SOCKET(AF_INET6,SOCK_STREAM, 0);
-           
+
                 #endif
                 break;
             case SocketType::ST_IPv6_UDP:
                 #if defined(AF_INET6)
                     this->sock = NETWORK_SOCKET(AF_INET6,SOCK_DGRAM, 0);
-           
+
                 #endif
             break;
             case SocketType::ST_UNIX:
             #if defined(AF_UNIX) && ((defined(_WIN32) && defined(HAS_AFUNIX) ) || !defined(_WIN32))
                     this->sock = NETWORK_SOCKET(AF_UNIX,SOCK_DGRAM, 0);
-           
+
             #endif
             break;
         }
@@ -621,7 +626,7 @@ namespace Tesses::Framework::Streams {
         this->owns=true;
         this->success=false;
         std::string portStr = std::to_string((uint32_t)port);
-        
+
         struct addrinfo hint;
         memset(&hint, 0, sizeof(hint));
         #if defined(AF_INET6)
@@ -631,7 +636,7 @@ namespace Tesses::Framework::Streams {
         #endif
         hint.ai_socktype = datagram ? SOCK_DGRAM : SOCK_STREAM;
 
-        struct addrinfo* result;   
+        struct addrinfo* result;
 
 
         int status = NETWORK_GETADDRINFO(ipOrFqdn.c_str(),portStr.c_str(), &hint, &result);
@@ -680,11 +685,11 @@ namespace Tesses::Framework::Streams {
         return this->endOfStream;
     }
     void NetworkStream::Listen(int32_t backlog)
-    {   
+    {
         if(this->success)
             NETWORK_LISTEN(this->sock, backlog);
     }
-    
+
     void NetworkStream::Bind(std::string ip, uint16_t port)
     {
         if(!this->success) return;
@@ -693,14 +698,14 @@ namespace Tesses::Framework::Streams {
 
         uint8_t ipBytes[16];
         bool success = IPParse(ip, &addr);
-        if(!success) 
+        if(!success)
         {
             this->success=false;
             if(this->owns)
                 NETWORK_CLOSE(this->sock);
             return;
         }
-       
+
         SetPort((struct sockaddr*)&addr, port);
         int on=1;
         #if defined(SO_REUSEPORT)
@@ -720,16 +725,81 @@ namespace Tesses::Framework::Streams {
             return;
         }
     }
-    void NetworkStream::SetBroadcast(bool bC)
+    void NetworkStream::SetReuseAddress(bool reuse)
     {
         if(!this->success) return;
-        int broadcast = 1;
-        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, (const char*)&broadcast, sizeof(broadcast)) != 0) 
+        int no = reuse ? 1 : 0;
+        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&no, sizeof(no)) != 0)
         {
             this->success=false;
             if(this->owns)
                 NETWORK_CLOSE(this->sock);
-                    
+
+        }
+    }
+    void NetworkStream::SetReusePort(bool reuse)
+    {
+        if(!this->success) return;
+        int no = reuse ? 1 : 0;
+        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_REUSEPORT, (const char*)&no, sizeof(no)) != 0)
+        {
+            this->success=false;
+            if(this->owns)
+                NETWORK_CLOSE(this->sock);
+
+        }
+    }
+    void NetworkStream::SetMulticastTTL(uint8_t ttl)
+    {
+        if(!this->success) return;
+        #if defined(IPPROTO_IP) && defined(IP_MULTICAST_TTL)
+        if (NETWORK_SETSOCKOPT(sock, IPPROTO_IP, IP_MULTICAST_TTL, (const char*)&ttl, sizeof(ttl)) != 0)
+        {
+            this->success=false;
+            if(this->owns)
+                NETWORK_CLOSE(this->sock);
+
+        }
+        #endif
+    }
+    void NetworkStream::SetMulticastMembership(std::string multicastAddress, std::string ifaceIP)
+    {
+        if(!this->success) return;
+        #if defined(IPPROTO_IP) && defined(IP_MULTICAST_TTL)
+        struct sockaddr_storage maddr;
+        struct sockaddr_storage iaddr;
+
+         bool success = IPParse(multicastAddress, &maddr) && IPParse(ifaceIP, &iaddr);
+         if(success && maddr.ss_family == AF_INET && iaddr.ss_family == AF_INET)
+         {
+             
+                 struct ip_mreq req;
+                 req.imr_multiaddr = ((struct sockaddr_in*)&maddr)->sin_addr;
+                 req.imr_interface = ((struct sockaddr_in*)&iaddr)->sin_addr;
+
+                 if(NETWORK_SETSOCKOPT(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&req, sizeof(req)) != 0)
+                 {
+
+                     this->success=false;
+                     if(this->owns)
+                         NETWORK_CLOSE(this->sock);
+
+                 }
+             
+         }
+        #endif
+    }
+
+    void NetworkStream::SetBroadcast(bool bC)
+    {
+        if(!this->success) return;
+        int broadcast = bC ? 1 : 0;
+        if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_BROADCAST, (const char*)&broadcast, sizeof(broadcast)) != 0)
+        {
+            this->success=false;
+            if(this->owns)
+                NETWORK_CLOSE(this->sock);
+
         }
     }
     std::shared_ptr<NetworkStream> NetworkStream::Accept(std::string& ip, uint16_t& port)
@@ -745,12 +815,12 @@ namespace Tesses::Framework::Streams {
 
         ip = StringifyIP((struct sockaddr*)&storage);
         port = getPort((struct sockaddr*)&storage);
-        
+
         return std::make_shared<NetworkStream>((int32_t)s,(bool)true);
     }
     size_t NetworkStream::Read(uint8_t* buff, size_t sz)
     {
-        
+
         if(!this->success) return 0;
         auto r = NETWORK_RECV(this->sock,(char*)buff,sz,0);
 
@@ -759,20 +829,20 @@ namespace Tesses::Framework::Streams {
             this->endOfStream=true;
             return 0;
         }
-        
+
         return (size_t)r;
     }
     size_t NetworkStream::Write(const uint8_t* buff, size_t sz)
     {
 
         if(!this->success) return 0;
-       
+
         auto sz2 = NETWORK_SEND(this->sock,(const char*)buff,sz, 0);
         if(sz2 <= 0) {
             this->endOfStream=true;
             return 0;
         }
-        
+
         return (size_t)sz;
     }
     size_t NetworkStream::ReadFrom(uint8_t* buff, size_t sz, std::string& ip, uint16_t& port)
@@ -786,10 +856,10 @@ namespace Tesses::Framework::Streams {
         if(r < 0) return 0;
         return (size_t)r;
 
-        
 
-        
-        
+
+
+
     }
     size_t NetworkStream::WriteTo(const uint8_t* buff, size_t sz, std::string ip, uint16_t port)
     {
@@ -800,14 +870,14 @@ namespace Tesses::Framework::Streams {
 
         uint8_t ipBytes[16];
         bool success = IPParse(ip, &addr);
-        if(!success) 
+        if(!success)
         {
             this->success=false;
             if(this->owns)
                 NETWORK_CLOSE(this->sock);
             return 0;
         }
-       
+
         SetPort((struct sockaddr*)&addr, port);
         auto sz2 = NETWORK_SENDTO(this->sock,(const char*)buff,sz, 0, (const sockaddr*)&addr, (socklen_t)sizeof(addr));
         if(sz2 < 0) return 0;
@@ -827,11 +897,11 @@ namespace Tesses::Framework::Streams {
     }
     void NetworkStream::SetNoDelay(bool noDelay)
     {
-         
+
         int noDelay2 = noDelay;
         NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, TCP_NODELAY, (const char*)&noDelay2,(socklen_t)sizeof(noDelay2));
     }
-    
+
 }
 #else
 namespace Tesses::Framework::Streams {
@@ -850,7 +920,7 @@ TcpServer::TcpServer(std::string ip, uint16_t port, int32_t backlog)
 }
 TcpServer::TcpServer(std::string unixPath,int32_t backlog)
 {
-    
+
 }
 std::shared_ptr<NetworkStream> TcpServer::GetStream(std::string& ip, uint16_t& port)
 {
@@ -866,7 +936,7 @@ bool TcpServer::IsValid()
     }
 void TcpServer::Close()
 {
-    
+
 }
 bool NetworkStream::EndOfStream() {
     return true;
@@ -877,7 +947,7 @@ bool NetworkStream::CanRead() {
 bool NetworkStream::CanWrite() {
     return false;
 }
-    
+
 NetworkStream::NetworkStream(SocketType type)
 {
 
@@ -888,7 +958,7 @@ NetworkStream::NetworkStream(std::string ipOrFqdn, uint16_t port, bool datagram,
 }
 NetworkStream::NetworkStream(std::string unixPath, bool isServer)
 {
-    
+
 }
 NetworkStream::NetworkStream(int32_t sock, bool owns)
 {
@@ -906,6 +976,23 @@ void NetworkStream::SetBroadcast(bool bC)
 {
 
 }
+void NetworkStream::SetReuseAddress(bool reuse)
+{
+
+}
+void NetworkStream::SetReusePort(bool reuse)
+{
+
+}
+void NetworkStream::SetMulticastTTL(uint8_t ttl)
+{
+
+}
+void NetworkStream::SetMulticastMembership(std::string multicastAddress, std::string ifaceIP="0.0.0.0")
+{
+    
+}
+        
 std::shared_ptr<NetworkStream> NetworkStream::Accept(std::string& ip, uint16_t& port)
 {
     return nullptr;
@@ -936,7 +1023,7 @@ NetworkStream::~NetworkStream()
 }
 void NetworkStream::SetNoDelay(bool noDelay)
 {
-    
+
 }
 void NetworkStream::Close()
 {

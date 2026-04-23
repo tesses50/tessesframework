@@ -13,12 +13,30 @@ namespace Tesses::Framework::Http
         public:
             virtual ~ServerContextData();
     };
-
+    class ServerContext;
+    class ServerSentEvents {
+        std::vector<std::shared_ptr<Tesses::Framework::Streams::Stream>> strms;
+        Tesses::Framework::Threading::Mutex mtx;
+        private:
+            void SendEventRaw(const std::string& evt);
+        public:
+            void SendRetry(uint32_t ms);
+            void SendRetry(std::chrono::milliseconds ms);
+            void SendRetry(Tesses::Framework::Date::TimeSpan ts);
+            void SendData(const std::string& message);
+            void SendData(const std::string& message, const std::string& dataType);
+            void SendId(const std::string& idVal);
+            void SendCustomEvent(const std::string& type, const std::string& value);
+            void SendComment(const std::string& comment);
+            friend class ServerContext;
+    };
 
 
     class ServerContext {
+        
         bool sent;
         bool debug;
+        std::vector<std::shared_ptr<ServerSentEvents>> sse;
         std::shared_ptr<Tesses::Framework::Streams::Stream> strm;
         std::map<std::string,ServerContextData*> data;
         std::queue<std::function<bool(ServerContext& ctx)>> headerhandlers;
@@ -54,6 +72,7 @@ namespace Tesses::Framework::Http
             void SendNotFound();
             void SendBadRequest();
             void SendException(std::exception& ex);
+            void SendServerSentEvents(std::shared_ptr<ServerSentEvents> sse);
             std::shared_ptr<Tesses::Framework::Streams::Stream> OpenResponseStream();
             std::shared_ptr<Tesses::Framework::Streams::Stream> OpenRequestStream();
             ServerContext& WithStatusCode(StatusCode code);
@@ -87,6 +106,9 @@ namespace Tesses::Framework::Http
                 data[name] = item;
                 return item;
             }
+            friend class ServerSentEvents;
+
+        
     };
 
     class IHttpServer {
