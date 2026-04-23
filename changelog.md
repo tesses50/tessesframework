@@ -6,6 +6,5 @@ Add server sent events, change vfs structure, dark mode error pages and dark mod
 ## 0.0.2
 Add UUIDs
 
-
 ## 0.0.1
 Start versioning

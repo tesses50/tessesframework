@@ -10,7 +10,7 @@ groups=()
 depends=('mbedtls')
 makedepends=('git' 'cmake' 'make' 'base-devel' 'wget') # 'bzr', 'git', 'mercurial' or 'subversion'
 install=
-source=('tessesframework::git+https://git.tesses.org/tesses-framework')
+source=('tessesframework::git+https://git.tesses.org/tessesframework')
 noextract=()
 sha256sums=('SKIP')
 if [[ -z "$CMAKE_TOOLCHAIN" ]]; then
