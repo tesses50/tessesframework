@@ -16,12 +16,12 @@ namespace Tesses::Framework::Text {
         uint64_t total = 0;
         size_t read;
         
-        uint8_t* data = new uint8_t[BLK_SZ];
+        std::vector<uint8_t> data(BLK_SZ);
         bool first=true;
 
 
         do {
-            read = strm->ReadBlock(data, BLK_SZ);
+            read = strm->ReadBlock(data.data(), data.size());
 
             for(size_t i = 0; i < read; i++)
             {
@@ -33,7 +33,6 @@ namespace Tesses::Framework::Text {
         } while(read != 0);
         
         
-        delete data;
 
         writer->WriteLine("};");
         writer->Write("const size_t ");

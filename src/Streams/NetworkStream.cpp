@@ -739,6 +739,7 @@ namespace Tesses::Framework::Streams {
     }
     void NetworkStream::SetReusePort(bool reuse)
     {
+        #if !defined(_WIN32)
         if(!this->success) return;
         int no = reuse ? 1 : 0;
         if (NETWORK_SETSOCKOPT(sock, SOL_SOCKET, SO_REUSEPORT, (const char*)&no, sizeof(no)) != 0)
@@ -748,6 +749,7 @@ namespace Tesses::Framework::Streams {
                 NETWORK_CLOSE(this->sock);
 
         }
+        #endif
     }
     void NetworkStream::SetMulticastTTL(uint8_t ttl)
     {

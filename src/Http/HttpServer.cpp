@@ -493,7 +493,7 @@ namespace Tesses::Framework::Http
     static bool parseUntillBoundaryEnd(std::shared_ptr<Tesses::Framework::Streams::Stream> src, std::shared_ptr<Tesses::Framework::Streams::Stream> dest, std::string boundary)
     {
         bool hasMore=true;
-        uint8_t* checkBuffer = new uint8_t[boundary.size()];
+        std::vector<uint8_t> checkBuffer(boundary.size());
 
         int b;
         size_t i = 0;
@@ -558,8 +558,6 @@ namespace Tesses::Framework::Http
         {
             dest->Write(buffer,offsetInMem);
         }
-        delete[] checkBuffer;
-
         return hasMore;
     }
 
@@ -1128,10 +1126,9 @@ namespace Tesses::Framework::Http
             if(ctx.requestHeaders.TryGetFirst("Content-Type",type) && type == "application/x-www-form-urlencoded" && ctx.requestHeaders.TryGetFirstInt("Content-Length",length))
             {
                 size_t len = (size_t)length;
-                uint8_t* buffer = new uint8_t[len];
-                len = bStrm->ReadBlock(buffer,len);
-                std::string query((const char*)buffer,len);
-                delete[] buffer;
+                std::vector<uint8_t> buffer(len);
+                len = bStrm->ReadBlock(buffer.data(),len);
+                std::string query((const char*)buffer.data(),len);
                 HttpUtils::QueryParamsDecode(ctx.queryParams, query);
             }
 

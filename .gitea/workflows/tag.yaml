@@ -13,7 +13,7 @@ jobs:
     runs-on: arch-builder
     steps:
       - uses: actions/checkout@v4
-      - run: pacman --noconfirm -Sy mbedtls curl
+      - run: pacman --noconfirm -Sy mbedtls curl zip zig ninja
       - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
       - run: cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
       - run: cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
@@ -21,6 +21,14 @@ jobs:
       - run: chown build:build /home/build/PKGBUILD
       - run: chown build:build /home/build/build-arch.sh
       - run: su build -c /home/build/build-arch.sh
+      - run: env -C Packaging/Tools bash build.sh
+      - uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
+        with:
+          prerelease: true
+          files: |-
+            artifacts/** 
   
   update-tap:
     runs-on: ubuntu-latest

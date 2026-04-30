@@ -50,7 +50,7 @@ int main(int argc, char** argv)
                 .SendText(
                     "<!DOCTYPE html>"
                     "<html>"
-                    "<head><title>AnonyDrop - Uploaded successfully</title>"
+                    "<head><meta name=\"color-scheme\" content=\"dark light\"><title>AnonyDrop - Uploaded successfully</title></head>"
                     "<body>"
                     "<h1>Uploaded successfully</h1>"
                     "<a href=\"./\">Back</a>"

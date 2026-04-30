@@ -33,9 +33,17 @@ namespace Tesses::Framework::Filesystem
     #endif
     bool LocalFilesystem::Stat(VFSPath path, StatData& sfs)
     {
+
         std::string s = VFSPathToSystem(path);
+        #if defined(_WIN32)
+
+        struct __stat64 st;
+        if(_stat64(s.c_str(),&st) == 0)
+        #else
         struct stat st;
         if(stat(s.c_str(),&st) == 0)
+        #endif
+        
         {
 
             sfs.Device = (uint64_t)st.st_dev;
@@ -46,8 +54,13 @@ namespace Tesses::Framework::Filesystem
             sfs.GroupId = (uint32_t)st.st_gid;
             sfs.DeviceId = (uint64_t)st.st_rdev;
             sfs.Size = (uint64_t)st.st_size;
+            #if defined(_WIN32)
+            sfs.BlockSize = 512;
+            sfs.BlockCount = sfs.Size / sfs.BlockSize;
+            #else
             sfs.BlockSize = (uint64_t)st.st_blksize;
             sfs.BlockCount = (uint64_t)st.st_blocks;
+            #endif
             sfs.LastAccess = Date::DateTime((int64_t)st.st_atime);
             sfs.LastModified = Date::DateTime((int64_t)st.st_mtime);
             sfs.LastStatus = Date::DateTime((int64_t)st.st_ctime);

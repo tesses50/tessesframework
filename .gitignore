@@ -3,3 +3,4 @@ builds
 .vscode
 out
 /.vs
+artifacts

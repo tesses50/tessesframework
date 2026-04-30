@@ -108,36 +108,34 @@ namespace Tesses::Framework::Streams {
     void Stream::CopyToLimit(std::shared_ptr<Stream> strm,uint64_t len, size_t buffSize)
     {
         size_t read;
-        uint8_t* buffer = new uint8_t[buffSize];
+        std::vector<uint8_t> buffer(buffSize);
         uint64_t offset = 0;
 
         do {
             if(offset >= len) break;
-            read = (size_t)std::min(len-offset,(uint64_t)buffSize);
+            read = (size_t)std::min(len-offset,(uint64_t)buffer.size());
 
-            read = this->Read(buffer,read);
-            strm->WriteBlock(buffer, read);
+            read = this->Read(buffer.data(),read);
+            strm->WriteBlock(buffer.data(), read);
 
             offset += read;
             
         } while(read > 0 && !strm->EndOfStream());
         strm->Flush();
 
-        delete[] buffer;
     }
    
     void Stream::CopyTo(std::shared_ptr<Stream> strm, size_t buffSize)
     {
         size_t read;
-        uint8_t* buffer = new uint8_t[buffSize];
+        std::vector<uint8_t> buffer(buffSize);
         do {
-            read = this->Read(buffer,buffSize);
-            strm->WriteBlock(buffer, read);
+            read = this->Read(buffer.data(),buffer.size());
+            strm->WriteBlock(buffer.data(), read);
             
         } while(read > 0 && !strm->EndOfStream());
         strm->Flush();
 
-        delete[] buffer;
       
     }
     Stream::~Stream()
