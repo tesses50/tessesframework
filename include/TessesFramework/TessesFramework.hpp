@@ -31,6 +31,7 @@
 #include "Filesystem/SubdirFilesystem.hpp"
 #include "Filesystem/NullFilesystem.hpp"
 #include "Filesystem/MountableFilesystem.hpp"
+#include "Filesystem/RelativeFilesystem.hpp"
 #include "Filesystem/FSHelpers.hpp"
 #include "Crypto/ClientTLSStream.hpp"
 #include "Crypto/Crypto.hpp"

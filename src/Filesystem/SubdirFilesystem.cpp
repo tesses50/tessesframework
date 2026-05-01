@@ -77,7 +77,7 @@ namespace Tesses::Framework::Filesystem
     {
         VFSPathEnumerator* enumerator = this->parent->EnumeratePaths(ToParent(path)).MakePointer();
 
-        return VFSPathEnumerator([enumerator,path,this](VFSPath& path0)->bool{
+        return VFSPathEnumerator([enumerator,this](VFSPath& path0)->bool{
             if(enumerator->MoveNext())
             {
                 path0 = FromParent(enumerator->Current);
@@ -146,4 +146,40 @@ namespace Tesses::Framework::Filesystem
     {
         return this->parent->CreateFIFO(path, mod);
     }
+    
+    SubdirFilesystem::Watcher::Watcher(std::shared_ptr<SubdirFilesystem> vfs, VFSPath path) : FSWatcher(vfs, path)
+    {
+        this->watcher = FSWatcher::Create(vfs->parent, vfs->ToParent(path));
+        this->watcher->event = [vfs,this](FSWatcherEvent & evt)-> void{
+            FSWatcherEvent e2=evt;
+            if(evt.IsEvent(FSWatcherEventType::Moved))
+            {
+                e2.dest = vfs->FromParent(e2.dest);
+            }
+            e2.src = vfs->FromParent(e2.src);
+
+            if(this->event) this->event(e2);
+        };
+    }
+
+    void SubdirFilesystem::Watcher::SetEnabledImpl(bool enabled)
+    {
+        this->enabled = enabled;
+        this->watcher->events = this->events;
+        this->watcher->SetEnabled(enabled);
+    }
+    SubdirFilesystem::Watcher::~Watcher()
+    {
+        this->watcher->SetEnabled(false);
+    }
+    std::shared_ptr<FSWatcher> SubdirFilesystem::CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path)
+    {
+        auto sdfs = std::dynamic_pointer_cast<SubdirFilesystem>(vfs);
+        if(sdfs)
+        {
+            return std::make_shared<Watcher>(sdfs,path);
+        }
+        return VFS::CreateWatcher(vfs,path);
+    }
+
 }

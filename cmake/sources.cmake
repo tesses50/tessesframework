@@ -47,6 +47,7 @@ src/Filesystem/LocalFS.cpp
 src/Filesystem/SubdirFilesystem.cpp
 src/Filesystem/NullFilesystem.cpp
 src/Filesystem/MountableFilesystem.cpp
+src/Filesystem/RelativeFilesystem.cpp
 src/Filesystem/FSHelpers.cpp
 src/Filesystem/TempFS.cpp
 src/Crypto/MbedTLS/ClientTLSStream.cpp

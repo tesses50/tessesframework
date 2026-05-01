@@ -35,5 +35,19 @@ namespace Tesses::Framework::Filesystem
             FIFOCreationResult CreateFIFO(VFSPath path, uint32_t mode);
             void Lock(VFSPath path);
             void Unlock(VFSPath path);
+
+
+            protected:
+                std::shared_ptr<FSWatcher> CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path);
+
+
+                class Watcher : public FSWatcher {
+                    std::shared_ptr<FSWatcher> watcher;
+                    protected:
+                        void SetEnabledImpl(bool enabled);
+                    public:
+                        Watcher(std::shared_ptr<SubdirFilesystem> vfs, VFSPath path);
+                        ~Watcher();
+                };
     };
 }

@@ -170,6 +170,11 @@ namespace Tesses::Framework::Filesystem {
         if(this->deleteOnDestroy && this->parent->DirectoryExists(p))
         this->parent->DeleteDirectoryRecurse(p);
     }
+    std::shared_ptr<FSWatcher> TempFS::CreateWatcher(std::shared_ptr<VFS> vfs, VFSPath path)
+    {
+        return FSWatcher::Create(vfs,path);
+    }
+
     TempFS::~TempFS()
     {
         VFSPath p;
