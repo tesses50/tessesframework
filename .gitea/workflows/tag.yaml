@@ -33,7 +33,7 @@ jobs:
   
   update-tap-and-build-win32:
     name: "🔨 Build win32 and update the tap 🍺"
-    runs-on: global-containers-mingw
+    runs-on: global-container-mingw
     steps:
       - uses: actions/checkout@v4
       - run: |
