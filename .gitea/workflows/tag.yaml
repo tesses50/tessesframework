@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
+          mkdir artifacts
           env -C Packaging/WinToolsIntel bash build.sh
 
       - uses: akkuman/gitea-release-action@v1
