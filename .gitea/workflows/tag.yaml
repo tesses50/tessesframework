@@ -14,7 +14,7 @@ jobs:
     runs-on: arch-builder
     steps:
       - uses: actions/checkout@v4
-      - run: pacman --noconfirm -Sy mbedtls curl zip zig ninja
+      - run: pacman --noconfirm -Sy mbedtls zip zig ninja
       - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
       - run: cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
       - run: cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
