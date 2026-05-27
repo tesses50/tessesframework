@@ -4,6 +4,7 @@ include(cmake/version.cmake)
 project(TessesFramework VERSION ${TESSESFRAMEWORK_MAJOR_VERSION}.${TESSESFRAMEWORK_MINOR_VERSION}.${TESSESFRAMEWORK_PATCH_VERSION})
 
 set(CMAKE_CXX_STANDARD 17)
+include(GNUInstallDirs)
 include(CheckLibraryExists)
 include(FetchContent)
 include(cmake/sources.cmake)
