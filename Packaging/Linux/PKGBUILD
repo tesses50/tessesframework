@@ -1,6 +1,6 @@
 # Maintainer: Mike Nolan <tesses@tesses.net>
 pkgname=tessesframework # '-bzr', '-git', '-hg' or '-svn'
-pkgver=0.0.3
+pkgver=0.0.4
 pkgrel=1
 pkgdesc=""
 arch=('x86_64' 'powerpc')
