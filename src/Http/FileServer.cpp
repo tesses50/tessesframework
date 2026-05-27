@@ -1,131 +1,135 @@
+/*
+    TessesFramework a library to make C++ easier for me, used in CrossLang:
+   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "TessesFramework/Http/FileServer.hpp"
+#include "TessesFramework/Common.hpp"
 #include "TessesFramework/Filesystem/LocalFS.hpp"
 #include "TessesFramework/Filesystem/SubdirFilesystem.hpp"
 #include <iostream>
-#include "TessesFramework/Common.hpp"
 using LocalFilesystem = Tesses::Framework::Filesystem::LocalFilesystem;
 using SubdirFilesystem = Tesses::Framework::Filesystem::SubdirFilesystem;
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
 using VFS = Tesses::Framework::Filesystem::VFS;
-namespace Tesses::Framework::Http
-{
-    FileServer::FileServer(std::filesystem::path path,bool allowListing,bool spa) : FileServer(path,allowListing,spa,{"index.html","default.html","index.htm","default.htm"})
-    {
+namespace Tesses::Framework::Http {
+FileServer::FileServer(std::filesystem::path path, bool allowListing, bool spa)
+    : FileServer(path, allowListing, spa,
+                 {"index.html", "default.html", "index.htm", "default.htm"}) {}
+FileServer::FileServer(std::filesystem::path path, bool allowListing, bool spa,
+                       std::vector<std::string> defaultNames) {
+    std::shared_ptr<SubdirFilesystem> sdfs = std::make_shared<SubdirFilesystem>(
+        Tesses::Framework::Filesystem::LocalFS,
+        Tesses::Framework::Filesystem::LocalFS->SystemToVFSPath(path.string()));
+    this->vfs = sdfs;
+    this->spa = spa;
 
-    }
-    FileServer::FileServer(std::filesystem::path path,bool allowListing, bool spa, std::vector<std::string> defaultNames)
-    {
-        std::shared_ptr<SubdirFilesystem> sdfs=std::make_shared<SubdirFilesystem>(Tesses::Framework::Filesystem::LocalFS,Tesses::Framework::Filesystem::LocalFS->SystemToVFSPath(path.string()));
-        this->vfs = sdfs;
-        this->spa = spa;
-
-        this->allowListing = allowListing;
-        this->defaultNames = defaultNames;
-    }
-    FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing,bool spa) : FileServer(fs,allowListing,spa,{"index.html","default.html","index.htm","default.htm"})
-    {
-
-    }
-    FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs, bool allowListing, bool spa, std::vector<std::string> defaultNames)
-    {
-        this->vfs = fs;
-        this->allowListing = allowListing;
-        this->defaultNames = defaultNames;
-        this->spa = spa;
-    }
-    bool FileServer::SendFile(ServerContext& ctx,VFSPath path)
-    {
-        TF_LOG("File: " + path.ToString());
-        auto strm = this->vfs->OpenFile(path,"rb");
-        bool retVal = false;
-        if(strm != nullptr)
-        {
-            Date::DateTime lw,la;
-            this->vfs->GetDate(path,lw,la);
-            ctx.WithLastModified(lw).WithMimeType(HttpUtils::MimeType(path.GetFileName())).SendStream(strm);
-            retVal = true;
-
-        }
-        return retVal;
-    }
-
-    bool FileServer::Handle(ServerContext& ctx)
-    {
-        auto path = ((VFSPath)HttpUtils::UrlPathDecode(ctx.path)).CollapseRelativeParents();
-
-
-        if(this->vfs->DirectoryExists(path))
-        {
-            TF_LOG("Directory exists");
-            for(auto f : defaultNames)
-            {
-                VFSPath p=path;
-                p = p / f;
-                TF_LOG("Trying " + p.ToString());
-                TF_LOG("Before file exists");
-                TF_LOG(this->vfs->FileExists(p)?"File Exists" : "File Does Not Exist");
-                TF_LOG("After file exists");
-                if(this->vfs->FileExists(p))
-                    return SendFile(ctx,p);
-            }
-            if(this->allowListing)
-            {
-                std::string p = HttpUtils::HtmlEncode(ctx.originalPath);
-                std::string html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Index of ";
-                html.append(p);
-                html.append("</title><meta name=\"color-scheme\" content=\"dark light\"></head><body><h1>Index of ");
-                html.append(p);
-                html.append("</h1><hr><pre><a href=\"../\">../</a>\r\n");
-
-
-                for(auto item : vfs->EnumeratePaths(path))
-                {
-                    if(vfs->DirectoryExists(item))
-                    {
-                        //is dir
-                        std::string path = item.GetFileName();
-                        html.append("<a href=\"");
-                        html.append(HttpUtils::UrlPathEncode(path) + "/");
-                        html.append("\">");
-                        html.append(HttpUtils::HtmlEncode(path) + "/");
-                        html.append("</a>\r\n");
-                    }
-                    else
-                    {
-                        //is file
-                        std::string path = item.GetFileName();
-                        html.append("<a href=\"");
-                        html.append(HttpUtils::UrlPathEncode(path));
-                        html.append("\">");
-                        html.append(HttpUtils::HtmlEncode(path));
-                        html.append("</a>\r\n");
-                    }
-                }
-
-                html.append("</pre><hr></body></html>");
-
-                ctx.WithMimeType("text/html").SendText(html);
-                return true;
-            }
-        }
-        else if(this->vfs->FileExists(path))
-        {
-            return SendFile(ctx,path);
-        }
-        else if(this->spa)
-        {
-            for(auto f : defaultNames)
-            {
-                VFSPath p(f);
-                p.relative=false;
-                if(this->vfs->FileExists(p))
-                    return SendFile(ctx,p);
-            }
-        }
-        return false;
-    }
-    FileServer::~FileServer()
-    {
-
-    }
+    this->allowListing = allowListing;
+    this->defaultNames = defaultNames;
 }
+FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs,
+                       bool allowListing, bool spa)
+    : FileServer(fs, allowListing, spa,
+                 {"index.html", "default.html", "index.htm", "default.htm"}) {}
+FileServer::FileServer(std::shared_ptr<Tesses::Framework::Filesystem::VFS> fs,
+                       bool allowListing, bool spa,
+                       std::vector<std::string> defaultNames) {
+    this->vfs = fs;
+    this->allowListing = allowListing;
+    this->defaultNames = defaultNames;
+    this->spa = spa;
+}
+bool FileServer::SendFile(ServerContext &ctx, VFSPath path) {
+    TF_LOG("File: " + path.ToString());
+    auto strm = this->vfs->OpenFile(path, "rb");
+    bool retVal = false;
+    if (strm != nullptr) {
+        Date::DateTime lw, la;
+        this->vfs->GetDate(path, lw, la);
+        ctx.WithLastModified(lw)
+            .WithMimeType(HttpUtils::MimeType(path.GetFileName()))
+            .SendStream(strm);
+        retVal = true;
+    }
+    return retVal;
+}
+
+bool FileServer::Handle(ServerContext &ctx) {
+    auto path =
+        ((VFSPath)HttpUtils::UrlPathDecode(ctx.path)).CollapseRelativeParents();
+
+    if (this->vfs->DirectoryExists(path)) {
+        TF_LOG("Directory exists");
+        for (auto f : defaultNames) {
+            VFSPath p = path;
+            p = p / f;
+            TF_LOG("Trying " + p.ToString());
+            TF_LOG("Before file exists");
+            TF_LOG(this->vfs->FileExists(p) ? "File Exists"
+                                            : "File Does Not Exist");
+            TF_LOG("After file exists");
+            if (this->vfs->FileExists(p))
+                return SendFile(ctx, p);
+        }
+        if (this->allowListing) {
+            std::string p = HttpUtils::HtmlEncode(ctx.originalPath);
+            std::string html = "<!DOCTYPE html><html><head><meta "
+                               "charset=\"UTF-8\"><title>Index of ";
+            html.append(p);
+            html.append("</title><meta name=\"color-scheme\" content=\"dark "
+                        "light\"></head><body><h1>Index of ");
+            html.append(p);
+            html.append("</h1><hr><pre><a href=\"../\">../</a>\r\n");
+
+            for (auto item : vfs->EnumeratePaths(path)) {
+                if (vfs->DirectoryExists(item)) {
+                    // is dir
+                    std::string path = item.GetFileName();
+                    html.append("<a href=\"");
+                    html.append(HttpUtils::UrlPathEncode(path) + "/");
+                    html.append("\">");
+                    html.append(HttpUtils::HtmlEncode(path) + "/");
+                    html.append("</a>\r\n");
+                } else {
+                    // is file
+                    std::string path = item.GetFileName();
+                    html.append("<a href=\"");
+                    html.append(HttpUtils::UrlPathEncode(path));
+                    html.append("\">");
+                    html.append(HttpUtils::HtmlEncode(path));
+                    html.append("</a>\r\n");
+                }
+            }
+
+            html.append("</pre><hr></body></html>");
+
+            ctx.WithMimeType("text/html").SendText(html);
+            return true;
+        }
+    } else if (this->vfs->FileExists(path)) {
+        return SendFile(ctx, path);
+    } else if (this->spa) {
+        for (auto f : defaultNames) {
+            VFSPath p(f);
+            p.relative = false;
+            if (this->vfs->FileExists(p))
+                return SendFile(ctx, p);
+        }
+    }
+    return false;
+}
+FileServer::~FileServer() {}
+} // namespace Tesses::Framework::Http

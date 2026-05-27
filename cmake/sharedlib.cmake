@@ -1,0 +1,21 @@
+if(TESSESFRAMEWORK_ENABLE_RPATH)
+set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
+if (APPLE)
+    set(CMAKE_INSTALL_RPATH "@executable_path/../${CMAKE_INSTALL_LIBDIR}")
+else()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
+endif()
+add_library(tessesframework SHARED ${TESSESFRAMEWORK_SOURCE})
+set_target_properties(tessesframework PROPERTIES
+    VERSION ${TESSESFRAMEWORK_MAJOR_VERSION}.${TESSESFRAMEWORK_MINOR_VERSION}.${TESSESFRAMEWORK_PATCH_VERSION}
+    SOVERSION ${TESSESFRAMEWORK_MAJOR_VERSION}
+)
+include(${CMAKE_CURRENT_LIST_DIR}/helpers.cmake)
+
+install(TARGETS tessesframework DESTINATION)
+
+
+list(APPEND TessesFrameworkLibs tessesframework)

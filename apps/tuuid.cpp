@@ -1,9 +1,8 @@
 #include "TessesFramework/Uuid.hpp"
 #include <iostream>
 
-int main(int argc, char** argv)
-{
-    //e794499c
+int main(int argc, char **argv) {
+    // e794499c
     using namespace Tesses::Framework;
 
     Uuid uuid = Uuid::Generate();
@@ -20,5 +19,7 @@ int main(int argc, char** argv)
     uuid.node[4] = 0xb4;
     uuid.node[5] = 0xac;*/
 
-    std::cout << uuid.ToString(Tesses::Framework::UuidStringifyConfig::LowercaseNoCurly) << std::endl;
+    std::cout << uuid.ToString(
+                     Tesses::Framework::UuidStringifyConfig::LowercaseNoCurly)
+              << std::endl;
 }

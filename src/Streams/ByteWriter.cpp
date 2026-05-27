@@ -1,140 +1,130 @@
+/*
+    TessesFramework a library to make C++ easier for me, used in CrossLang:
+   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "TessesFramework/Streams/ByteWriter.hpp"
 #include "TessesFramework/Serialization/BitConverter.hpp"
-namespace Tesses::Framework::Streams
-{
-    std::shared_ptr<Stream> ByteWriter::GetStream()
-    {
-        return this->strm;
-    }
-    ByteWriter::ByteWriter(std::shared_ptr<Stream> strm)
-    {
-        this->strm = strm;
-    }
-    
-    void ByteWriter::WriteU8(uint8_t v)
-    {
-        strm->WriteByte(v);
-    }
-    void ByteWriter::WriteU16BE(uint16_t v)
-    {
-        uint8_t b[2];
-        b[0] = (uint8_t)(v >> 8);
-        b[1] = (uint8_t)v;
-        strm->WriteBlock(b,2);
-    }
-    void ByteWriter::WriteU16LE(uint16_t v)
-    {
-        uint8_t b[2];
-        b[0] = (uint8_t)v;
-        b[1] = (uint8_t)(v >> 8);
-        strm->WriteBlock(b,2);
-    }
-    void ByteWriter::WriteU32BE(uint32_t v)
-    {
-        uint8_t b[4];
-        b[0] = (uint8_t)(v >> 24);
-        b[1] = (uint8_t)(v >> 16);
-        b[2] = (uint8_t)(v >> 8);
-        b[3] = (uint8_t)v;
-        strm->WriteBlock(b,4);
-    }
-    void ByteWriter::WriteU32LE(uint32_t v)
-    {
-        uint8_t b[4];
-        b[0] = (uint8_t)v;
-        b[1] = (uint8_t)(v >> 8);
-        b[2] = (uint8_t)(v >> 16);
-        b[3] = (uint8_t)(v >> 24);
-    
-        strm->WriteBlock(b,4);
-    }
-    void ByteWriter::WriteU64BE(uint64_t v)
-    {
-        uint8_t b[8];
-        b[0] = (uint8_t)(v >> 56);
-        b[1] = (uint8_t)(v >> 48);
-        b[2] = (uint8_t)(v >> 40);
-        b[3] = (uint8_t)(v >> 32);
-        b[4] = (uint8_t)(v >> 24);
-        b[5] = (uint8_t)(v >> 16);
-        b[6] = (uint8_t)(v >> 8);
-        b[7] = (uint8_t)v;
-        strm->WriteBlock(b,8);
-    }
-    void ByteWriter::WriteU64LE(uint64_t v)
-    {
-        uint8_t b[8];
-        
-        b[0] = (uint8_t)v;
-        b[1] = (uint8_t)(v >> 8);
-        b[2] = (uint8_t)(v >> 16);
-        b[3] = (uint8_t)(v >> 24);
-        b[4] = (uint8_t)(v >> 32);
-        b[5] = (uint8_t)(v >> 40);
-        b[6] = (uint8_t)(v >> 48);
-        b[7] = (uint8_t)(v >> 56);
-        strm->WriteBlock(b,8);
-    }
-    void ByteWriter::WriteI8(int8_t v)
-    {
-        uint8_t data = *(uint8_t*)&v;
-        WriteU8(data);
-    }
-    void ByteWriter::WriteI16BE(int16_t v)
-    {
-        uint16_t data = *(uint16_t*)&v;
-        WriteU16BE(data);
-    }
-    void ByteWriter::WriteI16LE(int16_t v)
-    {
-        uint16_t data = *(uint16_t*)&v;
-        WriteU16LE(data);
-    }
-    void ByteWriter::WriteI32BE(int32_t v)
-    {
-        uint32_t data = *(uint32_t*)&v;
-        WriteU32BE(data);
-    }
-    void ByteWriter::WriteI32LE(int32_t v)
-    {
-        uint32_t data = *(uint32_t*)&v;
-        WriteU32LE(data);
-    }
-    void ByteWriter::WriteI64BE(int64_t v)
-    {
-        uint64_t data = *(uint64_t*)&v;
-        WriteU64BE(data);
-    }
-    void ByteWriter::WriteI64LE(int64_t v)
-    {
-        uint64_t data = *(uint64_t*)&v;
-        WriteU64LE(data);
-    }
-    void ByteWriter::WriteF32BE(float v)
-    {
-        uint32_t data = *(uint32_t*)&v;
-        WriteU32BE(data);
-    }
-    void ByteWriter::WriteF32LE(float v)
-    {
-        uint32_t data = *(uint32_t*)&v;
-        WriteU32LE(data);
-    }
-    void ByteWriter::WriteF64BE(double v)
-    {
-        uint64_t data = *(uint64_t*)&v;
-        WriteU64BE(data);
-    }
-    void ByteWriter::WriteF64LE(double v)
-    {
-        uint64_t data = *(uint64_t*)&v;
-        WriteU64LE(data);
-    }
-    void ByteWriter::WriteUuid(const Uuid& uuid)
-    {
-        uint8_t data[16];
-        Serialization::BitConverter::FromUuid(data[0], uuid);
-        this->strm->WriteBlock(data, 16);
-    }
-    
+namespace Tesses::Framework::Streams {
+std::shared_ptr<Stream> ByteWriter::GetStream() { return this->strm; }
+ByteWriter::ByteWriter(std::shared_ptr<Stream> strm) { this->strm = strm; }
+
+void ByteWriter::WriteU8(uint8_t v) { strm->WriteByte(v); }
+void ByteWriter::WriteU16BE(uint16_t v) {
+    uint8_t b[2];
+    b[0] = (uint8_t)(v >> 8);
+    b[1] = (uint8_t)v;
+    strm->WriteBlock(b, 2);
 }
+void ByteWriter::WriteU16LE(uint16_t v) {
+    uint8_t b[2];
+    b[0] = (uint8_t)v;
+    b[1] = (uint8_t)(v >> 8);
+    strm->WriteBlock(b, 2);
+}
+void ByteWriter::WriteU32BE(uint32_t v) {
+    uint8_t b[4];
+    b[0] = (uint8_t)(v >> 24);
+    b[1] = (uint8_t)(v >> 16);
+    b[2] = (uint8_t)(v >> 8);
+    b[3] = (uint8_t)v;
+    strm->WriteBlock(b, 4);
+}
+void ByteWriter::WriteU32LE(uint32_t v) {
+    uint8_t b[4];
+    b[0] = (uint8_t)v;
+    b[1] = (uint8_t)(v >> 8);
+    b[2] = (uint8_t)(v >> 16);
+    b[3] = (uint8_t)(v >> 24);
+
+    strm->WriteBlock(b, 4);
+}
+void ByteWriter::WriteU64BE(uint64_t v) {
+    uint8_t b[8];
+    b[0] = (uint8_t)(v >> 56);
+    b[1] = (uint8_t)(v >> 48);
+    b[2] = (uint8_t)(v >> 40);
+    b[3] = (uint8_t)(v >> 32);
+    b[4] = (uint8_t)(v >> 24);
+    b[5] = (uint8_t)(v >> 16);
+    b[6] = (uint8_t)(v >> 8);
+    b[7] = (uint8_t)v;
+    strm->WriteBlock(b, 8);
+}
+void ByteWriter::WriteU64LE(uint64_t v) {
+    uint8_t b[8];
+
+    b[0] = (uint8_t)v;
+    b[1] = (uint8_t)(v >> 8);
+    b[2] = (uint8_t)(v >> 16);
+    b[3] = (uint8_t)(v >> 24);
+    b[4] = (uint8_t)(v >> 32);
+    b[5] = (uint8_t)(v >> 40);
+    b[6] = (uint8_t)(v >> 48);
+    b[7] = (uint8_t)(v >> 56);
+    strm->WriteBlock(b, 8);
+}
+void ByteWriter::WriteI8(int8_t v) {
+    uint8_t data = *(uint8_t *)&v;
+    WriteU8(data);
+}
+void ByteWriter::WriteI16BE(int16_t v) {
+    uint16_t data = *(uint16_t *)&v;
+    WriteU16BE(data);
+}
+void ByteWriter::WriteI16LE(int16_t v) {
+    uint16_t data = *(uint16_t *)&v;
+    WriteU16LE(data);
+}
+void ByteWriter::WriteI32BE(int32_t v) {
+    uint32_t data = *(uint32_t *)&v;
+    WriteU32BE(data);
+}
+void ByteWriter::WriteI32LE(int32_t v) {
+    uint32_t data = *(uint32_t *)&v;
+    WriteU32LE(data);
+}
+void ByteWriter::WriteI64BE(int64_t v) {
+    uint64_t data = *(uint64_t *)&v;
+    WriteU64BE(data);
+}
+void ByteWriter::WriteI64LE(int64_t v) {
+    uint64_t data = *(uint64_t *)&v;
+    WriteU64LE(data);
+}
+void ByteWriter::WriteF32BE(float v) {
+    uint32_t data = *(uint32_t *)&v;
+    WriteU32BE(data);
+}
+void ByteWriter::WriteF32LE(float v) {
+    uint32_t data = *(uint32_t *)&v;
+    WriteU32LE(data);
+}
+void ByteWriter::WriteF64BE(double v) {
+    uint64_t data = *(uint64_t *)&v;
+    WriteU64BE(data);
+}
+void ByteWriter::WriteF64LE(double v) {
+    uint64_t data = *(uint64_t *)&v;
+    WriteU64LE(data);
+}
+void ByteWriter::WriteUuid(const Uuid &uuid) {
+    uint8_t data[16];
+    Serialization::BitConverter::FromUuid(data[0], uuid);
+    this->strm->WriteBlock(data, 16);
+}
+
+} // namespace Tesses::Framework::Streams

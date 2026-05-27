@@ -1,0 +1,27 @@
+if(TESSESFRAMEWORK_FETCHCONTENT)
+set(MBEDTLS_FATAL_WARNINGS OFF CACHE INTERNAL "For TessesFramework" FORCE)
+set(ENABLE_TESTING OFF CACHE INTERNAL "For TessesFramework" FORCE)
+set(ENABLE_PROGRAMS OFF CACHE INTERNAL "For TessesFramework" FORCE)
+
+FetchContent_Declare(
+    mbedtls
+    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.4.tar.bz2
+
+)
+if(TESSESFRAMEWORK_ENABLE_MBED AND TESSESFRAMEWORK_FETCHCONTENT)
+set(MBEDTLS_FATAL_WARNINGS OFF CACHE INTERNAL "For TessesFramework" FORCE)
+set(ENABLE_TESTING OFF CACHE INTERNAL "For TessesFramework" FORCE)
+set(ENABLE_PROGRAMS OFF CACHE INTERNAL "For TessesFramework" FORCE)
+if(TESSESFRAMEWORK_STATIC)
+set(USE_STATIC_MBEDTLS_LIBRARY ON CACHE INTERNAL "For TessesFramework" FORCE)
+set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE INTERNAL "For TessesFramework" FORCE)
+else()
+set(USE_STATIC_MBEDTLS_LIBRARY OFF CACHE INTERNAL "For TessesFramework" FORCE)
+set(USE_SHARED_MBEDTLS_LIBRARY ON CACHE INTERNAL "For TessesFramework" FORCE)
+endif()
+
+endif()
+FetchContent_MakeAvailable(mbedtls)
+else()
+find_package(MbedTLS REQUIRED)
+endif()

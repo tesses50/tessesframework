@@ -10,16 +10,8 @@ else()
 set(PKGCONFIG_DEPS "")
 endif()
 
-if(TESSESFRAMEWORK_ENABLE_STATIC)
-configure_file(tessesframework_static.pc.in tessesframework_static.pc @ONLY)
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/tessesframework_static.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()
-
-if(TESSESFRAMEWORK_ENABLE_SHARED)
 configure_file(tessesframework.pc.in tessesframework.pc @ONLY)
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/tessesframework.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()
+

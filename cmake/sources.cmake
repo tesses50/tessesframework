@@ -1,4 +1,5 @@
 list(APPEND TESSESFRAMEWORK_SOURCE
+src/Console.cpp
 src/Random.cpp
 src/Date/Date.cpp
 src/Http/FileServer.cpp
