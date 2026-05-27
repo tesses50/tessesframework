@@ -22,9 +22,12 @@
 #include "sago/platform_folders.h"
 #endif
 #if defined(_WIN32)
-#include "TessesFramework/Filesystem/VFSFix.hpp"
-#include "TessesFramework/Text/StringConverter.hpp"
+
+// clang-format off
 #include <windows.h>
+#include "TessesFramework/Text/StringConverter.hpp"
+#include "TessesFramework/Filesystem/VFSFix.hpp"
+// clang-format on
 
 using namespace Tesses::Framework::Text::StringConverter;
 #endif

@@ -24,9 +24,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #if defined(_WIN32)
-
-#include "TessesFramework/Filesystem/VFSFix.hpp"
+// clang-format off
 #include <windows.h>
+#include "TessesFramework/Filesystem/VFSFix.hpp"
+// clang format on
 #undef min
 #else
 #include <sys/statvfs.h>

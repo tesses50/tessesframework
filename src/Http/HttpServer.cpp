@@ -19,8 +19,7 @@
 #include "TessesFramework/Http/HttpServer.hpp"
 #include "TessesFramework/Common.hpp"
 #include "TessesFramework/Crypto/Crypto.hpp"
-#include "TessesFramework/Filesystem/VFS.hpp"
-#include "TessesFramework/Filesystem/VFSFix.hpp"
+
 #include "TessesFramework/Http/ContentDisposition.hpp"
 #include "TessesFramework/Http/HttpStream.hpp"
 #include "TessesFramework/Streams/BufferedStream.hpp"
@@ -33,6 +32,10 @@
 
 #include <TessesFramework/Http/HttpUtils.hpp>
 #include <iostream>
+// clang-format off
+#include "TessesFramework/Filesystem/VFS.hpp"
+#include "TessesFramework/Filesystem/VFSFix.hpp"
+// clang-format on
 using FileStream = Tesses::Framework::Streams::FileStream;
 using Stream = Tesses::Framework::Streams::Stream;
 using SeekOrigin = Tesses::Framework::Streams::SeekOrigin;
@@ -711,8 +714,8 @@ void HttpServer::StartAccepting() {
     }
     if (this->showARTL) {
         if (!svr->IsValid())
-            StdOut()
-                << "\x1B[31mError, we failed to bind or something\x1B[39m" << NewLine();
+            StdOut() << "\x1B[31mError, we failed to bind or something\x1B[39m"
+                     << NewLine();
         StdOut() << "\x1B[31mAlmost Ready to Listen\x1B[39m" << NewLine();
     }
 

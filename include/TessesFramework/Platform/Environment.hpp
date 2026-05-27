@@ -17,8 +17,10 @@
 */
 
 #pragma once
+// clang-format off
 #include "TessesFramework/Filesystem/LocalFS.hpp"
 #include "TessesFramework/Filesystem/VFSFix.hpp"
+// clang-format on
 #include <optional>
 namespace Tesses::Framework::Platform::Environment {
 extern const char EnvPathSeperator;
