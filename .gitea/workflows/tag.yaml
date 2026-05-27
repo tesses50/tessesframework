@@ -22,7 +22,6 @@ jobs:
       - run: chown build:build /home/build/PKGBUILD
       - run: chown build:build /home/build/build-arch.sh
       - run: su build -c /home/build/build-arch.sh
-      - run: env -C Packaging/Tools bash build.sh
       - uses: akkuman/gitea-release-action@v1
         env:
           NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
