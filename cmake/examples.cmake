@@ -1,4 +1,7 @@
 if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
+        add_executable(start-my-website examples/start-my-website.cpp)
+        target_link_libraries(start-my-website PUBLIC tessesframework)
+
         add_executable(echo-my-name examples/echo-my-name.cpp)
         target_link_libraries(echo-my-name PUBLIC tessesframework)
 

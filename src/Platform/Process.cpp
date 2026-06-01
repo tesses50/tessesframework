@@ -691,4 +691,38 @@ std::shared_ptr<Tesses::Framework::Streams::Stream> Process::GetStderrStream() {
 #endif
 }
 
+void ShellFileOrUrl(std::string fileOrUrl) {
+#if defined(GEKKO) || defined(__PS2__) || defined(__SWITCH__)
+    throw std::runtime_error("Platform not supported");
+#elif !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+    throw std::runtime_error("Process not enabled");
+#elif defined(_WIN32)
+    auto exec = Tesses::Framework::Platform::Environment::GetRealExecutablePath(
+        (std::string) "cmd");
+    Process p(exec.ToString(), {"cmd", "/c", "start", fileOrUrl});
+    if (p.Start())
+        if (p.WaitForExit() != 0)
+            throw std::runtime_error("Exit code did not indicate success");
+#elif defined(__APPLE__)
+    auto exec = Tesses::Framework::Platform::Environment::GetRealExecutablePath(
+        (std::string) "open");
+    Process p(exec.ToString(), {"open", fileOrUrl});
+    if (p.Start())
+        if (p.WaitForExit() != 0)
+            throw std::runtime_error("Exit code did not indicate success");
+#else
+    if (fileOrUrl == "--help" || fileOrUrl == "--version" ||
+        fileOrUrl == "--manual")
+        throw std::invalid_argument(
+            "Invalid argument \"" + fileOrUrl +
+            "\", this function expects a file or url not xdg-open flags");
+    auto exec = Tesses::Framework::Platform::Environment::GetRealExecutablePath(
+        (std::string) "xdg-open");
+    Process p(exec.ToString(), {"xdg-open", fileOrUrl});
+    if (p.Start())
+        if (p.WaitForExit() != 0)
+            throw std::runtime_error("Exit code did not indicate success");
+#endif
+}
+
 } // namespace Tesses::Framework::Platform

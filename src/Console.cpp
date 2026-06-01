@@ -1,19 +1,19 @@
 /*
-    TessesFramework a library to make C++ easier for me, used in CrossLang:
+   TessesFramework a library to make C++ easier for me, used in CrossLang:
    https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "TessesFramework/Console.hpp"
@@ -33,6 +33,58 @@
 #include <limits>
 
 namespace Tesses::Framework {
+
+class ConsoleHelpers {
+
+    bool canon;
+    bool echo;
+    bool signals;
+
+#if defined(_WIN32)
+    WORD colorFlags;
+
+#endif
+
+  public:
+    ConsoleHelpers() {
+        canon = Console::GetCanonical();
+        echo = Console::GetEcho();
+        signals = Console::GetSignals();
+#if defined(_WIN32)
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hConsole == INVALID_HANDLE_VALUE)
+            return;
+        CONSOLE_SCREEN_BUFFER_INFO bi;
+
+        GetConsoleScreenBufferInfo(hConsole, &bi);
+
+        colorFlags = bi.wAttributes;
+
+#endif
+    }
+
+    void reset() {
+#if defined(_WIN32)
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hConsole == INVALID_HANDLE_VALUE)
+            return;
+        SetConsoleTextAttribute(hConsole, colorFlags);
+#else
+        if (Console::IsTTY()) {
+            printf("\x1b[0m");
+            fflush(stdout);
+        }
+#endif
+    }
+
+    ~ConsoleHelpers() {
+        Console::SetCanonical(canon);
+        Console::SetEcho(echo);
+        Console::SetSignals(signals);
+        reset();
+    }
+};
+ConsoleHelpers consoleHelpers;
 
 size_t Console::List(std::vector<std::string> &strs) {
     if (!IsTTY())
@@ -54,11 +106,9 @@ size_t Console::List(std::vector<std::string> &strs) {
 
         for (int item = 0; item < size.second; ++item) {
             if (item == offsetInPage) {
-                Console::SetBackgroundColor(ConsoleColor::CC_WHITE, true);
-                Console::SetForegroundColor(ConsoleColor::CC_BLACK, false);
+                Console::SetInvertedColors(true);
             } else {
-                Console::SetBackgroundColor(ConsoleColor::CC_BLACK, false);
-                Console::SetForegroundColor(ConsoleColor::CC_WHITE, true);
+                Console::SetInvertedColors(false);
             }
 
             size_t myOffset = (size_t)item + page * (size.second);
@@ -72,8 +122,7 @@ size_t Console::List(std::vector<std::string> &strs) {
             }
         }
 
-        Console::SetBackgroundColor(ConsoleColor::CC_BLACK, false);
-        Console::SetForegroundColor(ConsoleColor::CC_WHITE, true);
+        Console::SetInvertedColors(false);
 
         int code = Console::Read();
 
@@ -102,49 +151,82 @@ size_t Console::List(std::vector<std::string> &strs) {
     }
     Console::SetEcho(echo);
     Console::SetCanonical(canonical);
-    Console::SetBackgroundColor(ConsoleColor::CC_BLACK, false);
-    Console::SetForegroundColor(ConsoleColor::CC_WHITE, true);
+    Console::SetInvertedColors(false);
     return i;
 }
+
+void Console::Reset() { consoleHelpers.reset(); }
+
+#if defined(_WIN32)
+static bool vt100_inverted = false;
+static void _setcol(ConsoleColor col, bool alt, bool bg) {
+    if (bg) {
+
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hConsole == INVALID_HANDLE_VALUE)
+            return;
+        CONSOLE_SCREEN_BUFFER_INFO bi;
+
+        GetConsoleScreenBufferInfo(hConsole, &bi);
+
+        bi.wAttributes &= ~(BACKGROUND_RED | BACKGROUND_GREEN |
+                            BACKGROUND_BLUE | BACKGROUND_INTENSITY);
+
+        if (col == ConsoleColor::CC_RED || col == ConsoleColor::CC_YELLOW ||
+            col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= BACKGROUND_RED;
+
+        if (col == ConsoleColor::CC_GREEN || col == ConsoleColor::CC_YELLOW ||
+            col == ConsoleColor::CC_CYAN || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= BACKGROUND_GREEN;
+
+        if (col == ConsoleColor::CC_BLUE || col == ConsoleColor::CC_CYAN ||
+            col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= BACKGROUND_BLUE;
+
+        if (alt)
+            bi.wAttributes |= BACKGROUND_INTENSITY;
+
+        SetConsoleTextAttribute(hConsole, bi.wAttributes);
+    } else {
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hConsole == INVALID_HANDLE_VALUE)
+            return;
+        CONSOLE_SCREEN_BUFFER_INFO bi;
+
+        GetConsoleScreenBufferInfo(hConsole, &bi);
+
+        bi.wAttributes &= ~(FOREGROUND_RED | FOREGROUND_GREEN |
+                            FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+
+        if (col == ConsoleColor::CC_RED || col == ConsoleColor::CC_YELLOW ||
+            col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= FOREGROUND_RED;
+
+        if (col == ConsoleColor::CC_GREEN || col == ConsoleColor::CC_YELLOW ||
+            col == ConsoleColor::CC_CYAN || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= FOREGROUND_GREEN;
+
+        if (col == ConsoleColor::CC_BLUE || col == ConsoleColor::CC_CYAN ||
+            col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
+            bi.wAttributes |= FOREGROUND_BLUE;
+
+        if (alt)
+            bi.wAttributes |= FOREGROUND_INTENSITY;
+
+        SetConsoleTextAttribute(hConsole, bi.wAttributes);
+    }
+}
+#endif
 
 void Console::SetForegroundColor(ConsoleColor col, bool alt) {
 
     if (!IsTTY())
         return;
-#if __has_include(<termios.h>)
-    if (alt) {
-        printf("\x1b[%im", ((int)col) + 90); // this should be Write
-    } else {
-        printf("\x1b[%im", ((int)col) + 30); // this too
-    }
-#elif defined(_WIN32)
 
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hConsole == INVALID_HANDLE_VALUE)
-        return;
-    CONSOLE_SCREEN_BUFFER_INFO bi;
+#if defined(_WIN32)
 
-    GetConsoleScreenBufferInfo(hConsole, &bi);
-
-    bi.wAttributes &= ~(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |
-                        FOREGROUND_INTENSITY);
-
-    if (col == ConsoleColor::CC_RED || col == ConsoleColor::CC_YELLOW ||
-        col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= FOREGROUND_RED;
-
-    if (col == ConsoleColor::CC_GREEN || col == ConsoleColor::CC_YELLOW ||
-        col == ConsoleColor::CC_CYAN || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= FOREGROUND_GREEN;
-
-    if (col == ConsoleColor::CC_BLUE || col == ConsoleColor::CC_CYAN ||
-        col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= FOREGROUND_BLUE;
-
-    if (alt)
-        bi.wAttributes |= FOREGROUND_INTENSITY;
-
-    SetConsoleTextAttribute(hConsole, bi.wAttributes);
+    _setcol(col, alt, vt100_inverted);
 
 #else
     if (alt) {
@@ -158,46 +240,50 @@ void Console::SetForegroundColor(ConsoleColor col, bool alt) {
 void Console::SetBackgroundColor(ConsoleColor col, bool alt) {
     if (!IsTTY())
         return;
-#if __has_include(<termios.h>)
-    if (alt) {
-        printf("\x1b[%im", ((int)col) + 100); // this should be Write
-    } else {
-        printf("\x1b[%im", ((int)col) + 40); // this too
-    }
-#elif defined(_WIN32)
 
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hConsole == INVALID_HANDLE_VALUE)
-        return;
-    CONSOLE_SCREEN_BUFFER_INFO bi;
-
-    GetConsoleScreenBufferInfo(hConsole, &bi);
-
-    bi.wAttributes &= ~(BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE |
-                        BACKGROUND_INTENSITY);
-
-    if (col == ConsoleColor::CC_RED || col == ConsoleColor::CC_YELLOW ||
-        col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= BACKGROUND_RED;
-
-    if (col == ConsoleColor::CC_GREEN || col == ConsoleColor::CC_YELLOW ||
-        col == ConsoleColor::CC_CYAN || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= BACKGROUND_GREEN;
-
-    if (col == ConsoleColor::CC_BLUE || col == ConsoleColor::CC_CYAN ||
-        col == ConsoleColor::CC_MAGENTA || col == ConsoleColor::CC_WHITE)
-        bi.wAttributes |= BACKGROUND_BLUE;
-
-    if (alt)
-        bi.wAttributes |= BACKGROUND_INTENSITY;
-
-    SetConsoleTextAttribute(hConsole, bi.wAttributes);
+#if defined(_WIN32)
+    _setcol(col, alt, !vt100_inverted);
 #else
     if (alt) {
         printf("\x1b[%im", ((int)col) + 100); // this should be Write
     } else {
         printf("\x1b[%im", ((int)col) + 40); // this too
     }
+#endif
+}
+
+void Console::SetInvertedColors(bool inverted) {
+    if (!IsTTY())
+        return;
+#if defined(_WIN32)
+    if (inverted != vt100_inverted) {
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hConsole == INVALID_HANDLE_VALUE)
+            return;
+        CONSOLE_SCREEN_BUFFER_INFO bi;
+
+        GetConsoleScreenBufferInfo(hConsole, &bi);
+
+        bi.wAttributes =
+            (bi.wAttributes & 0xFF00) |
+            ((bi.wAttributes & (FOREGROUND_RED | FOREGROUND_GREEN |
+                                FOREGROUND_BLUE | FOREGROUND_INTENSITY))
+             << 4) |
+            ((bi.wAttributes & (BACKGROUND_RED | BACKGROUND_GREEN |
+                                BACKGROUND_BLUE | BACKGROUND_INTENSITY)) >>
+             4);
+
+        SetConsoleTextAttribute(hConsole, bi.wAttributes);
+    }
+
+    vt100_inverted = inverted;
+#else
+    if (inverted)
+        Write("\x1b[7m");
+    else
+        Write("\x1b[27m");
+
+    Flush();
 #endif
 }
 
@@ -607,24 +693,33 @@ void Console::WriteToStream(std::string_view view, bool isStderr) {
                     }
 
                     if (text.size() > 0 && text.back() == 'm') {
-
-                        try {
-                            auto num =
-                                std::stol(text.substr(0, text.size() - 1));
-                            if (num >= 30 && num <= 37) {
-                                SetForegroundColor((ConsoleColor)(num - 30),
-                                                   false);
-                            } else if (num >= 40 && num <= 47) {
-                                SetBackgroundColor((ConsoleColor)(num - 40),
-                                                   false);
-                            } else if (num >= 90 && num <= 97) {
-                                SetForegroundColor((ConsoleColor)(num - 90),
-                                                   true);
-                            } else if (num >= 100 && num <= 107) {
-                                SetBackgroundColor((ConsoleColor)(num - 100),
-                                                   true);
+                        if (text.size() == 1) {
+                            consoleHelpers.reset();
+                        } else {
+                            try {
+                                auto num =
+                                    std::stol(text.substr(0, text.size() - 1));
+                                if (num == 0)
+                                    consoleHelpers.reset();
+                                if (num == 7)
+                                    Console::SetInvertedColors(true);
+                                if (num == 27)
+                                    Console::SetInvertedColors(false);
+                                if (num >= 30 && num <= 37) {
+                                    SetForegroundColor((ConsoleColor)(num - 30),
+                                                       false);
+                                } else if (num >= 40 && num <= 47) {
+                                    SetBackgroundColor((ConsoleColor)(num - 40),
+                                                       false);
+                                } else if (num >= 90 && num <= 97) {
+                                    SetForegroundColor((ConsoleColor)(num - 90),
+                                                       true);
+                                } else if (num >= 100 && num <= 107) {
+                                    SetBackgroundColor(
+                                        (ConsoleColor)(num - 100), true);
+                                }
+                            } catch (...) {
                             }
-                        } catch (...) {
                         }
                     }
 

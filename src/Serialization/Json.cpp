@@ -15,9 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
 #include "TessesFramework/Serialization/Json.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
+#include "TessesFramework/TessesFramework.hpp"
 #include <functional>
 
 #include "TessesFramework/Common.hpp"
@@ -129,6 +129,7 @@ JToken Json::Decode(std::string str) {
                                     v |= HttpUtils::HexToNibble(str[i])
                                          << ((3 - i2) * 4);
                                 }
+                                i--;
 
                                 uint32_t v2 = v;
 
@@ -274,7 +275,8 @@ JToken Json::Decode(std::string str) {
                         break;
                     } else {
 
-                        throw std::runtime_error("Invalid JSON object.");
+                        throw std::runtime_error("Invalid JSON object. " +
+                                                 std::to_string(tokenIndex));
                     }
                 }
                 return obj;

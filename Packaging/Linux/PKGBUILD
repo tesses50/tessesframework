@@ -1,6 +1,6 @@
 # Maintainer: Mike Nolan <tesses@tesses.net>
 pkgname=tessesframework # '-bzr', '-git', '-hg' or '-svn'
-pkgver=0.0.4
+pkgver=0.0.5
 pkgrel=1
 pkgdesc=""
 arch=('x86_64' 'powerpc')
@@ -10,7 +10,7 @@ groups=()
 depends=('mbedtls')
 makedepends=('git' 'cmake' 'make' 'base-devel' 'wget') # 'bzr', 'git', 'mercurial' or 'subversion'
 install=
-source=('tessesframework::git+https://git.tesses.org/tesses50/tessesframework')
+source=('tessesframework::git+https://git.tesses.org/tesses50/tessesframework#tag=v0.0.5')
 noextract=()
 sha256sums=('SKIP')
 if [[ -z "$CMAKE_TOOLCHAIN" ]]; then

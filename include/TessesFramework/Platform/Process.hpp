@@ -68,4 +68,6 @@ class Process {
 
     ~Process();
 };
+
+void ShellFileOrUrl(std::string fileOrUrl);
 } // namespace Tesses::Framework::Platform
