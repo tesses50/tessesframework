@@ -510,7 +510,7 @@ std::string TF_GetExecutableName() {
     if (sysctl(mib, 4, path.data(), &len, NULL, 0) < 0) {
         return "";
     }
-
+    path.resize(len-1);
     return path;
 #elif defined(__NetBSD__)
     auto path = Filesystem::LocalFS->ReadLink(
@@ -523,15 +523,18 @@ std::string TF_GetExecutableName() {
     return path.ToString();
 #elif TARGET_OS_MAC && !TARGET_OS_IPHONE
     std::string path;
-    path.resize(1024);
+    path.resize(1025);
     uint32_t bufsize = (uint32_t)path.size();
     if (_NSGetExecutablePath(path.data(), &bufsize) == 0) {
-        path.resize(bufsize);
+        path.resize(bufsize-1);
         return path;
     } else {
         path.resize(bufsize);
         if (_NSGetExecutablePath(path.data(), &bufsize) == 0)
+        {
+            path.resize(bufsize-1);
             return path;
+        }
     }
 #endif
 
