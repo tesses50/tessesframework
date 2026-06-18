@@ -46,7 +46,9 @@ endif()
 
 if(TESSESFRAMEWORK_FETCHCONTENT)
 target_link_libraries(tessesframework PRIVATE mbedtls mbedx509 mbedcrypto everest p256m)
+if(TESSESFRAMEWORK_STATIC)
 list(APPEND TessesFrameworkLibs mbedtls mbedx509 mbedcrypto everest p256m)
+endif()
 else()
 target_link_libraries(tessesframework PRIVATE mbedtls mbedx509 mbedcrypto)
 
