@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.6
+Use my new toolchain, fix a bug on mac/freebsd
+
 ## 0.0.5
 Fix win32 printing, fix my stupid json vulnerability
 

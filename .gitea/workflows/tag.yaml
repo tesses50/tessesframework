@@ -9,19 +9,50 @@ env:
   VERSION: ${{ gitea.ref_name }}
   
 jobs:
-  build-arch:
-    name: "🔨 Build for Arch Linux/Static Builds"
-    runs-on: arch-builder
+  build-ppc:
+    name: "🔨 Build for PowerPC"
+    runs-on: ubuntu-latest
+    container: 
+      image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
       - uses: actions/checkout@v4
-      - run: pacman --noconfirm -Sy mbedtls zip zig ninja
-      - run: pacman --config /opt/cross/ppc/pacman.conf --noconfirm -Sy mbedtls
-      - run: cp Packaging/Linux/PKGBUILD /home/build/PKGBUILD
-      - run: cp Packaging/Linux/build-arch.sh /home/build/build-arch.sh
-      - run: chmod 755 /home/build/build-arch.sh
-      - run: chown build:build /home/build/PKGBUILD
-      - run: chown build:build /home/build/build-arch.sh
-      - run: su build -c /home/build/build-arch.sh
+      - run: bash build-for-ppc.sh
+      - uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
+        with:
+          prerelease: true
+          files: |-
+            artifacts/** 
+
+  build-packages:
+    name: "🔨 Build for everything else"
+    runs-on: fw13-ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - container: "git.tesses.org/tesses50/linux-x64:latest"
+            nfpmName: "amd64"
+            debianName: "x86_64-linux-gnu"
+          - container: "git.tesses.org/tesses50/linux-x86:latest"
+            nfpmName: "386"
+            debianName: "i386-linux-gnu"
+          - container: "git.tesses.org/tesses50/linux-arm:latest"
+            nfpmName: "arm7"
+            debianName: "arm-linux-gnueabihf"
+          - container: "git.tesses.org/tesses50/linux-arm64:latest"
+            nfpmName: "arm64"
+            debianName: "aarch64-linux-gnu"
+          - container: "git.tesses.org/tesses50/linux-riscv64:latest"
+            nfpmName: "riscv64"
+            debianName: "riscv64-linux-gnu"
+            
+    container: 
+      image: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash build-for-nfpm.sh ${{ matrix.nfpmName }} ${{ matrix.debianName }}
       - uses: akkuman/gitea-release-action@v1
         env:
           NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18

@@ -64,3 +64,10 @@ include(cmake/apps.cmake)
 if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
 add_subdirectory(pkgconfig)
 endif()
+
+if(NOT TESSESFRAMEWORK_NFPM_ARCH STREQUAL "")
+configure_file(nfpm.yaml.in nfpm.yaml @ONLY)
+
+endif()
+
+configure_file(ppc-pkgbuild.in ppc-pkgbuild @ONLY)

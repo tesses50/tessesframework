@@ -1,0 +1,21 @@
+# Maintainer: Mike Nolan <tesses@tesses.net>
+pkgname=tessesframework # '-bzr', '-git', '-hg' or '-svn'
+pkgver=@TESSESFRAMEWORK_MAJOR_VERSION@.@TESSESFRAMEWORK_MINOR_VERSION@.@TESSESFRAMEWORK_PATCH_VERSION@
+pkgrel=1
+pkgdesc="TessesFramework a library to make C++ easier for me, used in CrossLang"
+arch=('powerpc')
+url="https://git.tesses.org/tesses50/tessesframework"
+license=('GPLv3')
+groups=()
+depends=()
+makedepends=('git' 'cmake' 'make' 'base-devel' 'wget') # 'bzr', 'git', 'mercurial' or 'subversion'
+install=
+source=()
+noextract=()
+sha256sums=()
+options=(!buildflags !strip)
+
+
+package() {
+    cp -r "${srcdir}/"* "${pkgdir}/"
+}
