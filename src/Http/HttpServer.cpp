@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -349,71 +352,6 @@ class WSServer {
     }
 };
 
-/*
-static int _header_field(multipart_parser* p, const char *at, size_t length)
-{
-    UploadData* data = static_cast<UploadData*>(multipart_parser_get_data(p));
-    data->currentHeaderKey = std::string(at,length);
-    return 0;
-}
-static int _header_value(multipart_parser* p, const char *at, size_t length)
-{
-    UploadData* data = static_cast<UploadData*>(multipart_parser_get_data(p));
-    data->currentHeaders.AddValue(data->currentHeaderKey,
-std::string(at,length)); std::cout << data->currentHeaderKey << ": " <<
-std::string(at,length) << std::endl; return 0;
-}
-static int _part_begin(multipart_parser* p)
-{
-    UploadData* data = static_cast<UploadData*>(multipart_parser_get_data(p));
-    std::string cd0;
-    ContentDisposition cd1;
-    std::string ct;
-    if(!data->currentHeaders.TryGetFirst("Content-Type",ct))
-        ct = "application/octet-stream";
-    if(data->currentHeaders.TryGetFirst("Content-Disposition", cd0) &&
-ContentDisposition::TryParse(cd0,cd1))
-    {
-        if(cd1.filename.empty())
-        {
-            data->isFile=false;
-            data->key = cd1.fieldName;
-            data->currentBody = new MemoryStream(true);
-        }
-        else
-        {
-            data->isFile = true;
-            data->currentBody = data->cb(ct, cd1.filename, cd1.fieldName);
-        }
-    }
-    return 0;
-}
-static int _part_end(multipart_parser* p)
-{
-    UploadData* data = static_cast<UploadData*>(multipart_parser_get_data(p));
-    if(data->currentBody == nullptr) return 0;
-    if(data->isFile)
-    {
-        delete data->currentBody;
-        data->currentBody = nullptr;
-    }
-    else
-    {
-        MemoryStream* ms = dynamic_cast<MemoryStream*>(data->currentBody);
-        if(ms != nullptr)
-        {
-            ms->Seek(0, SeekOrigin::Begin);
-            auto& buff = ms->GetBuffer();
-            data->ctx->queryParams.AddValue(data->key,
-std::string(buff.begin(),buff.end()));
-        }
-        delete data->currentBody;
-        data->currentBody=nullptr;
-    }
-    data->currentHeaders.Clear();
-    return 0;
-}*/
-
 std::string ServerContext::GetUrlWithQuery() {
     if (this->queryParams.kvp.empty())
         return this->path;
@@ -470,6 +408,8 @@ std::string ServerContext::ReadString() {
     return {};
 }
 bool ServerContext::NeedToParseFormData() {
+    if (method == "GET" || method == "HEAD")
+        return false;
     std::string ct;
     if (this->requestHeaders.TryGetFirst("Content-Type", ct)) {
         if (ct.find("multipart/form-data") == 0) {
@@ -478,6 +418,13 @@ bool ServerContext::NeedToParseFormData() {
     }
     return false;
 }
+/*
+ * The following function is adapted from SimpleHttp.
+ * Original C# Source:
+ * https://github.com/dajuric/simple-http/blob/master/Source/SimpleHTTP/Extensions/Request/RequestExtensions.Multipart.cs
+ * Original Author: Darko Jurić
+ * License: MIT
+ */
 static bool
 parseUntillBoundaryEnd(std::shared_ptr<Tesses::Framework::Streams::Stream> src,
                        std::shared_ptr<Tesses::Framework::Streams::Stream> dest,
@@ -542,13 +489,19 @@ parseUntillBoundaryEnd(std::shared_ptr<Tesses::Framework::Streams::Stream> src,
     }
     return hasMore;
 }
-
+/*
+ * The following function is adapted from SimpleHttp.
+ * Original C# Source:
+ * https://github.com/dajuric/simple-http/blob/master/Source/SimpleHTTP/Extensions/Request/RequestExtensions.Multipart.cs
+ * Original Author: Darko Jurić
+ * License: MIT
+ */
 static bool
 parseSection(ServerContext *ctx, std::string boundary,
              std::function<std::shared_ptr<Tesses::Framework::Streams::Stream>(
                  std::string mime, std::string filename, std::string name)>
                  cb) {
-    HttpDictionary req;
+    HttpDictionary req(false);
     StreamReader reader(ctx->GetStream());
     std::string line;
     while (reader.ReadLineHttp(line)) {
@@ -574,8 +527,8 @@ parseSection(ServerContext *ctx, std::string boundary,
                 parseUntillBoundaryEnd(ctx->GetStream(), ms, boundary);
             auto &buff = ms->GetBuffer();
 
-            ctx->queryParams.AddValue(cd1.fieldName,
-                                      std::string(buff.begin(), buff.end()));
+            ctx->bodyParams.AddValue(cd1.fieldName,
+                                     std::string(buff.begin(), buff.end()));
 
             return retVal;
 
@@ -591,11 +544,19 @@ parseSection(ServerContext *ctx, std::string boundary,
     }
     return false;
 }
-
+/*
+ * The following function is adapted from SimpleHttp.
+ * Original C# Source:
+ * https://github.com/dajuric/simple-http/blob/master/Source/SimpleHTTP/Extensions/Request/RequestExtensions.Multipart.cs
+ * Original Author: Darko Jurić
+ * License: MIT
+ */
 void ServerContext::ParseFormData(
     std::function<std::shared_ptr<Tesses::Framework::Streams::Stream>(
         std::string mime, std::string filename, std::string name)>
         cb) {
+    if (method == "GET" || method == "HEAD")
+        return;
     std::string ct;
     if (this->requestHeaders.TryGetFirst("Content-Type", ct)) {
         if (ct.find("multipart/form-data") != 0) {
@@ -731,13 +692,13 @@ HttpServer::~HttpServer() {
     }
 }
 IHttpServer::~IHttpServer() {}
-ServerContext::ServerContext(std::shared_ptr<Stream> strm, bool debug) {
+ServerContext::ServerContext(std::shared_ptr<Stream> strm, bool debug)
+    : queryParams(true), bodyParams(true), pathArguments(true),
+      requestHeaders(false), responseHeaders(false) {
     this->statusCode = OK;
     this->strm = strm;
     this->debug = debug;
     this->sent = false;
-    this->queryParams.SetCaseSensitive(true);
-    this->pathArguments.SetCaseSensitive(true);
     this->responseHeaders.AddValue("Server", "TessesFrameworkWebServer");
 }
 std::shared_ptr<Stream> ServerContext::GetStream() { return this->strm; }
@@ -788,6 +749,16 @@ ServerContext::~ServerContext() {
     }
 }
 ServerContextData::~ServerContextData() {}
+
+/*
+ * The following function is inspired or adapted from SimpleHttp.
+ * I don't remember if I used his range code or not but I am declaring this just
+ * in case Original C# Source:
+ * https://github.com/dajuric/simple-http/blob/master/Source/SimpleHTTP/Extensions/Response/ResponseExtensions.PartialStream.cs
+ *
+ * Original Author: Darko Jurić
+ * License: MIT
+ */
 void ServerContext::SendStream(std::shared_ptr<Stream> strm) {
     if (sent)
         return;
@@ -1053,7 +1024,20 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
                         .SendText("First line is not 3 elements");
                     return;
                 }
+
+                if (v[0] == "TRACE") {
+                    std::string httpdata = line + "\r\n";
+                    line.clear();
+                    while (reader.ReadLineHttp(line)) {
+                        httpdata += line + "\r\n";
+                        line.clear();
+                    }
+                    ctx.WithMimeType("message/http").SendText(httpdata);
+
+                    return;
+                }
                 ctx.method = v[0];
+
                 auto pp = HttpUtils::SplitString(v[1], "?", 2);
                 pp.resize(2);
 
@@ -1090,18 +1074,19 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
         std::string type;
         int64_t length;
 
-        if (ctx.requestHeaders.TryGetFirst("Content-Type", type) &&
+        if (!(ctx.method == "GET" || ctx.method == "HEAD") &&
+            ctx.requestHeaders.TryGetFirst("Content-Type", type) &&
             type == "application/x-www-form-urlencoded" &&
             ctx.requestHeaders.TryGetFirstInt("Content-Length", length)) {
             size_t len = (size_t)length;
             std::vector<uint8_t> buffer(len);
             len = bStrm->ReadBlock(buffer.data(), len);
             std::string query((const char *)buffer.data(), len);
-            HttpUtils::QueryParamsDecode(ctx.queryParams, query);
+            HttpUtils::QueryParamsDecode(ctx.bodyParams, query);
         }
 
         if (!server->Handle(ctx)) {
-            if ((int)ctx.statusCode < 400)
+            if ((int)ctx.statusCode == 200)
                 ctx.SendNotFound();
             else
                 ctx.SendErrorPage(true);

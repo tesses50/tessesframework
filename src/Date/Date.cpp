@@ -27,16 +27,17 @@
 #include <sstream>
 using namespace std::chrono;
 using namespace date;
+#if defined(__FreeBSD__)
+extern int tf_timezone;
+extern bool tf_daylight;
+#endif
 namespace Tesses::Framework::Date {
 int GetTimeZone() {
 
 #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
     return (int)(-_timezone);
 #elif defined(__FreeBSD__)
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday(&tv, &tz);
-    return (tz.tz_minuteswest / 60);
+    return tf_timezone;
 #else
     return (int)(-timezone);
 #endif
@@ -45,10 +46,7 @@ bool TimeZoneSupportDST() {
 #if defined(__SWITCH__) || defined(_WIN32) || defined(GEKKO) || defined(__PS2__)
     return _daylight == 1;
 #elif defined(__FreeBSD__)
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday(&tv, &tz);
-    return tz.tz_dsttime != 0;
+    return tf_daylight;
 #else
     return daylight == 1;
 #endif

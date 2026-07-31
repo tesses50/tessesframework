@@ -4,3 +4,5 @@ builds
 out
 /.vs
 artifacts
+doxy_html
+doxy_latex

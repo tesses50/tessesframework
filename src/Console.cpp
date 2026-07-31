@@ -1,26 +1,45 @@
 /*
-   TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    TessesFramework a library to make C++ easier for me, used in CrossLang:
+    https://git.tesses.org/tesses50/crosslang
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "TessesFramework/Console.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Text/StringConverter.hpp"
 
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__)
+
+extern "C" {
+#include <switch.h>
+}
+
+#elif defined(GEKKO)
+#include <gccore.h>
+#include <ogc/pad.h>
+
+#if defined(HW_RVL)
+#include <wiikeyboard/keyboard.h>
+#include <wiikeyboard/usbkeyboard.h>
+#include <wiiuse/wpad.h>
+#endif
+
+#elif __has_include(<termios.h>)
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -33,13 +52,16 @@
 #include <limits>
 
 namespace Tesses::Framework {
-
+#if defined(__SWITCH__)
+extern bool initedConsole;
+extern PadState default_pad;
+constexpr int CONSOLE_READ_BUFFER_MAX = 32768;
+#endif
 class ConsoleHelpers {
 
     bool canon;
     bool echo;
     bool signals;
-
 #if defined(_WIN32)
     WORD colorFlags;
 
@@ -47,9 +69,14 @@ class ConsoleHelpers {
 
   public:
     ConsoleHelpers() {
+
         canon = Console::GetCanonical();
         echo = Console::GetEcho();
         signals = Console::GetSignals();
+
+#if defined(HW_RVL)
+        KEYBOARD_Init(NULL);
+#endif
 #if defined(_WIN32)
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hConsole == INVALID_HANDLE_VALUE)
@@ -82,11 +109,16 @@ class ConsoleHelpers {
         Console::SetEcho(echo);
         Console::SetSignals(signals);
         reset();
+
+#if defined(HW_RVL)
+        KEYBOARD_Deinit();
+#endif
     }
 };
 ConsoleHelpers consoleHelpers;
 
 size_t Console::List(std::vector<std::string> &strs) {
+
     if (!IsTTY())
         return std::string::npos;
 
@@ -123,7 +155,77 @@ size_t Console::List(std::vector<std::string> &strs) {
         }
 
         Console::SetInvertedColors(false);
+#if defined(__SWITCH__)
+        if (!appletMainLoop()) {
+            TF_Quit();
+            break;
+        }
 
+        padUpdate(&default_pad);
+
+        u64 kDown = padGetButtonsDown(&default_pad);
+
+        if (kDown & HidNpadButton_AnyUp) {
+            i--;
+            if (i >= strs.size())
+                i = strs.size() - 1;
+        } else if (kDown & HidNpadButton_AnyDown) {
+            i++;
+            if (i >= strs.size())
+                i = 0;
+        } else if (kDown & HidNpadButton_A) {
+            break;
+        }
+
+        consoleUpdate(NULL);
+
+#elif defined(GEKKO)
+
+        PAD_ScanPads();
+        bool down = false;
+        bool up = false;
+        bool a = false;
+        bool exit = false;
+
+        auto gcdown = PAD_ButtonsDown(PAD_CHAN0);
+        if (gcdown & PAD_BUTTON_DOWN)
+            down = true;
+        if (gcdown & PAD_BUTTON_UP)
+            up = true;
+        if (gcdown & PAD_BUTTON_A)
+            a = true;
+        if (gcdown & PAD_BUTTON_START)
+            exit = true;
+
+#if defined(HW_RVL)
+        WPAD_ScanPads();
+        auto wiidown = WPAD_ButtonsDown(WPAD_CHAN_0);
+
+        if (wiidown & WPAD_BUTTON_UP)
+            up = true;
+        if (wiidown & WPAD_BUTTON_DOWN)
+            down = true;
+        if (wiidown & WPAD_BUTTON_A)
+            a = true;
+        if (wiidown & WPAD_BUTTON_PLUS)
+            exit = true;
+#endif
+        if (up) {
+            i--;
+            if (i >= strs.size())
+                i = strs.size() - 1;
+        } else if (down) {
+            i++;
+            if (i >= strs.size())
+                i = 0;
+        } else if (a) {
+            break;
+        } else if (exit) {
+            TF_Quit();
+            break;
+        }
+        VIDEO_WaitVSync();
+#else
         int code = Console::Read();
 
         if (code == 10)
@@ -148,16 +250,52 @@ size_t Console::List(std::vector<std::string> &strs) {
             } else if (code == -1)
                 break;
         }
+#endif
     }
     Console::SetEcho(echo);
     Console::SetCanonical(canonical);
     Console::SetInvertedColors(false);
+
+#if defined(__SWITCH__)
+    consoleUpdate(NULL);
+#endif
     return i;
 }
 
-void Console::Reset() { consoleHelpers.reset(); }
+#if defined(GEKKO)
+static bool vt100_inverted = false;
 
-#if defined(_WIN32)
+static ConsoleColor fg_color = ConsoleColor::CC_WHITE;
+static ConsoleColor bg_color = ConsoleColor::CC_BLACK;
+static bool fg_intense = false;
+static bool bg_intense = false;
+
+#if defined(HW_RVL)
+static bool wii_echo = true;
+static bool wii_cannon = true;
+#endif
+
+static void _setcol(ConsoleColor col, bool alt, bool bg) {
+    if (bg) {
+        bg_color = col;
+        bg_intense = alt;
+        if (alt) {
+            printf("\x1b[%im", ((int)col) + 100); // this should be Write
+        } else {
+            printf("\x1b[%im", ((int)col) + 40); // this too
+        }
+    } else {
+        fg_color = col;
+        fg_intense = alt;
+        if (alt) {
+            printf("\x1b[%im", ((int)col) + 90); // this should be Write
+        } else {
+            printf("\x1b[%im", ((int)col) + 30); // this too
+        }
+    }
+}
+
+#elif defined(_WIN32)
 static bool vt100_inverted = false;
 static void _setcol(ConsoleColor col, bool alt, bool bg) {
     if (bg) {
@@ -219,12 +357,22 @@ static void _setcol(ConsoleColor col, bool alt, bool bg) {
 }
 #endif
 
+void Console::Reset() {
+#if defined(GEKKO)
+    vt100_inverted = false;
+    Console::SetBackgroundColor(ConsoleColor::CC_BLACK, false);
+    Console::SetForegroundColor(ConsoleColor::CC_WHITE, false);
+#elif defined(_WIN32)
+    vt100_inverted = false;
+#endif
+    consoleHelpers.reset();
+}
 void Console::SetForegroundColor(ConsoleColor col, bool alt) {
 
     if (!IsTTY())
         return;
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(GEKKO)
 
     _setcol(col, alt, vt100_inverted);
 
@@ -241,7 +389,7 @@ void Console::SetBackgroundColor(ConsoleColor col, bool alt) {
     if (!IsTTY())
         return;
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(GEKKO)
     _setcol(col, alt, !vt100_inverted);
 #else
     if (alt) {
@@ -255,7 +403,30 @@ void Console::SetBackgroundColor(ConsoleColor col, bool alt) {
 void Console::SetInvertedColors(bool inverted) {
     if (!IsTTY())
         return;
-#if defined(_WIN32)
+#if defined(GEKKO)
+
+    if (inverted != vt100_inverted) {
+        auto tmpC = fg_color;
+        auto tmpI = fg_intense;
+        fg_color = bg_color;
+        fg_intense = bg_intense;
+        bg_color = tmpC;
+        bg_intense = tmpI;
+        vt100_inverted = inverted;
+
+        if (bg_intense) {
+            printf("\x1b[%im", ((int)bg_color) + 100); // this should be Write
+        } else {
+            printf("\x1b[%im", ((int)bg_color) + 40); // this too
+        }
+
+        if (fg_intense) {
+            printf("\x1b[%im", ((int)fg_color) + 90); // this should be Write
+        } else {
+            printf("\x1b[%im", ((int)fg_color) + 30); // this too
+        }
+    }
+#elif defined(_WIN32)
     if (inverted != vt100_inverted) {
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hConsole == INVALID_HANDLE_VALUE)
@@ -290,7 +461,15 @@ void Console::SetInvertedColors(bool inverted) {
 bool Console::SetEcho(bool echo) {
     if (!IsTTY())
         return false;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+
+#if defined(HW_RVL)
+    wii_echo = echo;
+    return true;
+#else
+    return false;
+#endif
+#elif __has_include(<termios.h>)
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
         return false;
@@ -302,7 +481,7 @@ bool Console::SetEcho(bool echo) {
 
     if (tcsetattr(0, TCSAFLUSH, &raw) != 0)
         return false;
-
+    return true;
 #elif defined(_WIN32)
     HANDLE hConsole = GetStdHandle(STD_INPUT_HANDLE);
     if (hConsole == INVALID_HANDLE_VALUE)
@@ -323,7 +502,13 @@ bool Console::SetEcho(bool echo) {
 bool Console::GetEcho() {
     if (!IsTTY())
         return false;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+#if defined(HW_RVL)
+    return wii_echo;
+#else
+    return false;
+#endif
+#elif __has_include(<termios.h>)
 
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
@@ -345,7 +530,13 @@ bool Console::GetEcho() {
 bool Console::GetCanonical() {
     if (!IsTTY())
         return false;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+#if defined(HW_RVL)
+    return wii_cannon;
+#else
+    return true;
+#endif
+#elif __has_include(<termios.h>)
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
         return false;
@@ -365,7 +556,14 @@ bool Console::GetCanonical() {
 bool Console::SetCanonical(bool can) {
     if (!IsTTY())
         return false;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+#if defined(HW_RVL)
+    wii_cannon = can;
+    return true;
+#else
+    return false;
+#endif
+#elif __has_include(<termios.h>)
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
         return false;
@@ -399,7 +597,9 @@ bool Console::SetCanonical(bool can) {
 bool Console::GetSignals() {
     if (!IsTTY())
         return true;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+    return false;
+#elif __has_include(<termios.h>)
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
         return false;
@@ -411,7 +611,9 @@ bool Console::GetSignals() {
 bool Console::SetSignals(bool sig) {
     if (!IsTTY())
         return false;
-#if __has_include(<termios.h>)
+#if defined(__SWITCH__) || defined(GEKKO)
+    return false;
+#elif __has_include(<termios.h>)
     struct termios raw;
     if (tcgetattr(0, &raw) != 0)
         return false;
@@ -431,6 +633,33 @@ bool Console::SetSignals(bool sig) {
 // ISIG
 
 std::string Console::ReadPassword() {
+
+#if defined(__SWITCH__)
+    consoleUpdate(NULL);
+    // bring up nx keyboard
+    SwkbdConfig kbd;
+    Result rc = swkbdCreate(&kbd, 0);
+    if (R_SUCCEEDED(rc)) {
+
+        swkbdConfigMakePresetPassword(&kbd);
+        char *text = new char[CONSOLE_READ_BUFFER_MAX];
+        rc = swkbdShow(&kbd, text, CONSOLE_READ_BUFFER_MAX);
+        if (R_SUCCEEDED(rc)) {
+            swkbdClose(&kbd);
+
+            std::string str = text;
+            delete[] text;
+            Console::WriteLine("");
+            return str;
+        }
+        delete[] text;
+
+        swkbdClose(&kbd);
+    }
+
+    Console::WriteLine("");
+    return "";
+#else
     bool echo = GetEcho();
     if (!SetEcho(false)) {
         Write("\nWARN: the password will be visible: ");
@@ -440,6 +669,7 @@ std::string Console::ReadPassword() {
     Write("\n");
 
     return text;
+#endif
 }
 
 #if defined(_WIN32)
@@ -447,8 +677,72 @@ thread_local std::string key;
 thread_local int keyOffset = -1;
 #endif
 
+#if defined(HW_RVL)
+static std::vector<char> keybuffer;
+static bool ready = false;
+static bool amEof = false;
+
+static int read_char_wiikeyboard() {
+    if (Console::GetCanonical()) {
+
+        if (ready && keybuffer.empty())
+            ready = false;
+
+        if (!ready) {
+            if (amEof)
+                return -1;
+            while (1) {
+                auto val = fgetc(stdin);
+                if (val == 127 || val == 8) {
+                    keybuffer.pop_back();
+
+                    if (Console::GetEcho())
+                        printf("\x08");
+                } else if (val == '\n') {
+
+                    if (Console::GetEcho())
+                        printf("\n");
+                    keybuffer.push_back('\n');
+                    ready = true;
+                    break;
+                } else if (val == -1) {
+                    ready = true;
+                    amEof = true;
+                    break;
+                } else {
+                    keybuffer.push_back((char)val);
+                    if (Console::GetEcho())
+                        printf("%c", (char)val);
+                }
+            }
+        }
+
+        if (ready) {
+            char c = keybuffer.front();
+            keybuffer.erase(keybuffer.begin());
+            return c;
+        }
+
+    } else {
+        int c = fgetc(stdin);
+        if (c == -1)
+            return -1;
+        if (Console::GetEcho())
+            printf("%c", (char)c);
+        return c;
+    }
+}
+#endif
+
 int Console::Read() {
-#if defined(WIN32)
+#if defined(__SWITCH__) || defined(GEKKO)
+#if defined(HW_RVL)
+    if (USBKeyboard_IsConnected()) {
+        return read_char_wiikeyboard();
+    }
+#endif
+    return -1;
+#elif defined(WIN32)
     if (keyOffset >= 0 && keyOffset < key.size()) {
         return (int)key[keyOffset++];
     } else {
@@ -609,6 +903,48 @@ int Console::Read() {
 }
 
 std::string Console::ReadLine() {
+#if defined(GEKKO)
+#if defined(HW_RVL)
+    if (USBKeyboard_IsConnected()) {
+        std::string text;
+
+        while (true) {
+            int chr = read_char_wiikeyboard();
+            if (chr == '\n' || chr == -1)
+                break;
+            else
+                text.push_back((char)chr);
+        }
+
+        return text;
+    }
+#endif
+    return "";
+#elif defined(__SWITCH__)
+    consoleUpdate(NULL);
+    // bring up nx keyboard
+    SwkbdConfig kbd;
+    Result rc = swkbdCreate(&kbd, 0);
+    if (R_SUCCEEDED(rc)) {
+        swkbdConfigMakePresetDefault(&kbd);
+        // swkbdConfigMakePresetPassword(&kbd);
+        char *text = new char[CONSOLE_READ_BUFFER_MAX];
+        rc = swkbdShow(&kbd, text, CONSOLE_READ_BUFFER_MAX);
+        if (R_SUCCEEDED(rc)) {
+            swkbdClose(&kbd);
+
+            std::string str = text;
+            delete[] text;
+            Console::WriteLine(str);
+            return str;
+        }
+        delete[] text;
+        swkbdClose(&kbd);
+    }
+
+    Console::WriteLine("");
+    return "";
+#else
     std::string text;
     int c = Read();
     while (c != '\n' && c != -1) {
@@ -619,6 +955,7 @@ std::string Console::ReadLine() {
     if (!text.empty() && text.back() == '\r')
         text.resize(text.size() - 1);
     return text;
+#endif
 }
 #if defined(_WIN32)
 void writeTextWin32(HANDLE hndl, const std::string &text) {
@@ -651,7 +988,100 @@ void writeTextUnix(FILE *f, std::string_view view) {
 }
 #endif
 void Console::WriteToStream(std::string_view view, bool isStderr) {
-#if defined(_WIN32)
+#if defined(GEKKO) // BECAUSE GEKKO's console doesn't allow you to switch chars,
+                   // we must emulate
+    std::string text;
+    for (size_t i = 0; i < view.size(); ++i) {
+        if (view[i] == '\x1b') {
+            if (!text.empty()) {
+
+                writeTextUnix(isStderr ? stderr : stdout, text);
+                // fwrite(text.c_str(), 1, text.size(), f);
+                text.clear();
+            }
+            i++;
+            if (i < view.size()) {
+                if (view[i] == '[') {
+                    i++;
+                    for (; i < view.size(); ++i) {
+                        text += view[i];
+                        if (view[i] >= 0x40 && view[i] <= 0x7e)
+                            break;
+                    }
+                    if (text.size() > 0 && text.back() == 'H') {
+                        MoveToHome();
+                    }
+                    if (text.size() > 0 && text.back() == 'J') {
+                        if (text[0] == '2') {
+                            ClearRetainPosition(
+                                ClearBehaviour::CB_ENTIRESCREEN);
+                        }
+
+                        if (text[0] == '1') {
+                            ClearRetainPosition(
+                                ClearBehaviour::CB_CURSORANDABOVE);
+                        }
+                        if (text[0] == '0') {
+                            ClearRetainPosition(
+                                ClearBehaviour::CB_CURSORANDBELOW);
+                        }
+                    }
+
+                    if (text.size() > 0 && text.back() == 'm') {
+                        if (text.size() == 1) {
+                            consoleHelpers.reset();
+                        } else {
+                            try {
+                                auto num =
+                                    std::stol(text.substr(0, text.size() - 1));
+                                if (num == 0)
+                                    consoleHelpers.reset();
+                                if (num == 7)
+                                    Console::SetInvertedColors(true);
+                                if (num == 27)
+                                    Console::SetInvertedColors(false);
+                                if (num >= 30 && num <= 37) {
+                                    SetForegroundColor((ConsoleColor)(num - 30),
+                                                       false);
+                                } else if (num >= 40 && num <= 47) {
+                                    SetBackgroundColor((ConsoleColor)(num - 40),
+                                                       false);
+                                } else if (num >= 90 && num <= 97) {
+                                    SetForegroundColor((ConsoleColor)(num - 90),
+                                                       true);
+                                } else if (num >= 100 && num <= 107) {
+                                    SetBackgroundColor(
+                                        (ConsoleColor)(num - 100), true);
+                                }
+                            } catch (...) {
+                            }
+                        }
+                    }
+
+                    text.clear();
+
+                } else {
+                    text += "\x1B";
+                    text += view[i];
+                }
+            }
+
+        } else if (view[i] == '\n') {
+            text += "\r\n";
+
+            writeTextUnix(isStderr ? stderr : stdout, text);
+            text.clear();
+        } else {
+            text += view[i];
+        }
+    }
+
+    if (!text.empty()) {
+
+        writeTextUnix(isStderr ? stderr : stdout, text);
+        text.clear();
+    }
+#elif defined(_WIN32)
     HANDLE hOut = GetStdHandle(isStderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE)
         return;
@@ -777,7 +1207,9 @@ void Console::ErrorLineView(std::string_view view) {
 }
 void Console::ErrorView(std::string_view view) { WriteToStream(view, true); }
 bool Console::IsTTY() {
-#if defined(_WIN32)
+#if defined(GEKKO) || defined(__SWITCH__)
+    return true;
+#elif defined(_WIN32)
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE)
         return false;
@@ -829,8 +1261,16 @@ void Console::ProgressBar(int v) { ProgressBar((double)v / 100.0); }
 std::pair<int, int> Console::GetSize() {
     if (!Console::IsTTY())
         return std::pair<int, int>(0, 0);
-
-#if __has_include(<termios.h>)
+#if defined(GEKKO)
+    int w, h;
+    CON_GetMetrics(&w, &h);
+    return std::pair<int, int>(w, h);
+#elif defined(__SWITCH__)
+    PrintConsole *console = consoleGetDefault();
+    if (console == nullptr)
+        return std::pair<int, int>(0, 0);
+    return std::pair<int, int>(console->consoleWidth, console->consoleHeight);
+#elif __has_include(<termios.h>)
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
         return std::make_pair<int, int>(ws.ws_col, ws.ws_row);
@@ -854,7 +1294,7 @@ std::pair<int, int> Console::GetSize() {
 void Console::SetPosition(int x, int y) {
     if (!IsTTY())
         return;
-#if __has_include(<termios.h>)
+#if __has_include(<termios.h>) || defined(__SWITCH__) || defined(GEKKO)
     printf("\x1B[%i;%iH", y + 1, x + 1);
 #elif defined(_WIN32)
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -876,7 +1316,10 @@ void Console::Clear() {
 }
 
 void Console::ClearRetainPosition(ClearBehaviour cb) {
-#if __has_include(<termios.h>)
+#if defined(GEKKO) || defined(__SWITCH__)
+    printf("\x1b[%iJ", (int)cb);
+    Flush();
+#elif __has_include(<termios.h>)
     if (isatty(STDOUT_FILENO)) {
         printf("\x1b[%iJ", (int)cb);
         Flush();
@@ -946,7 +1389,13 @@ void Console::ClearRetainPosition(ClearBehaviour cb) {
 #endif
 }
 void Console::MoveToHome() {
-#if __has_include(<termios.h>)
+#if defined(GEKKO)
+    printf("\x1b[h");
+    fflush(stdout);
+#elif defined(__SWITCH__)
+    Write("\x1b[H");
+    Flush();
+#elif __has_include(<termios.h>)
     if (isatty(STDOUT_FILENO)) {
         Write("\x1b[H");
         Flush();

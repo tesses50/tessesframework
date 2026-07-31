@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.7
+Fix license compliance and fix things up
+
 ## 0.0.6
 Use my new toolchain, fix a bug on mac/freebsd
 

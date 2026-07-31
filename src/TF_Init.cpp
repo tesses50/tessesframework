@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,6 +49,9 @@
 
 #if defined(__FreeBSD__)
 #include <sys/sysctl.h>
+int tf_timezone = 0;
+bool tf_daylight = false;
+
 #endif
 
 #if defined(TESSESFRAMEWORK_ENABLE_SQLITE)
@@ -262,8 +268,7 @@ int64_t TF_Timer_Handle::GetIntervalMilliseconds() {
 }
 
 void TF_RunEventLoopItteration() {
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING) &&                               \
-    (defined(GEKKO) || defined(__SWITCH__))
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(__SWITCH__))
     Tesses::Framework::Threading::LookForFinishedThreads();
 
 #endif
@@ -314,8 +319,7 @@ void TF_RunEventLoopItteration() {
 void TF_SetIsRunning(bool _isRunning) { isRunning = _isRunning; }
 void TF_Quit() {
     isRunning = false;
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING) &&                               \
-    (defined(GEKKO) || defined(__SWITCH__))
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(__SWITCH__))
     Tesses::Framework::Threading::JoinAllThreads();
 #endif
 }
@@ -330,8 +334,15 @@ void TF_Init() {
     sqlite3_vfs_register(sqlite3_demovfs(), 1);
 #endif
 #endif
+#if defined(__FreeBSD__)
 
+    time_t t = 0;
+    auto tz = localtime(&t);
+    tf_timezone = tz->tm_gmtoff;
+    tf_daylight = tz->tm_isdst;
+#else
     tzset();
+#endif
 #if defined(_WIN32)
     signal(SIGINT, _sigInt);
     signal(SIGTERM, _sigInt);
@@ -510,7 +521,7 @@ std::string TF_GetExecutableName() {
     if (sysctl(mib, 4, path.data(), &len, NULL, 0) < 0) {
         return "";
     }
-    path.resize(len-1);
+    path.resize(strlen(path.c_str()));
     return path;
 #elif defined(__NetBSD__)
     auto path = Filesystem::LocalFS->ReadLink(
@@ -526,13 +537,12 @@ std::string TF_GetExecutableName() {
     path.resize(1025);
     uint32_t bufsize = (uint32_t)path.size();
     if (_NSGetExecutablePath(path.data(), &bufsize) == 0) {
-        path.resize(bufsize-1);
+        path.resize(strlen(path.c_str()));
         return path;
     } else {
         path.resize(bufsize);
-        if (_NSGetExecutablePath(path.data(), &bufsize) == 0)
-        {
-            path.resize(bufsize-1);
+        if (_NSGetExecutablePath(path.data(), &bufsize) == 0) {
+            path.resize(strlen(path.c_str()));
             return path;
         }
     }

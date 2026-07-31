@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -138,7 +141,7 @@ bool Uri::TryParse(std::string url, Uri &uri) {
 
     return true;
 }
-Uri::Uri() { this->query.SetCaseSensitive(true); }
+Uri::Uri() : query(true) {}
 std::string Uri::GetPathAndQuery() { return this->path + this->GetQuery(); }
 std::string Uri::GetQuery() {
     if (this->query.kvp.empty())
@@ -180,7 +183,8 @@ std::string HttpUtils::Replace(std::string text, std::string find,
 }
 
 std::string HttpUtils::LeftPad(std::string text, int count, char c) {
-    if(text.size() >= (size_t)count) return text;
+    if (text.size() >= (size_t)count)
+        return text;
 
     text.insert(text.begin(), (size_t)count - text.size(), c);
     return text;
@@ -740,14 +744,10 @@ CaseInsensitiveLess::CaseInsensitiveLess() {
     this->caseSensitive = false;
     this->offset = this;
 }
-void HttpDictionary::SetCaseSensitive(bool isCaseSensitive) {
+HttpDictionary::HttpDictionary(bool isCaseSensitive) {
+
     this->kvp.key_comp().offset->caseSensitive = isCaseSensitive;
 }
-HttpDictionary::HttpDictionary(bool isCaseSensitive) {
-    this->SetCaseSensitive(isCaseSensitive);
-}
-HttpDictionary::HttpDictionary() : HttpDictionary(false) {}
-
 bool HttpDictionary::AnyEquals(std::string key, std::string value) {
     if (this->kvp.count(key) > 0)
         for (auto v : this->kvp[key])

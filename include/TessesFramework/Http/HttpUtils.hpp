@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -97,10 +100,9 @@ struct CaseInsensitiveLess {
 
 class HttpDictionary {
   public:
-    HttpDictionary();
-    HttpDictionary(bool caseSensitive);
+    explicit HttpDictionary(bool caseSensitive);
     std::map<std::string, std::vector<std::string>, CaseInsensitiveLess> kvp;
-    void SetCaseSensitive(bool isCaseSensitive);
+
     void Clear();
     void Clear(std::string key, bool kvpExistsAfter);
     void SetValue(std::string key, std::string value);

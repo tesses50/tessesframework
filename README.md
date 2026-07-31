@@ -62,4 +62,4 @@ sudo make install
 - [Multipart parser (rewriten in C++ was C# in dejuric/simplehttp)](https://github.com/dajuric/simple-http)
 
 ## Resources used from others
-- [ca-certificate.crt (from ubuntu)](ca-certificate.crt)
+- [ca-certificate.crt (from curl's website, originally mozilla)](ca-certificate.crt)

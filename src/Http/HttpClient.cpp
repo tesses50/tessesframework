@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -72,7 +75,7 @@ void StreamHttpRequestBody::Write(
     this->strm->CopyTo(strm);
 }
 StreamHttpRequestBody::~StreamHttpRequestBody() {}
-HttpRequest::HttpRequest() {
+HttpRequest::HttpRequest() : requestHeaders(false) {
     this->body = nullptr;
     this->followRedirects = true;
     this->ignoreSSLErrors = false;
@@ -151,7 +154,8 @@ HttpResponse::GetInternalStream() {
 
 HttpResponse::~HttpResponse() {}
 
-HttpResponse::HttpResponse(std::shared_ptr<Stream> strm) {
+HttpResponse::HttpResponse(std::shared_ptr<Stream> strm)
+    : responseHeaders(false) {
     this->handleStrm = nullptr;
     StreamReader reader(strm);
     std::string statusLine;
@@ -176,7 +180,7 @@ HttpResponse::HttpResponse(std::shared_ptr<Stream> strm) {
     this->handleStrm = strm;
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) {
+HttpResponse::HttpResponse(HttpRequest &req) : responseHeaders(false) {
     this->handleStrm = nullptr;
 
     std::string url = req.url;

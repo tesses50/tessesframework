@@ -43,4 +43,9 @@ if(TESSESFRAMEWORK_ENABLE_EXAMPLES)
 
          add_executable(tests examples/tests.cpp)
         target_link_libraries(tests PUBLIC tessesframework)
+        add_executable(console-login-test examples/console-login-test.cpp)
+        target_link_libraries(console-login-test PUBLIC tessesframework)
+
+        
+        
 endif()

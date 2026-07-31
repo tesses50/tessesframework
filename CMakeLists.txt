@@ -25,11 +25,31 @@ endif()
 
 include(cmake/findmbed.cmake)
 
+set(TESSESFRAMEWORK_CA_CERT_URL "https://curl.se/ca/cacert.pem")
+set(TESSESFRAMEWORK_CA_CERT_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ca-certificates.crt")
 
 
 
-if(TESSESFRAMEWORK_VENDERCERTCHAIN)
+if(TESSESFRAMEWORK_VENDERCERTCHAIN AND TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
+if(TESSESFRAMEWORK_FETCHCONTENT)
+# Define paths
+
+# Download the file
+# EXPECTED_HASH is optional but recommended for reproducibility.
+# To get the current hash, run: curl -sSL https://curl.se/ca/cacert.pem | sha256sum
+file(DOWNLOAD
+    ${TESSESFRAMEWORK_CA_CERT_URL}
+    ${TESSESFRAMEWORK_CA_CERT_OUTPUT}
+    SHOW_PROGRESS
+    TLS_VERIFY ON
+    # EXPECTED_HASH SHA256=<insert_sha256_hash_here>
+)
+
+# Optional: Inform the user
+message(STATUS "CA certificates bundle downloaded to ${TESSESFRAMEWORK_CA_CERT_OUTPUT}")
+else()
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
+endif()
 else()
 set(TESSESFRAMEWORK_CERT_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt" CACHE FILEPATH "Path to ca-chain")
 endif()
@@ -42,9 +62,15 @@ if(TESSESFRAMEWORK_ENABLE_MBED)
 if(TESSESFRAMEWORK_EMBED_CERT_BUNDLE)
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" "#pragma once\n")
-bin2h(SOURCE_FILE "${TESSESFRAMEWORK_CERT_BUNDLE_FILE}" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
-file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" "\n")
+if(TESSESFRAMEWORK_FETCHCONTENT)
 
+bin2h(SOURCE_FILE "${TESSESFRAMEWORK_CA_CERT_OUTPUT}" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
+
+else()
+bin2h(SOURCE_FILE "${TESSESFRAMEWORK_CERT_BUNDLE_FILE}" HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" VARIABLE_NAME CertificateChain APPEND NULL_TERMINATE)
+
+endif()
+file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/include/TessesFramework/CertificateChain.h" "\n")
 endif()
 endif()
 
@@ -56,6 +82,10 @@ else()
 include(cmake/sharedlib.cmake)
 endif()
 
+if(TESSESFRAMEWORK_MBEDTLS_PORTLIB)
+target_include_directories(tessesframework PUBLIC "${TESSESFRAMEWORK_MBEDTLS_PORTLIB}/include")
+target_link_directories(tessesframework PUBLIC "${TESSESFRAMEWORK_MBEDTLS_PORTLIB}/lib")
+endif()
 include(cmake/install-dev.cmake)
 
 include(cmake/examples.cmake)
@@ -65,7 +95,7 @@ if(TESSESFRAMEWORK_INSTALL_DEVELOPMENT)
 add_subdirectory(pkgconfig)
 endif()
 
-if(NOT TESSESFRAMEWORK_NFPM_ARCH STREQUAL "")
+if(TESSESFRAMEWORK_NFPM_ARCH)
 configure_file(nfpm.yaml.in nfpm.yaml @ONLY)
 
 endif()

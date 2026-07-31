@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,9 +20,8 @@
 */
 
 #include "TessesFramework/Streams/PtyStream.hpp"
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
 #if __has_include(<util.h>)
 #include <util.h>
 #elif __has_include(<pty.h>)
@@ -29,18 +31,17 @@
 #endif
 #include <fcntl.h>
 #include <signal.h>
-#include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <unistd.h>
 
 #endif
 namespace Tesses::Framework::Streams {
 PtyStream::PtyStream(WindowSize windowSize, std::string filename,
                      std::vector<std::string> args,
                      std::vector<std::string> env) {
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     this->wS = windowSize;
     this->eos = false;
     winsize sz;
@@ -96,9 +97,8 @@ bool PtyStream::CanWrite() { return true; }
 size_t PtyStream::Read(uint8_t *buff, size_t sz) {
     if (this->eos)
         return 0;
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     auto res = read(this->socket, buff, sz);
 
     if (res == -1) {
@@ -112,9 +112,8 @@ size_t PtyStream::Read(uint8_t *buff, size_t sz) {
 #endif
 }
 size_t PtyStream::Write(const uint8_t *buff, size_t sz) {
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__)  &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     auto res = write(this->socket, buff, sz);
     return res;
 #else
@@ -123,9 +122,8 @@ size_t PtyStream::Write(const uint8_t *buff, size_t sz) {
 }
 WindowSize PtyStream::GetWindowSize() { return this->wS; }
 void PtyStream::Resize(WindowSize windowSize) {
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     this->wS = windowSize;
     winsize sz;
     sz.ws_col = (unsigned short)windowSize.Columns;
@@ -140,9 +138,8 @@ PtyStream::~PtyStream() {
     if (this->eos)
         return;
     this->eos = true;
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     close(this->socket);
 
     kill((pid_t)this->pid, SIGHUP);
@@ -152,9 +149,8 @@ void PtyStream::Close() {
     if (this->eos)
         return;
     this->eos = true;
-#if !defined(GEKKO) && !defined(__PS2__) &&             \
-    !defined(_WIN32) && !defined(__SWITCH__) &&       \
-    defined(TESSESFRAMEWORK_ENABLE_PROCESS)
+#if !defined(GEKKO) && !defined(__PS2__) && !defined(_WIN32) &&                \
+    !defined(__SWITCH__) && defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     close(this->socket);
 
     kill((pid_t)this->pid, SIGHUP);

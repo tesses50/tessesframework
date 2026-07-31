@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -241,7 +244,7 @@ void LocalFilesystem::Chmod(VFSPath path, uint32_t mode) {
 }
 void LocalFilesystem::Chown(VFSPath path, uint32_t uid, uint32_t gid) {
     auto pathStr = this->VFSPathToSystem(path);
-#if defined(_WIN32)
+#if defined(_WIN32)  || defined(GEKKO) || defined(__SWITCH__)
 
 #else
     chown(pathStr.c_str(), (uid_t)uid, (gid_t)gid);
@@ -250,7 +253,8 @@ void LocalFilesystem::Chown(VFSPath path, uint32_t uid, uint32_t gid) {
 
 FIFOCreationResult LocalFilesystem::CreateFIFO(VFSPath path, uint32_t mod) {
     auto pathStr = this->VFSPathToSystem(path);
-#if defined(_WIN32)
+
+#if defined(_WIN32) || defined(GEKKO) || defined(__SWITCH__)
     return FIFOCreationResult::Unsupported;
 #else
     int res = mkfifo(pathStr.c_str(), (mode_t)mod);

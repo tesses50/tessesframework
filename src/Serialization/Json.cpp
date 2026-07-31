@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,9 +18,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #include "TessesFramework/Serialization/Json.hpp"
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/TessesFramework.hpp"
+#include "TessesFramework/Text/StringConverter.hpp"
 #include <functional>
 
 #include "TessesFramework/Common.hpp"
@@ -126,78 +131,53 @@ JToken Json::Decode(std::string str) {
                             uint16_t v = 0;
                             if (i + 4 <= str.size()) {
                                 for (size_t i2 = 0; i2 < 4; i2++, i++) {
+                                    if (!((str[i] >= '0' && str[i] <= '9') ||
+                                          (str[i] >= 'A' && str[i] <= 'F') ||
+                                          (str[i] >= 'a' && str[i] <= 'f')))
+                                        throw std::runtime_error(
+                                            "Invalid hex value");
+
                                     v |= HttpUtils::HexToNibble(str[i])
                                          << ((3 - i2) * 4);
                                 }
                                 i--;
 
-                                uint32_t v2 = v;
+                                std::u16string unicode = {(char16_t)v};
+                                std::string utf8;
 
-                                if ((v & 0xFC00) == 0xD800) {
-
-                                    v2 = (v & 0x03FF) << 10;
-                                    if (i + 6 <= str.size() &&
-                                        str.substr(i, 2) == "\\u") {
-                                        i += 2;
-                                        v = 0;
-
-                                        for (size_t i2 = 0; i2 < 4; i2++, i++) {
-                                            v |= HttpUtils::HexToNibble(str[i])
-                                                 << ((3 - i2) * 4);
-                                        }
-                                        if ((v & 0xFC00) != 0xDC00) {
-                                            throw std::runtime_error(
-                                                "Not a lower utf-16 surrogate "
-                                                "pair.");
-                                        }
-
-                                        v2 |= (v & 0x03FF);
-
-                                        v2 += 0x10000;
-                                    } else {
-
+                                if ((v >= 0xD800) && (v <= 0xDBFF)) {
+                                    v = 0;
+                                    i++;
+                                    if (i + 6 > str.size())
                                         throw std::runtime_error(
-                                            "Could not read lower utf-16 "
-                                            "surrogate pair.");
+                                            "Not enough chars");
+
+                                    if (str[i] != '\\' || str[i + 1] != 'u')
+                                        throw std::runtime_error(
+                                            "Low surogate must begin with \\u");
+                                    i += 2;
+                                    for (size_t i2 = 0; i2 < 4; i2++, i++) {
+                                        if (!((str[i] >= '0' &&
+                                               str[i] <= '9') ||
+                                              (str[i] >= 'A' &&
+                                               str[i] <= 'F') ||
+                                              (str[i] >= 'a' && str[i] <= 'f')))
+                                            throw std::runtime_error(
+                                                "Invalid hex value");
+
+                                        v |= HttpUtils::HexToNibble(str[i])
+                                             << ((3 - i2) * 4);
                                     }
-                                    if (v2 <= 0x7F) {
-                                        str2.push_back((char)v2);
-                                    } else if (v2 >= 0x80 && v2 <= 0x7FF) {
-                                        uint8_t high = 0b11000000 |
-                                                       ((v2 >> 6) & 0b00011111);
-                                        uint8_t low =
-                                            0b10000000 | (v2 & 0b00111111);
-                                        str2.push_back((char)high);
-                                        str2.push_back((char)low);
-                                    } else if (v2 >= 0x800 && v2 <= 0xFFFF) {
-                                        uint8_t highest =
-                                            0b11100000 |
-                                            ((v2 >> 12) & 0b00001111);
-                                        uint8_t high = 0b10000000 |
-                                                       ((v2 >> 6) & 0b00111111);
-                                        uint8_t low =
-                                            0b10000000 | (v2 & 0b00111111);
-                                        str2.push_back((char)highest);
-                                        str2.push_back((char)high);
-                                        str2.push_back((char)low);
-                                    } else if (v2 >= 0x010000 &&
-                                               v2 <= 0x10FFFF) {
-                                        uint8_t highest =
-                                            0b11110000 |
-                                            ((v2 >> 18) & 0b00000111);
-                                        uint8_t high =
-                                            0b10000000 |
-                                            ((v2 >> 12) & 0b00111111);
-                                        uint8_t low = 0b10000000 |
-                                                      ((v2 >> 6) & 0b00111111);
-                                        uint8_t lowest =
-                                            0b10000000 | (v2 & 0b00111111);
-                                        str2.push_back((char)highest);
-                                        str2.push_back((char)high);
-                                        str2.push_back((char)low);
-                                        str2.push_back((char)lowest);
-                                    }
+                                    i--;
+
+                                    unicode.push_back(v);
                                 }
+
+                                Text::StringConverter::UTF8::FromUTF16(utf8,
+                                                                       unicode);
+                                str2.append(utf8);
+                            } else {
+                                throw std::runtime_error("Not enough chars");
                             }
                         } else {
                             str2.push_back(str[i]);

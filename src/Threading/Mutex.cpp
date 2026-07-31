@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,10 +54,6 @@ Mutex::Mutex() {
     auto md = this->data.AllocField<MutexHiddenFieldData>();
 #if defined(_WIN32)
     md->mtx = CreateMutex(NULL, false, NULL);
-#elif defined(GEKKO)
-    md->mtx = LWP_MUTEX_NULL;
-    LWP_MutexInit(&md->mtx, true);
-
 #else
     pthread_mutexattr_init(&md->attr);
     pthread_mutexattr_settype(&md->attr, PTHREAD_MUTEX_RECURSIVE);

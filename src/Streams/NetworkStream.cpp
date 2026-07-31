@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,8 +43,8 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #else
 
 #if defined(_WIN32)
-#include <winsock2.h>
 #include <iphlpapi.h>
+#include <winsock2.h>
 
 #include <ws2tcpip.h>
 
@@ -886,7 +889,7 @@ void NetworkStream::SetReuseAddress(bool reuse) {}
 void NetworkStream::SetReusePort(bool reuse) {}
 void NetworkStream::SetMulticastTTL(uint8_t ttl) {}
 void NetworkStream::SetMulticastMembership(std::string multicastAddress,
-                                           std::string ifaceIP = "0.0.0.0") {}
+                                           std::string ifaceIP) {}
 
 std::shared_ptr<NetworkStream> NetworkStream::Accept(std::string &ip,
                                                      uint16_t &port) {

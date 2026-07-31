@@ -1,6 +1,9 @@
 /*
     TessesFramework a library to make C++ easier for me, used in CrossLang:
-   https://git.tesses.org/tesses50/crosslang Copyright (C) 2026 Mike Nolan
+    https://git.tesses.org/tesses50/crosslang
+
+    Copyright (C) 2026 Mike Nolan
+    SPDX-License-Identifier: GPL-3.0-or-later WITH TessesFramework-Exception-1.0
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +53,7 @@ class RouteServer : public IHttpServer {
 
     void Delete(std::string pattern, ServerRequestHandler handler);
 
-    void Trace(std::string pattern, ServerRequestHandler handler);
+    void Query(std::string pattern, ServerRequestHandler handler);
     void Options(std::string pattern, ServerRequestHandler handler);
     void Add(std::string method, std::string pattern,
              ServerRequestHandler handler);

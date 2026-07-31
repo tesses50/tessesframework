@@ -64,4 +64,9 @@ add_executable(tuuid apps/tuuid.cpp)
 
 target_link_libraries(tuuid PUBLIC tessesframework)
 install(TARGETS tuuid DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(ttimezone apps/ttimezone.cpp)
+
+target_link_libraries(ttimezone PUBLIC tessesframework)
+install(TARGETS ttimezone DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()

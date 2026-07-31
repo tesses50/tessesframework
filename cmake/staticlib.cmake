@@ -8,6 +8,7 @@ target_link_libraries(tessesframework PUBLIC fat)
 endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "NintendoWii")
 target_link_libraries(tessesframework PUBLIC wiisocket)
+target_link_libraries(tessesframework PUBLIC wiikeyboard)
 target_compile_definitions(tessesframework PUBLIC TESSESFRAMEWORK_USE_WII_SOCKET)
 endif()
 
