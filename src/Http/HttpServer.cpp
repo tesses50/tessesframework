@@ -1004,20 +1004,6 @@ ServerContext &ServerContext::WriteHeaders() {
     return *this;
 }
 
-static void sanitise_path(std::string &path) {
-    bool endsWithSlash = !path.empty() ? (path.back() == '/') : false;
-    Tesses::Framework::Filesystem::VFSPath path2 = path;
-    for (auto ittr = path2.path.begin(); ittr != path2.path.end(); ittr++) {
-        if (*ittr == ".." || *ittr == ".") {
-            path2.path.erase(ittr);
-            ittr--;
-        }
-    }
-    path = path2.ToString();
-    if (endsWithSlash)
-        path += '/';
-}
-
 void HttpServer::Process(std::shared_ptr<Stream> strm,
                          std::shared_ptr<IHttpServer> server, std::string ip,
                          uint16_t port, uint16_t serverPort, bool encrypted,
@@ -1061,7 +1047,6 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
                 pp.resize(2);
 
                 ctx.originalPath = pp[0];
-                sanitise_path(ctx.originalPath);
                 ctx.path = ctx.originalPath;
 
                 TF_LOG(ctx.method + " with path " + ctx.path);
