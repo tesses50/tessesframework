@@ -38,8 +38,8 @@ class HiddenField {
     HiddenField(HiddenFieldData *data);
     void SetField(HiddenFieldData *data);
     template <typename T> T GetField() { return dynamic_cast<T>(ptr); }
-    template <typename T> T *AllocField() {
-        auto v = new T();
+    template <typename T, typename... TArgs> T *AllocField(TArgs &&...args) {
+        auto v = new T(std::forward<TArgs>(args)...);
         SetField(v);
         return v;
     }

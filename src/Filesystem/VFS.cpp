@@ -296,6 +296,7 @@ VFSPath VFSPath::CollapseRelativeParents() const {
     newpath.path = parts;
     return newpath;
 }
+
 VFSPath VFSPath::CurrentDirectoryAsRelative() {
     VFSPath path;
     path.relative = true;

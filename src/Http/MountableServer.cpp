@@ -51,36 +51,46 @@ MountableServer::MountableServer(std::shared_ptr<IHttpServer> root) {
 
 void MountableServer::Mount(std::string path,
                             std::shared_ptr<IHttpServer> server) {
+    mtx.Lock();
     this->servers.insert(
         this->servers.begin(),
         std::pair<std::string, std::shared_ptr<IHttpServer>>(path, server));
+    mtx.Unlock();
 }
 void MountableServer::Unmount(std::string path) {
+    mtx.Lock();
     for (auto i = this->servers.begin(); i != this->servers.end(); i++) {
         auto &item = *i;
         if (item.first == path) {
             this->servers.erase(i);
+            mtx.Unlock();
             return;
         }
     }
+    mtx.Unlock();
 }
 bool MountableServer::Handle(ServerContext &ctx) {
     std::string oldPath = ctx.path;
+    mtx.Lock();
+    bool needUnlock = true;
     for (auto item : this->servers) {
         if (StartsWith(oldPath, item.first)) {
             ctx.path = Subpath(oldPath, item.first);
+            mtx.Unlock();
             if (item.second->Handle(ctx)) {
                 ctx.path = oldPath;
                 return true;
             }
             ctx.path = oldPath;
+            needUnlock = false;
             break;
         }
     }
+    if (needUnlock)
+        mtx.Unlock();
     ctx.path = oldPath;
     if (this->root && this->root->Handle(ctx))
         return true;
     return false;
 }
-MountableServer::~MountableServer() {}
 } // namespace Tesses::Framework::Http

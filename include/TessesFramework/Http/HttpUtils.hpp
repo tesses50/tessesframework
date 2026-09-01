@@ -22,6 +22,9 @@
 #pragma once
 #include "../Common.hpp"
 #include "../Date/Date.hpp"
+
+#include "../Filesystem/VFS.hpp"
+#include "../Filesystem/VFSFix.hpp"
 #include <algorithm>
 
 namespace Tesses::Framework::Http {
@@ -91,9 +94,7 @@ typedef enum StatusCode {
 } StatusCode;
 
 struct CaseInsensitiveLess {
-    CaseInsensitiveLess(const CaseInsensitiveLess &str);
-    CaseInsensitiveLess();
-    CaseInsensitiveLess *offset;
+    explicit CaseInsensitiveLess(bool caseSensitive);
     bool caseSensitive;
     bool operator()(const std::string &s1, const std::string &s2) const;
 };
@@ -136,7 +137,17 @@ class HttpDictionary {
 
     bool GetFirstBoolean(std::string key);
 
+    bool TryGetOnlyOne(std::string key, std::string &value);
+
+    bool TryGetOnlyOneInt(std::string key, int64_t &value);
+
+    bool TryGetOnlyOneDouble(std::string key, double &value);
+    bool TryGetOnlyOneDate(std::string key, Date::DateTime &value);
+
+    bool TryGetOnlyOneBoolean(std::string key, bool &value);
+
     bool AnyEquals(std::string key, std::string value);
+    bool AnyEqualsCSV(std::string key, std::string value);
 };
 
 class Uri {
@@ -169,30 +180,40 @@ class HttpUtils {
                                   bool isUppercase);
     static void BytesToHex(std::string &text, const std::vector<uint8_t> &data,
                            bool isUppercase);
-    static std::vector<uint8_t> HexToBytes(const std::string &text);
-    static void HexToBytes(std::vector<uint8_t> &data, const std::string &text);
-    static std::string MimeType(std::filesystem::path p);
+    static std::vector<uint8_t> HexToBytes(std::string_view text);
+    static void HexToBytes(std::vector<uint8_t> &data, std::string_view text);
+    static std::string GetMimeType(const std::string &ext);
+    static std::string GetMimeTypePath(const Filesystem::VFSPath &pathWithExt);
+    static void AddMimeType(const std::string &ext, const std::string &mime);
+    static void AddMimeTypePath(const Filesystem::VFSPath &pathWithExt,
+                                const std::string &mime);
     static bool Invalid(char c);
-    static std::string Sanitise(std::string text);
-    static void QueryParamsDecode(HttpDictionary &dict, std::string query);
-    static std::string Join(std::string joinStr, std::vector<std::string> ents);
+    static std::string Sanitise(std::string_view text);
+    static void QueryParamsDecode(HttpDictionary &dict, std::string_view query);
+    static std::string Join(std::string_view joinStr,
+                            std::vector<std::string> ents);
     static std::string QueryParamsEncode(HttpDictionary &dict);
-    static std::string UrlDecode(std::string v);
-    static std::string UrlEncode(std::string v);
-    static std::string UrlPathDecode(std::string v);
-    static std::string UrlPathEncode(std::string v, bool ignoreSpace = false);
-    static std::string HtmlEncode(std::string v);
-    static std::string HtmlP(std::string text);
-    static std::string HtmlDecodeOnlyEntityNumber(std::string v);
+    static std::string UrlDecode(std::string_view v);
+    static std::string UrlEncode(std::string_view v);
+    static std::string UrlPathDecode(std::string_view v);
+    static std::string UrlPathEncode(std::string_view v,
+                                     bool ignoreSpace = false);
+    static std::string HtmlEncode(std::string_view v);
+    static std::string HtmlP(std::string_view text);
+    static void SplitString(std::vector<std::string> &out,
+                            std::string_view text, std::string_view delimiter,
+                            std::size_t maxCnt = std::string::npos);
     static std::vector<std::string>
-    SplitString(std::string text, std::string delimiter,
+    SplitString(std::string_view text, std::string_view delimiter,
                 std::size_t maxCnt = std::string::npos);
-    static std::string Replace(std::string str, std::string find,
-                               std::string replace);
+    static std::string Replace(std::string_view str, std::string_view find,
+                               std::string_view replace);
     static std::string StatusCodeString(StatusCode code);
-    static std::string ToLower(std::string str);
-    static std::string ToUpper(std::string str);
-    static std::string LeftPad(std::string text, int count, char c);
+    static std::string ToLower(std::string_view str);
+    static std::string ToUpper(std::string_view str);
+    static std::string LeftPad(std::string_view text, int count, char c);
+    static bool CaseInsensitiveCompare(std::string_view left,
+                                       std::string_view right);
 };
 
 } // namespace Tesses::Framework::Http

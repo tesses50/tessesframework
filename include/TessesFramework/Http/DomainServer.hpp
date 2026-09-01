@@ -20,19 +20,22 @@
 */
 
 #pragma once
+#include "../Filesystem/VFS.hpp"
+#include "../Filesystem/VFSFix.hpp"
 #include "HttpServer.hpp"
 
 namespace Tesses::Framework::Http {
-class ChangeableServer {
-    std::shared_ptr<IHttpServer> server;
+class DomainServer : public IHttpServer {
+    std::shared_ptr<IHttpServer> root;
+    std::map<std::string, std::shared_ptr<IHttpServer>> servers;
     Tesses::Framework::Threading::Mutex mtx;
 
   public:
-    ChangeableServer();
-    ChangeableServer(std::shared_ptr<IHttpServer> original);
+    DomainServer();
+    DomainServer(std::shared_ptr<IHttpServer> root);
+    void Set(std::string domain, std::shared_ptr<IHttpServer> server);
+    void Unset(std::string domain);
+    void Clear();
     bool Handle(ServerContext &ctx);
-    void SetServer(std::shared_ptr<IHttpServer> server);
-    std::shared_ptr<IHttpServer> GetServer();
-    ~ChangeableServer();
 };
 } // namespace Tesses::Framework::Http

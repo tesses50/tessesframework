@@ -45,13 +45,24 @@ class ClientTLSPrivateData {
   public:
     bool eos;
     bool success;
+    bool mTLS;
     std::shared_ptr<Stream> strm;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
     mbedtls_x509_crt cachain;
+    mbedtls_x509_crt client_cert;
+    mbedtls_pk_context client_key;
+
     ~ClientTLSPrivateData() {
+        strm->SetSendTimeout((uint64_t)7);
+        mbedtls_ssl_close_notify(&ssl);
+        if (mTLS) {
+            mbedtls_x509_crt_free(&client_cert);
+            mbedtls_pk_free(&client_key);
+        }
+
         mbedtls_x509_crt_free(&cachain);
         mbedtls_ctr_drbg_free(&ctr_drbg);
         mbedtls_entropy_free(&entropy);
@@ -101,6 +112,7 @@ ClientTLSStream::ClientTLSStream(
     data->eos = false;
     data->success = false;
     data->strm = innerStream;
+    data->mTLS = false;
 
     mbedtls_ssl_init(&data->ssl);
     mbedtls_ssl_config_init(&data->conf);
@@ -119,15 +131,10 @@ ClientTLSStream::ClientTLSStream(
         return;
     }
 
-    if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse cert %i\n", ret);
-        return;
-    }
     ret = mbedtls_x509_crt_parse(
         &data->cachain, (const unsigned char *)cert.c_str(), cert.size() + 1);
-
     if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse chain %i\n", ret);
+        printf("FAILED mbedtls_x509_crt_parse cert %i\n", ret);
         return;
     }
 
@@ -185,6 +192,132 @@ ClientTLSStream::ClientTLSStream(
 
 #endif
 }
+
+ClientTLSStream::ClientTLSStream(
+    std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream,
+    bool verify, std::string domain, std::string cert,
+    CertificateKeyStore keyStore) {
+#if defined(TESSESFRAMEWORK_ENABLE_MBED)
+    if (cert.empty()) {
+        cert = GetCertChain();
+    }
+
+    ClientTLSPrivateData *data = new ClientTLSPrivateData();
+    this->privateData = static_cast<void *>(data);
+    data->eos = false;
+    data->success = false;
+    data->strm = innerStream;
+    data->mTLS = true;
+
+    mbedtls_ssl_init(&data->ssl);
+    mbedtls_ssl_config_init(&data->conf);
+    mbedtls_x509_crt_init(&data->cachain);
+    mbedtls_ctr_drbg_init(&data->ctr_drbg);
+    mbedtls_entropy_init(&data->entropy);
+    mbedtls_x509_crt_init(&data->client_cert);
+    mbedtls_pk_init(&data->client_key);
+
+    const char *pers = "TessesFramework";
+
+    int ret = 0;
+
+    if ((ret = mbedtls_ctr_drbg_seed(
+             &data->ctr_drbg, mbedtls_entropy_func, &data->entropy,
+             (const unsigned char *)pers, strlen(pers))) != 0) {
+        printf("FAILED mbedtls_ctr_drbg_seed\n");
+        return;
+    }
+
+    ret = mbedtls_x509_crt_parse(
+        &data->cachain, (const unsigned char *)cert.c_str(), cert.size() + 1);
+
+    if (ret != 0) {
+        printf("FAILED mbedtls_x509_crt_parse chain %i\n", ret);
+        return;
+    }
+
+    ret = mbedtls_x509_crt_parse(
+        &data->client_cert, (const unsigned char *)keyStore.certificate.c_str(),
+        keyStore.certificate.size() + 1);
+
+    if (ret != 0) {
+        printf("FAILED mbedtls_x509_crt_parse client_certificate %i\n", ret);
+        return;
+    }
+
+    ret = mbedtls_pk_parse_key(
+        &data->client_key, (const unsigned char *)keyStore.certificate.c_str(),
+        keyStore.certificate.size() + 1,
+        keyStore.password.empty()
+            ? NULL
+            : (const unsigned char *)keyStore.password.c_str(),
+        keyStore.password.size(), mbedtls_entropy_func, &data->entropy);
+
+    if (ret != 0) {
+        printf("FAILED mbedtls_x509_crt_parse client_certificate %i\n", ret);
+        return;
+    }
+
+    if ((ret = mbedtls_ssl_config_defaults(&data->conf, MBEDTLS_SSL_IS_CLIENT,
+                                           MBEDTLS_SSL_TRANSPORT_STREAM,
+                                           MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
+        char buffer[100];
+        mbedtls_strerror(ret, buffer, sizeof(buffer));
+        printf("FAILED mbedtls_ssl_conf_defaults %s\n", buffer);
+        return;
+    }
+
+    mbedtls_ssl_conf_rng(&data->conf, mbedtls_ctr_drbg_random, &data->ctr_drbg);
+
+    /* #if defined(MBEDTLS_SSL_CACHE_C)
+  mbedtls_ssl_conf_session_cache(&conf, &cache,
+                                 mbedtls_ssl_cache_get,
+                                 mbedtls_ssl_cache_set);
+#endif*/
+    mbedtls_ssl_conf_authmode(&data->conf, verify ? MBEDTLS_SSL_VERIFY_REQUIRED
+                                                  : MBEDTLS_SSL_VERIFY_NONE);
+    mbedtls_ssl_conf_ca_chain(&data->conf, &data->cachain, NULL);
+
+    mbedtls_ssl_conf_own_cert(&data->conf, &data->client_cert,
+                              &data->client_key);
+
+    mbedtls_ssl_set_bio(&data->ssl, static_cast<void *>(data), strm_send,
+                        strm_recv, NULL);
+    if ((ret = mbedtls_ssl_setup(&data->ssl, &data->conf) != 0)) {
+        printf("FAILED mbedtls_ssl_setup %i\n", ret);
+        return;
+    }
+    if ((ret = mbedtls_ssl_set_hostname(&data->ssl, domain.c_str()) != 0)) {
+        printf("FAILED mbedtls_ssl_set_hostname %i\n", ret);
+        return;
+    }
+    if ((ret = mbedtls_ssl_handshake(&data->ssl)) != 0) {
+        char buffer[100];
+        mbedtls_strerror(ret, buffer, sizeof(buffer));
+        printf("FAILED mbedtls_ssl_handshake %s\n", buffer);
+        return;
+    }
+    uint32_t flags;
+    if ((flags = mbedtls_ssl_get_verify_result(&data->ssl)) != 0) {
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
+        char vrfy_buf[512];
+#endif
+
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
+        mbedtls_x509_crt_verify_info(vrfy_buf, sizeof(vrfy_buf), "  ! ", flags);
+
+#endif
+        if (verify)
+            return;
+    }
+
+    data->success = true;
+
+#endif
+}
+
+void ClientTLSStream::Shutdown(StreamShutdownMode mode) {}
+
 size_t ClientTLSStream::Read(uint8_t *buffer, size_t len) {
 #if defined(TESSESFRAMEWORK_ENABLE_MBED)
     auto priv = static_cast<ClientTLSPrivateData *>(this->privateData);
@@ -245,4 +378,18 @@ ClientTLSStream::~ClientTLSStream() {
     delete static_cast<ClientTLSPrivateData *>(this->privateData);
 #endif
 }
+
+void ClientTLSStream::SetSendTimeout(uint64_t seconds) {
+#if defined(TESSESFRAMEWORK_ENABLE_MBED)
+    static_cast<ClientTLSPrivateData *>(this->privateData)
+        ->strm->SetSendTimeout(seconds);
+#endif
+}
+void ClientTLSStream::SetRecvTimeout(uint64_t seconds) {
+#if defined(TESSESFRAMEWORK_ENABLE_MBED)
+    static_cast<ClientTLSPrivateData *>(this->privateData)
+        ->strm->SetRecvTimeout(seconds);
+#endif
+}
+
 } // namespace Tesses::Framework::Crypto

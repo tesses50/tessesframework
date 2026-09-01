@@ -58,22 +58,36 @@ RouteServer::RouteServer(std::shared_ptr<IHttpServer> root) : root(root) {}
 
 void RouteServer::Add(std::string method, std::string pattern,
                       ServerRequestHandler handler) {
+    mtx.Lock();
     this->routes.emplace_back(pattern, method, handler);
+    mtx.Unlock();
 }
 
 bool RouteServer::Handle(ServerContext &ctx) {
     auto pathArgs = ctx.pathArguments;
     auto path = Tesses::Framework::Filesystem::VFSPath::ParseUriPath(ctx.path);
+    bool mustUnlock = true;
+    mtx.Lock();
     for (auto &svr : this->routes) {
         if (svr.method != ctx.method &&
             !((svr.method == "GET" && ctx.method == "HEAD") ||
               (svr.method == "HEAD" && ctx.method == "GET")))
             continue;
         ctx.pathArguments = pathArgs;
-        if (svr.Equals(path, ctx.pathArguments) && svr.handler &&
-            svr.handler(ctx))
-            return true;
+        if (svr.Equals(path, ctx.pathArguments) && svr.handler) {
+            auto hndl = svr.handler;
+            mtx.Unlock();
+
+            if (hndl(ctx)) {
+                return true;
+            }
+            mustUnlock = false;
+
+            break;
+        }
     }
+    if (mustUnlock)
+        mtx.Unlock();
     ctx.pathArguments = pathArgs;
 
     if (this->root)
@@ -103,5 +117,10 @@ void RouteServer::Query(std::string pattern, ServerRequestHandler handler) {
 }
 void RouteServer::Options(std::string pattern, ServerRequestHandler handler) {
     Add("OPTIONS", pattern, handler);
+}
+void RouteServer::Clear() {
+    mtx.Lock();
+    this->routes.clear();
+    mtx.Unlock();
 }
 } // namespace Tesses::Framework::Http

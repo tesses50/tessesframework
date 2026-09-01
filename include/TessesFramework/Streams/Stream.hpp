@@ -21,8 +21,11 @@
 
 #pragma once
 #include "../Common.hpp"
+#include "../Date/Date.hpp"
 namespace Tesses::Framework::Streams {
 enum class SeekOrigin : uint8_t { Begin = 0, Current = 1, End = 2 };
+enum class StreamShutdownMode { Read = 0, Write = 1, ReadWrite = 2 };
+
 class Stream {
   public:
     int32_t ReadByte();
@@ -42,6 +45,12 @@ class Stream {
     void CopyTo(std::shared_ptr<Stream> strm, size_t buffSize = 1024);
     void CopyToLimit(std::shared_ptr<Stream> strm, uint64_t len,
                      size_t buffSize = 1024);
+    virtual void Shutdown(StreamShutdownMode mode);
+    void SetSendTimeout(Tesses::Framework::Date::TimeSpan ts);
+    void SetRecvTimeout(Tesses::Framework::Date::TimeSpan ts);
+    virtual void SetSendTimeout(uint64_t seconds);
+    virtual void SetRecvTimeout(uint64_t seconds);
+
     virtual void Close();
     virtual ~Stream();
 };

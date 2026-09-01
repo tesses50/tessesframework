@@ -21,6 +21,7 @@
 
 #pragma once
 #include "../Streams/Stream.hpp"
+#include "Crypto.hpp"
 
 namespace Tesses::Framework::Crypto {
 /**
@@ -60,6 +61,32 @@ class ClientTLSStream : public Tesses::Framework::Streams::Stream {
         std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream,
         bool verify, std::string domain, std::string cert);
     /**
+     * @brief Construct a new Client TLS Stream object, with mTLS
+     *
+     * @param innerStream the underlying encrypted in transit stream
+     * @param verify do we verify the certificate
+     * @param domain the domain name
+     * @param keyStore the keystore for mTLS
+     */
+    ClientTLSStream(
+        std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream,
+        bool verify, std::string domain, CertificateKeyStore keyStore);
+    /**
+     * @brief Construct a new Client TLS Stream object with an alternative
+     * certificate chain (for server with self signed certificates) for mTLS
+     *
+     * @param innerStream the underlying encrypted in transit stream
+     * @param verify do we verify the certificate
+     * @param domain the domain name
+     * @param cert the actual certificate
+     * @param keyStore the keystore for mTLS
+     */
+    ClientTLSStream(
+        std::shared_ptr<Tesses::Framework::Streams::Stream> innerStream,
+        bool verify, std::string domain, std::string cert,
+        CertificateKeyStore keyStore);
+
+    /**
      * @brief Read from the stream
      *
      * @param buff the buffer
@@ -96,6 +123,10 @@ class ClientTLSStream : public Tesses::Framework::Streams::Stream {
      * @return false no
      */
     bool EndOfStream();
+
+    void Shutdown(Tesses::Framework::Streams::StreamShutdownMode sdm);
+    void SetSendTimeout(uint64_t seconds);
+    void SetRecvTimeout(uint64_t seconds);
     ~ClientTLSStream();
 };
 

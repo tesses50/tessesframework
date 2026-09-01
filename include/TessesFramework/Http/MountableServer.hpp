@@ -32,6 +32,7 @@ class MountableServer : public IHttpServer {
                         Filesystem::VFSPath offsetPath);
     bool StartsWith(Filesystem::VFSPath fullPath,
                     Filesystem::VFSPath offsetPath);
+    Tesses::Framework::Threading::Mutex mtx;
 
   public:
     MountableServer();
@@ -39,6 +40,5 @@ class MountableServer : public IHttpServer {
     void Mount(std::string path, std::shared_ptr<IHttpServer> server);
     void Unmount(std::string path);
     bool Handle(ServerContext &ctx);
-    ~MountableServer();
 };
 } // namespace Tesses::Framework::Http

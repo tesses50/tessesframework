@@ -42,6 +42,7 @@ class RouteServer : public IHttpServer {
     };
     std::vector<RouteServerRoute> routes;
     std::shared_ptr<IHttpServer> root;
+    Tesses::Framework::Threading::Mutex mtx;
 
   public:
     RouteServer() = default;
@@ -58,5 +59,6 @@ class RouteServer : public IHttpServer {
     void Add(std::string method, std::string pattern,
              ServerRequestHandler handler);
     bool Handle(ServerContext &ctx);
+    void Clear();
 };
 } // namespace Tesses::Framework::Http

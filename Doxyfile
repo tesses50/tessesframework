@@ -1,8 +1,6 @@
 GENERATE_HTML      = YES
-GENERATE_LATEX     = YES
 
 HTML_OUTPUT       = doxy_html
-LATEX_OUTPUT      = doxy_latex
 
 # optional but common
 RECURSIVE          = YES

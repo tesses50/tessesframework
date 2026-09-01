@@ -24,13 +24,47 @@
 #include "VFSFix.hpp"
 
 namespace Tesses::Framework::Filesystem::Helpers {
+/** @brief Read all of the text from a file
+ * @param vfs the VFS you want to use
+ * @param path the path to the file in the VFS
+ * @param text the file's contents
+ */
 void ReadAllText(std::shared_ptr<VFS> vfs, VFSPath path, std::string &text);
+/**
+ * @brief Read all of the lines from a file
+ *
+ * @param vfs the VFS you want to use
+ * @param path the path to the file in the VFS
+ * @param lines the file's lines
+ */
 void ReadAllLines(std::shared_ptr<VFS> vfs, VFSPath path,
                   std::vector<std::string> &lines);
+/**
+ * @brief Read all of the bytes from a file
+ *
+ * @param vfs the VFS you want to use
+ * @param path the path to the file in the VFS
+ * @param array the file's contents
+ */
 void ReadAllBytes(std::shared_ptr<VFS> vfs, VFSPath path,
                   std::vector<uint8_t> &array);
+/**
+ * @brief Read all of the text from a file
+ *
+ * @param vfs the VFS you want to use
+ * @param path the path to the file in the VFS
+ * @return std::string the file's contents
+ */
 std::string ReadAllText(std::shared_ptr<VFS> vfs, VFSPath path);
+/**
+ * @brief Read all of the lines from a file
+ *
+ * @param vfs the VFS you want to use
+ * @param path the path to the file in the VFS
+ * @return std::vector<std::string> the file's lines
+ */
 std::vector<std::string> ReadAllLines(std::shared_ptr<VFS> vfs, VFSPath path);
+
 std::vector<uint8_t> ReadAllBytes(std::shared_ptr<VFS> vfs, VFSPath path);
 void WriteAllText(std::shared_ptr<VFS> vfs, VFSPath path,
                   const std::string &text);

@@ -65,10 +65,12 @@ StreamHttpRequestBody::StreamHttpRequestBody(std::shared_ptr<Stream> strm,
     this->mimeType = mimeType;
 }
 void StreamHttpRequestBody::HandleHeaders(HttpDictionary &dict) {
-    dict.AddValue("Content-Type", this->mimeType);
+    dict.SetValue("Content-Type", this->mimeType);
     auto len = this->strm->GetLength();
     if (len > -1)
-        dict.AddValue("Content-Length", std::to_string(len));
+        dict.SetValue("Content-Length", std::to_string(len));
+    else
+        dict.SetValue("Transfer-Encoding", "chunked");
 }
 void StreamHttpRequestBody::Write(
     std::shared_ptr<Tesses::Framework::Streams::Stream> strm) {
@@ -96,6 +98,7 @@ void HttpRequest::SendRequest(
 
     std::string request = method + " " + uri.GetPathAndQuery() +
                           " HTTP/1.1\r\nHost: " + uri.HostPort() + "\r\n";
+
     for (auto headers : requestHeaders.kvp) {
         for (auto item : headers.second) {
             request.append(headers.first);
@@ -106,7 +109,6 @@ void HttpRequest::SendRequest(
     }
 
     request.append("\r\n");
-
     StreamWriter writer(strm);
     writer.Write(request);
 
@@ -114,9 +116,9 @@ void HttpRequest::SendRequest(
         body->Write(strm);
     }
 }
-std::shared_ptr<Stream>
-HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors,
-                                 std::string trusted_root_cert_bundle) {
+std::shared_ptr<Stream> HttpRequest::EstablishConnection(
+    Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle,
+    std::optional<Crypto::CertificateKeyStore> mTLS_keyStore) {
     if (uri.scheme == "http:" || uri.scheme == "ws:") {
         return std::make_shared<NetworkStream>(uri.host, uri.GetPort(), false,
                                                false, false);
@@ -125,24 +127,34 @@ HttpRequest::EstablishConnection(Uri uri, bool ignoreSSLErrors,
                                                        false, false, false);
         if (netStrm == nullptr)
             return nullptr;
-        return std::make_shared<ClientTLSStream>(
-            netStrm, !ignoreSSLErrors, uri.host, trusted_root_cert_bundle);
+        return mTLS_keyStore
+                   ? std::make_shared<ClientTLSStream>(
+                         netStrm, !ignoreSSLErrors, uri.host,
+                         trusted_root_cert_bundle, mTLS_keyStore.value())
+                   : std::make_shared<ClientTLSStream>(
+                         netStrm, !ignoreSSLErrors, uri.host,
+                         trusted_root_cert_bundle);
     }
 
     return nullptr;
 }
-std::shared_ptr<Stream>
-HttpRequest::EstablishUnixPathConnection(std::string unixPath, Uri uri,
-                                         bool ignoreSSLErrors,
-                                         std::string trusted_root_cert_bundle) {
+std::shared_ptr<Stream> HttpRequest::EstablishUnixPathConnection(
+    std::string unixPath, Uri uri, bool ignoreSSLErrors,
+    std::string trusted_root_cert_bundle,
+    std::optional<Crypto::CertificateKeyStore> mTLS_keyStore) {
     if (uri.scheme == "http:" || uri.scheme == "ws:") {
         return std::make_shared<NetworkStream>(unixPath, false);
     } else if (uri.scheme == "https:" || uri.scheme == "wss:") {
         auto netStrm = std::make_shared<NetworkStream>(unixPath, false);
         if (netStrm == nullptr)
             return nullptr;
-        return std::make_shared<ClientTLSStream>(
-            netStrm, !ignoreSSLErrors, uri.host, trusted_root_cert_bundle);
+        return mTLS_keyStore
+                   ? std::make_shared<ClientTLSStream>(
+                         netStrm, !ignoreSSLErrors, uri.host,
+                         trusted_root_cert_bundle, mTLS_keyStore.value())
+                   : std::make_shared<ClientTLSStream>(
+                         netStrm, !ignoreSSLErrors, uri.host,
+                         trusted_root_cert_bundle);
     }
 
     return nullptr;
@@ -186,13 +198,13 @@ HttpResponse::HttpResponse(HttpRequest &req) : responseHeaders(false) {
     std::string url = req.url;
     Uri uri;
     while (Uri::TryParse(url, uri)) {
-        auto strm =
-            req.unixSocket.empty()
-                ? HttpRequest::EstablishConnection(uri, req.ignoreSSLErrors,
-                                                   req.trusted_root_cert_bundle)
-                : HttpRequest::EstablishUnixPathConnection(
-                      req.unixSocket, uri, req.ignoreSSLErrors,
-                      req.trusted_root_cert_bundle);
+        auto strm = req.unixSocket.empty()
+                        ? HttpRequest::EstablishConnection(
+                              uri, req.ignoreSSLErrors,
+                              req.trusted_root_cert_bundle, req.mTLS_keyStore)
+                        : HttpRequest::EstablishUnixPathConnection(
+                              req.unixSocket, uri, req.ignoreSSLErrors,
+                              req.trusted_root_cert_bundle, req.mTLS_keyStore);
         if (strm == nullptr)
             return;
         auto reqHeaders = req.requestHeaders;
@@ -628,7 +640,7 @@ void WebSocketUnixSocketClient(std::string unixSocket, std::string url,
     if (resp.statusCode != 101 ||
         !resp.responseHeaders.TryGetFirst("Sec-WebSocket-Accept", accept) ||
         !resp.responseHeaders.AnyEquals("Connection", "Upgrade") ||
-        !resp.responseHeaders.AnyEquals("Upgrade", "websocket")) {
+        !resp.responseHeaders.AnyEqualsCSV("Upgrade", "websocket")) {
         cb(resp.responseHeaders, false);
         return;
     }

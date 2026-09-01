@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "../Date/Date.hpp"
 #include "../HiddenField.hpp"
 namespace Tesses::Framework::Threading {
 class Mutex {
@@ -28,9 +29,39 @@ class Mutex {
 
   public:
     Mutex();
+
     void Lock();
+
     void Unlock();
     bool TryLock();
+
+    void lock() { Lock(); }
+    void unlock() { Unlock(); }
     ~Mutex();
+
+    friend class Cond;
 };
+class LockGuard {
+    Mutex &mtx;
+
+  public:
+    explicit LockGuard(Mutex &m) : mtx(m) { mtx.Lock(); }
+    ~LockGuard() { mtx.Unlock(); }
+    LockGuard(const LockGuard &) = delete;
+    LockGuard &operator=(const LockGuard &) = delete;
+};
+
+class Cond {
+    HiddenField data;
+
+  public:
+    Cond();
+    void Wait(Mutex *mtx);
+    bool Wait(Mutex *mtx, uint32_t milliseconds);
+    bool Wait(Mutex *mtx, Date::TimeSpan ts);
+    void Signal();
+    void Broadcast();
+    ~Cond();
+};
+
 } // namespace Tesses::Framework::Threading

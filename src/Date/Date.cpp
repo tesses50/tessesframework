@@ -392,7 +392,10 @@ const char *weekday_long[] = {"Sunday",   "Monday", "Tuesday", "Wednesday",
 const char *months_long[] = {"January",   "Febuary", "March",    "April",
                              "May",       "June",    "July",     "August",
                              "September", "October", "November", "December"};
-bool DateTime::TryParseHttpDate(std::string txt, DateTime &dt) {
+bool DateTime::TryParseHttpDate(std::string_view txt) {
+    return TryParseHttpDate(txt, *this);
+}
+bool DateTime::TryParseHttpDate(std::string_view txt, DateTime &dt) {
     // Mon, 24 Jul 2018 11:00:00 GMT
     auto split = Http::HttpUtils::SplitString(txt, ", ", 2);
     if (split.size() != 2)
@@ -579,9 +582,8 @@ std::string DateTime::ToString(std::string fmt) const {
 
                 break;
                 case 'u': {
-                    int dow = weekday + 6;
-                    dow %= 7;
-                    text.append(std::to_string(dow + 1));
+
+                    text.append(std::to_string(weekday + 1));
                 } break;
                 case 'w': {
 
@@ -590,10 +592,10 @@ std::string DateTime::ToString(std::string fmt) const {
                 case 'c': {
                     text.append(weekday_short[weekday]);
                     text.push_back(' ');
-                    text.append(months_short[month]);
+                    text.append(months_short[month - 1]);
                     text.push_back(' ');
                     text.append(
-                        Http::HttpUtils::LeftPad(std::to_string(day), 2, '0'));
+                        Http::HttpUtils::LeftPad(std::to_string(day), 2, ' '));
                     text.push_back(' ');
                     text.append(
                         Http::HttpUtils::LeftPad(std::to_string(hour), 2, '0'));
@@ -709,7 +711,29 @@ void TimeSpan::SetTotalMinutes(int64_t totalMinutes) {
 void TimeSpan::SetTotalHours(int64_t totalHours) {
     this->totalSeconds = totalHours * 3600;
 }
-
+void TimeSpan::SetTotalDays(int64_t totalDays) {
+    this->totalSeconds = totalDays * 86400;
+}
+TimeSpan TimeSpan::FromSeconds(int64_t sec) {
+    TimeSpan span;
+    span.SetTotalSeconds(sec);
+    return span;
+}
+TimeSpan TimeSpan::FromMinutes(int64_t minutes) {
+    TimeSpan span;
+    span.SetTotalMinutes(minutes);
+    return span;
+}
+TimeSpan TimeSpan::FromHours(int64_t hours) {
+    TimeSpan span;
+    span.SetTotalMinutes(hours);
+    return span;
+}
+TimeSpan TimeSpan::FromDays(int64_t days) {
+    TimeSpan span;
+    span.SetTotalMinutes(days);
+    return span;
+}
 std::string TimeSpan::ToString(bool slim) const {
     std::string str = {};
     if (this->totalSeconds < 0)
@@ -750,8 +774,8 @@ std::string TimeSpan::ToString(bool slim) const {
     }
     return str;
 }
-
-bool TimeSpan::TryParse(std::string text, TimeSpan &span) {
+bool TimeSpan::TryParse(std::string_view text) { return TryParse(text, *this); }
+bool TimeSpan::TryParse(std::string_view text, TimeSpan &span) {
     if (text.empty())
         return false;
     bool negative = text[0] == '-';
@@ -759,7 +783,7 @@ bool TimeSpan::TryParse(std::string text, TimeSpan &span) {
 
     try {
 
-        std::string colonPart = text.substr(negative ? 1 : 0);
+        std::string_view colonPart = text.substr(negative ? 1 : 0);
         auto res = Http::HttpUtils::SplitString(colonPart, ":");
 
         if (res.size() < 2 || res.size() > 3)

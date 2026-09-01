@@ -699,12 +699,56 @@ void ShellFileOrUrl(std::string fileOrUrl) {
 #elif !defined(TESSESFRAMEWORK_ENABLE_PROCESS)
     throw std::runtime_error("Process not enabled");
 #elif defined(_WIN32)
-    auto exec = Tesses::Framework::Platform::Environment::GetRealExecutablePath(
-        (std::string) "cmd");
-    Process p(exec.ToString(), {"cmd", "/c", "start", fileOrUrl});
-    if (p.Start())
-        if (p.WaitForExit() != 0)
-            throw std::runtime_error("Exit code did not indicate success");
+    std::u16string wname;
+    UTF16::FromUTF8(wname, fileOrUrl);
+
+    auto result = ShellExecuteW(NULL, L"open", (LPCWSTR)wname.c_str(), NULL,
+                                NULL, SW_SHOWNORMAL);
+    if ((INT_PTR)result <= 32) {
+        switch ((int)result) {
+        case 0:
+            throw std::runtime_error(
+                "The operating system is out of memory or resources.");
+        case 2:
+            throw std::runtime_error(
+                "The specified file was not found (SE_ERR_FNF).");
+        case 3:
+            throw std::runtime_error(
+                "The specified path was not found (SE_ERR_PNF).");
+        case 5:
+            throw std::runtime_error("Access denied (SE_ERR_ACCESSDENIED).");
+        case 8:
+            throw std::runtime_error("Out of memory (SE_ERR_OOM).");
+        case 11:
+            throw std::runtime_error(
+                "Bad executable format (ERROR_BAD_FORMAT).");
+        case 26:
+            throw std::runtime_error(
+                "Sharing violation occurred (SE_ERR_SHARE).");
+        case 27:
+            throw std::runtime_error("File association incomplete or invalid "
+                                     "(SE_ERR_ASSOCINCOMPLETE).");
+        case 28:
+            throw std::runtime_error(
+                "DDE transaction timed out (SE_ERR_DDETIMEOUT).");
+        case 29:
+            throw std::runtime_error(
+                "DDE transaction failed (SE_ERR_DDEFAIL).");
+        case 30:
+            throw std::runtime_error("DDE transaction busy (SE_ERR_DDEBUSY).");
+        case 31:
+            throw std::runtime_error(
+                "No application associated with file extension "
+                "(SE_ERR_NOASSOC).");
+        case 32:
+            throw std::runtime_error("Dynamic-link library (DLL) not found "
+                                     "(SE_ERR_DLLNOTFOUND).");
+        default:
+            throw std::runtime_error("Unknown error: " +
+                                     std::to_string((int)result));
+        }
+    }
+
 #elif defined(__APPLE__)
     auto exec = Tesses::Framework::Platform::Environment::GetRealExecutablePath(
         (std::string) "open");

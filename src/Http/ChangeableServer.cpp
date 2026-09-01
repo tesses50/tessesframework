@@ -27,9 +27,22 @@ ChangeableServer::ChangeableServer(std::shared_ptr<IHttpServer> original) {
     this->server = original;
 }
 
+std::shared_ptr<IHttpServer> ChangeableServer::GetServer() {
+    mtx.Lock();
+    auto server = this->server;
+    mtx.Unlock();
+    return server;
+}
+void ChangeableServer::SetServer(std::shared_ptr<IHttpServer> server) {
+    mtx.Lock();
+    this->server = server;
+    mtx.Unlock();
+}
 bool ChangeableServer::Handle(ServerContext &ctx) {
-    if (this->server)
-        this->server->Handle(ctx);
+    auto server = GetServer();
+
+    if (server)
+        return server->Handle(ctx);
     return false;
 }
 ChangeableServer::~ChangeableServer() {}

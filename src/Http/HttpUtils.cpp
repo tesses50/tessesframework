@@ -162,17 +162,19 @@ std::string Uri::ToString() {
     uri.append(this->GetPathAndQuery());
     return uri;
 }
-std::string HttpUtils::Replace(std::string text, std::string find,
-                               std::string replace) {
+std::string HttpUtils::Replace(std::string_view text, std::string_view find,
+                               std::string_view replace) {
+    if (find.empty())
+        return std::string(text);
     std::string dest;
     while (text.length() > 0) {
         std::size_t index = text.find(find);
 
-        if (index == std::string::npos) {
+        if (index == std::string_view::npos) {
             dest.append(text);
             break;
         } else {
-            std::string left = text.substr(0, index);
+            std::string_view left = text.substr(0, index);
 
             text = text.substr(index + find.size());
             dest.append(left);
@@ -182,12 +184,12 @@ std::string HttpUtils::Replace(std::string text, std::string find,
     return dest;
 }
 
-std::string HttpUtils::LeftPad(std::string text, int count, char c) {
-    if (text.size() >= (size_t)count)
-        return text;
-
-    text.insert(text.begin(), (size_t)count - text.size(), c);
-    return text;
+std::string HttpUtils::LeftPad(std::string_view text, int count, char c) {
+    if (text.size() >= count)
+        return std::string(text);
+    std::string newStr(count - text.size(), c);
+    newStr.append(text);
+    return newStr;
 }
 char HttpUtils::NibbleToHex(uint8_t b, bool isUppercase) {
     if (isUppercase) {
@@ -221,74 +223,105 @@ uint8_t HttpUtils::HexToNibble(char c) {
     return 0;
 }
 
-std::string HttpUtils::MimeType(std::filesystem::path p) {
-    std::string ext = p.extension().string();
-    if (ext == ".html" || ext == ".htm") {
-        return "text/html";
-    }
-    if (ext == ".txt" || ext == ".log" || ext == ".twss") {
-        return "text/plain";
-    }
-    if (ext == ".woff") {
-        return "application/x-font-woff";
-    }
-    if (ext == ".vtt") {
-        return "text/vtt";
-    }
-    if (ext == ".svg") {
-        return "image/svg+xml";
-    }
-    if (ext == ".webp") {
-        return "image/webp";
-    }
-    if (ext == ".vcf") {
-        return "text/v-card";
-    }
-    if (ext == ".rss" || ext == ".xml" || ext == ".atom" || ext == ".rdf") {
-        return "application/xml";
-    }
-    if (ext == ".js") {
-        return "text/javascript";
-    }
-    if (ext == ".json") {
-        return "application/json";
-    }
-    if (ext == ".wasm") {
-        return "application/wasm";
-    }
-    if (ext == ".png") {
-        return "image/png";
-    }
-    if (ext == ".jpg" || ext == ".jpeg") {
-        return "image/jpeg";
-    }
-    if (ext == ".css") {
-        return "text/css";
-    }
-    if (ext == ".gif") {
-        return "image/gif";
-    }
-    if (ext == ".mp4") {
-        return "video/mp4";
-    }
-    if (ext == ".mov") {
-        return "video/quicktime";
-    }
-    if (ext == ".m4a") {
-        return "audio/mp4";
-    }
-    if (ext == ".webm") {
-        return "video/webm";
-    }
-    if (ext == ".webmanifest") {
-        return "application/manifest+json";
-    }
-    if (ext == ".ico") {
-        return "image/x-icon";
-    }
+struct mimetype_reg {
+    Threading::Mutex mtx;
+    std::unordered_map<std::string, std::string> map = {
+        {".html", "text/html"},
+        {".htm", "text/html"},
+        {".txt", "text/plain"},
+        {".log", "text/plain"},
+        {".twss", "text/twss"},
+        {".css", "text/css"},
+        {".js", "text/javascript"},
+        {".mjs", "text/javascript"},
+        {".json", "application/json"},
+        {".map", "application/json"},
+        {".pdf", "application/pdf"},
+        {".png", "image/png"},
+        {".jpg", "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".gif", "image/gif"},
+        {".webp", "image/webp"},
+        {".svg", "image/svg+xml"},
+        {".ico", "image/x-icon"},
+        {".bmp", "image/bmp"},
+        {".avif", "image/avif"},
+        {".heic", "image/heic"},
+        {".tif", "image/tiff"},
+        {".tiff", "image/tiff"},
+        {".mp4", "video/mp4"},
+        {".webm", "video/webm"},
+        {".mov", "video/quicktime"},
+        {".mkv", "video/x-matroska"},
+        {".avi", "video/x-msvideo"},
+        {".ts", "video/mp2t"},
+        {".mp3", "audio/mpeg"},
+        {".m4a", "audio/mp4"},
+        {".ogg", "audio/ogg"},
+        {".oga", "audio/ogg"},
+        {".opus", "audio/ogg"},
+        {".wav", "audio/wav"},
+        {".flac", "audio/flac"},
+        {".aac", "audio/aac"},
+        {".weba", "audio/webm"},
+        {".woff", "font/woff"},
+        {".woff2", "font/woff2"},
+        {".ttf", "font/ttf"},
+        {".zip", "application/zip"},
+        {".gz", "application/gzip"},
+        {".7z", "application/x-7z-compressed"},
+        {".rar", "application/vnd.rar"},
+        {".csv", "text/csv"},
+        {".vtt", "text/vtt"},
+        {".vcf", "text/v-card"},
+        {".rss", "application/xml"},
+        {".xml", "application/xml"},
+        {".atom", "application/xml"},
+        {".rdf", "application/xml"},
+        {".wasm", "application/wasm"},
+        {".webmanifest", "application/manifest+json"},
+        {".m3u8", "application/vnd.apple.mpegurl"},
+        {".mpd", "application/dash+xml"},
+        {".md", "text/markdown"},
+        {".epub", "application/epub+zip"},
+        {".ics", "text/calendar"},
+        {".apk", "application/vnd.android.package-archive"},
+        {".crvm", "application/crvm"},
+        {".tcross", "text/tcross"},
+    };
+    std::string Get(const std::string &ext) {
+        Threading::LockGuard lg(mtx);
+        std::string mime;
 
-    return "application/octet-stream";
+        if (map.count(ext) != 0)
+            mime = map[ext];
+
+        if (mime.empty())
+            return "application/octet-stream";
+        return mime;
+    }
+    void Add(const std::string &ext, const std::string &mime) {
+        Threading::LockGuard lg(mtx);
+        map[ext] = mime;
+    }
+};
+
+static mimetype_reg mime_reg;
+
+std::string HttpUtils::GetMimeType(const std::string &ext) {
+    return mime_reg.Get(ext);
 }
+std::string HttpUtils::GetMimeTypePath(const Filesystem::VFSPath &p) {
+    return GetMimeType(p.GetExtension());
+}
+void HttpUtils::AddMimeType(const std::string &ext, const std::string &mime) {
+    mime_reg.Add(ext, mime);
+}
+void HttpUtils::AddMimeTypePath(const Filesystem::VFSPath &p,
+                                const std::string &mime) {
+    AddMimeType(p.GetExtension(), mime);
+}
+
 bool HttpUtils::Invalid(char c) {
     // just do windows because it is the strictist when it comes to windows, mac
     // and linux
@@ -316,7 +349,7 @@ bool HttpUtils::Invalid(char c) {
         return true;
     return false;
 }
-std::string HttpUtils::Sanitise(std::string text) {
+std::string HttpUtils::Sanitise(std::string_view text) {
     std::string myStr = {};
     for (auto item : text) {
         if (Invalid(item))
@@ -326,7 +359,8 @@ std::string HttpUtils::Sanitise(std::string text) {
     return myStr;
 }
 
-void HttpUtils::QueryParamsDecode(HttpDictionary &dict, std::string query) {
+void HttpUtils::QueryParamsDecode(HttpDictionary &dict,
+                                  std::string_view query) {
     for (auto item : SplitString(query, "&")) {
         std::vector<std::string> ss = SplitString(item, "=", 2);
         if (ss.size() >= 1) {
@@ -338,7 +372,7 @@ void HttpUtils::QueryParamsDecode(HttpDictionary &dict, std::string query) {
         }
     }
 }
-std::string HttpUtils::Join(std::string joinStr,
+std::string HttpUtils::Join(std::string_view joinStr,
                             std::vector<std::string> ents) {
     std::string str = {};
     bool first = true;
@@ -368,41 +402,43 @@ std::string HttpUtils::QueryParamsEncode(HttpDictionary &dict) {
     return s;
 }
 
-std::string HttpUtils::UrlDecode(std::string v) {
+std::string HttpUtils::UrlDecode(std::string_view v) {
     std::string s = {};
 
     for (size_t i = 0; i < v.size(); i++) {
         if (v[i] == '+')
             s.push_back(' ');
         else if (v[i] == '%') {
-            i++;
-            uint8_t n = HexToNibble(v[i]) << 4;
-            i++;
-            n |= HexToNibble(v[i]);
-            s.push_back((char)n);
+            if (i + 2 >= v.size())
+                break;
+
+            uint8_t n = (HexToNibble(v[i + 1]) << 4) | (HexToNibble(v[i + 2]));
+            i += 2;
+            s.push_back(static_cast<char>(n));
         } else
             s.push_back(v[i]);
     }
     return s;
 }
-std::string HttpUtils::UrlPathEncode(std::string v, bool ignoreSpace) {
+std::string HttpUtils::UrlPathEncode(std::string_view v, bool ignoreSpace) {
     std::string s = {};
 
     for (auto item : v) {
-        if (item >= 'A' && item <= 'Z')
+        uint8_t byte = static_cast<uint8_t>(item);
+        if (byte >= 'A' && byte <= 'Z')
             s.push_back(item);
-        else if (item >= 'a' && item <= 'z')
+        else if (byte >= 'a' && byte <= 'z')
             s.push_back(item);
-        else if (item >= '0' && item <= '9')
+        else if (byte >= '0' && byte <= '9')
             s.push_back(item);
-        else if (item == '-' || item == '_' || item == '.' || item == '~' ||
-                 item == '/')
+        else if (byte == '-' || byte == '_' || byte == '.' || byte == '~' ||
+                 byte == '/')
             s.push_back(item);
         else {
-            if (item != ' ' || !ignoreSpace) {
+            if (byte != ' ' || !ignoreSpace) {
                 s.push_back('%');
-                s.push_back(NibbleToHex((item >> 4) & 0xF));
-                s.push_back(NibbleToHex((item) & 0xF));
+                s.push_back(NibbleToHex((byte >> 4) & 0xF));
+                s.push_back(NibbleToHex((byte) & 0xF));
             } else {
                 s.push_back(' ');
             }
@@ -410,134 +446,87 @@ std::string HttpUtils::UrlPathEncode(std::string v, bool ignoreSpace) {
     }
     return s;
 }
-std::string HttpUtils::UrlPathDecode(std::string v) {
+std::string HttpUtils::UrlPathDecode(std::string_view v) {
     std::string s = {};
 
     for (size_t i = 0; i < v.size(); i++) {
         if (v[i] == '%') {
-            i++;
-            uint8_t n = HexToNibble(v[i]) << 4;
-            i++;
-            n |= HexToNibble(v[i]);
-            s.push_back((char)n);
+            if (i + 2 >= v.size())
+                break;
+
+            uint8_t n = (HexToNibble(v[i + 1]) << 4) | (HexToNibble(v[i + 2]));
+            i += 2;
+            s.push_back(static_cast<char>(n));
         } else
             s.push_back(v[i]);
     }
     return s;
 }
 
-std::string HttpUtils::UrlEncode(std::string v) {
+std::string HttpUtils::UrlEncode(std::string_view v) {
     std::string s = {};
 
     for (auto item : v) {
-        if (item == ' ')
+        uint8_t byte = static_cast<uint8_t>(item);
+        if (byte == ' ')
             s.push_back('+');
-        else if (item >= 'A' && item <= 'Z')
+        else if (byte >= 'A' && byte <= 'Z')
             s.push_back(item);
-        else if (item >= 'a' && item <= 'z')
+        else if (byte >= 'a' && byte <= 'z')
             s.push_back(item);
-        else if (item >= '0' && item <= '9')
+        else if (byte >= '0' && byte <= '9')
             s.push_back(item);
-        else if (item == '-' || item == '_' || item == '.' || item == '~')
+        else if (byte == '-' || byte == '_' || byte == '.' || byte == '~')
             s.push_back(item);
         else {
             s.push_back('%');
-            s.push_back(NibbleToHex((item >> 4) & 0xF));
-            s.push_back(NibbleToHex((item) & 0xF));
+            s.push_back(NibbleToHex((byte >> 4) & 0xF));
+            s.push_back(NibbleToHex((byte) & 0xF));
         }
     }
     return s;
 }
-
-std::vector<std::string> HttpUtils::SplitString(std::string text,
-                                                std::string delimiter,
-                                                std::size_t maxCnt) {
-    std::vector<std::string> strs;
+void HttpUtils::SplitString(std::vector<std::string> &strs,
+                            std::string_view text, std::string_view delimiter,
+                            std::size_t maxCnt) {
+    if (maxCnt == 0)
+        return;
+    if (delimiter.empty()) {
+        strs.push_back(std::string(text));
+        return;
+    }
     std::size_t i = 1;
-    while (text.length() > 0) {
+    while (true) {
         if (i == maxCnt) {
-            strs.push_back(text);
+            strs.push_back(std::string(text));
             break;
         }
         std::size_t index = text.find(delimiter);
 
-        if (index == std::string::npos) {
-            strs.push_back(text);
+        if (index == std::string_view::npos) {
+            strs.push_back(std::string(text));
             break;
-        } else {
-            std::string left = text.substr(0, index);
-
-            text = text.substr(index + delimiter.size());
-
-            strs.push_back(left);
         }
+        std::string_view left = text.substr(0, index);
+
+        text = text.substr(index + delimiter.size());
+
+        strs.push_back(std::string(left));
+
         i++;
     }
+}
+
+std::vector<std::string> HttpUtils::SplitString(std::string_view text,
+                                                std::string_view delimiter,
+                                                std::size_t maxCnt) {
+    std::vector<std::string> strs;
+    SplitString(strs, text, delimiter, maxCnt);
+
     return strs;
 }
-std::string HttpUtils::HtmlDecodeOnlyEntityNumber(std::string v) {
-    std::string buff = {};
-    int state = 0;
-    uint64_t n = 0;
-    for (auto item : v) {
-        switch (state) {
-        case 0:
-            if (item == '&')
-                state = 1;
-            else
-                buff.push_back(item);
-            break;
-        case 1:
-            if (item == '#') {
-                state = 2;
-                n = 0;
-            } else {
-                state = 0;
-                buff.push_back('&');
-                buff.push_back(item);
-            }
-            break;
-        case 2:
-            if (item == ';') {
-                state = 0;
-                if (n <= 0x7F) {
-                    buff.push_back((char)n);
-                } else if (n >= 0x80 && n <= 0x7FF) {
-                    uint8_t high =
-                        0b11000000 | ((uint8_t)(n >> 6) & 0b00011111);
-                    uint8_t low = 0b10000000 | ((uint8_t)(n) & 0b00111111);
-                    buff.push_back((char)high);
-                    buff.push_back((char)low);
-                } else if (n >= 0x800 && n <= 0xFFFF) {
-                    uint8_t high =
-                        0b11100000 | ((uint8_t)(n >> 12) & 0b00001111);
-                    uint8_t low = 0b10000000 | ((uint8_t)(n >> 6) & 0b00111111);
-                    uint8_t lowest = 0b10000000 | ((uint8_t)(n) & 0b00111111);
-                    buff.push_back((char)high);
-                    buff.push_back((char)low);
-                    buff.push_back((char)lowest);
-                } else if (n >= 0x010000 && n <= 0x10FFFF) {
-                    uint8_t highest =
-                        0b11110000 | ((uint8_t)(n >> 18) & 0b00000111);
-                    uint8_t high =
-                        0b10000000 | ((uint8_t)(n >> 12) & 0b00111111);
-                    uint8_t low = 0b10000000 | ((uint8_t)(n >> 6) & 0b00111111);
-                    uint8_t lowest = 0b10000000 | ((uint8_t)(n) & 0b00111111);
-                    buff.push_back((char)highest);
 
-                    buff.push_back((char)high);
-                    buff.push_back((char)low);
-                    buff.push_back((char)lowest);
-                }
-            } else if (item >= '0' && item <= '9') {
-                n *= 10;
-                n += item - '0';
-            }
-        }
-    }
-    return buff;
-}
-std::string HttpUtils::HtmlP(std::string text) {
+std::string HttpUtils::HtmlP(std::string_view text) {
     std::string newText = "";
     std::string builder = "";
 
@@ -589,7 +578,7 @@ std::string HttpUtils::HtmlP(std::string text) {
 
     return newText;
 }
-std::string HttpUtils::HtmlEncode(std::string html) {
+std::string HttpUtils::HtmlEncode(std::string_view html) {
     std::string myHtml = {};
     for (auto item : html) {
         if (item == '\"') {
@@ -736,24 +725,57 @@ std::string HttpUtils::StatusCodeString(StatusCode code) {
         return "";
     }
 }
-CaseInsensitiveLess::CaseInsensitiveLess(const CaseInsensitiveLess &str) {
-    this->caseSensitive = str.caseSensitive;
-    this->offset = this;
-}
-CaseInsensitiveLess::CaseInsensitiveLess() {
-    this->caseSensitive = false;
-    this->offset = this;
-}
-HttpDictionary::HttpDictionary(bool isCaseSensitive) {
 
-    this->kvp.key_comp().offset->caseSensitive = isCaseSensitive;
+CaseInsensitiveLess::CaseInsensitiveLess(bool caseSensitive) {
+    this->caseSensitive = caseSensitive;
 }
+HttpDictionary::HttpDictionary(bool isCaseSensitive)
+    : kvp(CaseInsensitiveLess(isCaseSensitive)) {}
 bool HttpDictionary::AnyEquals(std::string key, std::string value) {
     if (this->kvp.count(key) > 0)
         for (auto v : this->kvp[key])
             if (v == value)
                 return true;
     // for(auto v : item.second) if(v == value) return true;
+    return false;
+}
+bool HttpUtils::CaseInsensitiveCompare(std::string_view left,
+                                       std::string_view right) {
+    if (left.size() != right.size())
+        return false;
+
+    for (size_t i = 0; i < left.size(); i++) {
+        unsigned char senleft = static_cast<unsigned char>(left[i]);
+        unsigned char senright = static_cast<unsigned char>(right[i]);
+        unsigned char insenleft = (senleft & 0b11011111);
+        unsigned char insenright = (senright & 0b11011111);
+
+        if (insenleft >= 'A' && insenleft <= 'Z' && insenright >= 'A' &&
+            insenright <= 'Z') {
+            if (insenleft != insenright)
+                return false;
+        } else if (senleft != senright)
+            return false;
+    }
+    return true;
+}
+bool HttpDictionary::AnyEqualsCSV(std::string key, std::string value) {
+
+    if (this->kvp.count(key)) {
+        for (std::string v : this->kvp[key]) {
+            auto items = HttpUtils::SplitString(v, ",");
+            for (auto item : items) {
+                std::string_view itm = item;
+                size_t start = itm.find_first_not_of(" \t");
+                if (start == std::string::npos)
+                    continue; // Empty
+                size_t end = itm.find_last_not_of(" \t");
+                std::string_view val = itm.substr(start, end - start + 1);
+                if (HttpUtils::CaseInsensitiveCompare(value, val))
+                    return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -848,20 +870,89 @@ bool HttpDictionary::TryGetFirstDouble(std::string key, double &value) {
     }
     return true;
 }
+
+bool HttpDictionary::TryGetOnlyOne(std::string key, std::string &value) {
+    if (kvp.count(key) == 0)
+        return false;
+    auto &ls = kvp[key];
+    if (ls.size() != 1)
+        return false;
+    value = ls.front();
+
+    return true;
+}
+
+bool HttpDictionary::TryGetOnlyOneInt(std::string key, int64_t &value) {
+    std::string val;
+    if (!TryGetOnlyOne(key, val))
+        return false;
+    try {
+        size_t off = 0;
+        auto v = std::stoll(val, &off);
+        if (off != val.size())
+            return false;
+        value = v;
+    } catch (std::exception &ex) {
+        return false;
+    }
+    return true;
+}
+
+bool HttpDictionary::TryGetOnlyOneDouble(std::string key, double &value) {
+    std::string val;
+    if (!TryGetOnlyOne(key, val))
+        return false;
+    try {
+        size_t off = 0;
+        auto v = std::stod(val, &off);
+        if (off != val.size())
+            return false;
+        value = v;
+    } catch (std::exception &ex) {
+        return false;
+    }
+    return true;
+}
+bool HttpDictionary::TryGetOnlyOneDate(std::string key, Date::DateTime &value) {
+    std::string val;
+    if (!TryGetOnlyOne(key, val))
+        return false;
+    return Date::DateTime::TryParseHttpDate(val, value);
+}
+
+bool HttpDictionary::TryGetOnlyOneBoolean(std::string key, bool &val) {
+    val = false;
+    if (kvp.count(key) == 0)
+        return true;
+
+    auto &ls = kvp[key];
+    if (ls.size() != 1)
+        return false;
+
+    auto front = ls.front();
+    val = front == "on" || front == "true";
+
+    return true;
+}
+
 bool CaseInsensitiveLess::operator()(const std::string &s1,
                                      const std::string &s2) const {
     if (this->caseSensitive)
-        return s1 == s2;
-    return HttpUtils::ToLower(s1) < HttpUtils::ToLower(s2);
+        return s1 < s2;
+    return std::lexicographical_compare(
+        s1.begin(), s1.end(), s2.begin(), s2.end(), [](char a, char b) {
+            return std::tolower(static_cast<unsigned char>(a)) <
+                   std::tolower(static_cast<unsigned char>(b));
+        });
 }
 
-std::string HttpUtils::ToLower(std::string str) {
+std::string HttpUtils::ToLower(std::string_view str) {
     std::string str1(str.length(), ' ');
     std::transform(str.begin(), str.end(), str1.begin(), tolower);
     return str1;
 }
 
-std::string HttpUtils::ToUpper(std::string str) {
+std::string HttpUtils::ToUpper(std::string_view str) {
     std::string str1(str.length(), ' ');
     std::transform(str.begin(), str.end(), str1.begin(), toupper);
     return str1;
@@ -909,13 +1000,12 @@ void HttpUtils::BytesToHex(std::string &text, const std::vector<uint8_t> &data,
         text[i * 2 + 1] += NibbleToHex(data[i], isUpper);
     }
 }
-std::vector<uint8_t> HttpUtils::HexToBytes(const std::string &text) {
+std::vector<uint8_t> HttpUtils::HexToBytes(std::string_view text) {
     std::vector<uint8_t> data;
     HexToBytes(data, text);
     return data;
 }
-void HttpUtils::HexToBytes(std::vector<uint8_t> &data,
-                           const std::string &text) {
+void HttpUtils::HexToBytes(std::vector<uint8_t> &data, std::string_view text) {
     if (text.empty()) {
         data.clear();
         return;

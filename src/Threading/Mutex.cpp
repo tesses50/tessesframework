@@ -34,26 +34,45 @@ namespace Tesses::Framework::Threading {
 class MutexHiddenFieldData : public HiddenFieldData {
   public:
 #if defined(_WIN32)
-    HANDLE mtx;
+    CRITICAL_SECTION mtx;
 #else
     pthread_mutex_t mtx;
     pthread_mutexattr_t attr;
 #endif
     ~MutexHiddenFieldData() {
 #if defined(_WIN32)
-        CloseHandle(mtx);
+        DeleteCriticalSection(&mtx);
 #else
         pthread_mutex_destroy(&mtx);
         pthread_mutexattr_destroy(&attr);
 #endif
     }
 };
+
+class MutexCondHiddenFieldData : public HiddenFieldData {
+  public:
+#if defined(_WIN32)
+    CONDITION_VARIABLE cond;
+#else
+
+    pthread_cond_t cond;
 #endif
+
+    ~MutexCondHiddenFieldData() {
+#if defined(_WIN32)
+
+#else
+        pthread_cond_destroy(&cond);
+#endif
+    }
+};
+#endif
+
 Mutex::Mutex() {
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     auto md = this->data.AllocField<MutexHiddenFieldData>();
 #if defined(_WIN32)
-    md->mtx = CreateMutex(NULL, false, NULL);
+    InitializeCriticalSection(&(md->mtx));
 #else
     pthread_mutexattr_init(&md->attr);
     pthread_mutexattr_settype(&md->attr, PTHREAD_MUTEX_RECURSIVE);
@@ -66,7 +85,7 @@ void Mutex::Lock() {
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     auto md = this->data.GetField<MutexHiddenFieldData *>();
 #if defined(_WIN32)
-    WaitForSingleObject(md->mtx, INFINITE);
+    EnterCriticalSection(&(md->mtx));
 
 #else
     pthread_mutex_lock(&md->mtx);
@@ -77,7 +96,7 @@ void Mutex::Unlock() {
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     auto md = this->data.GetField<MutexHiddenFieldData *>();
 #if defined(_WIN32)
-    ReleaseMutex(md->mtx);
+    LeaveCriticalSection(&(md->mtx));
 #else
     pthread_mutex_unlock(&md->mtx);
 #endif
@@ -87,12 +106,88 @@ bool Mutex::TryLock() {
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     auto md = this->data.GetField<MutexHiddenFieldData *>();
 #if defined(_WIN32)
-    return WaitForSingleObject(md->mtx, 100) == WAIT_OBJECT_0;
-
+    return TryEnterCriticalSection(&md->mtx) != FALSE;
 #else
     return pthread_mutex_trylock(&md->mtx) == 0;
 #endif
 #endif
 }
 Mutex::~Mutex() {}
+
+Cond::Cond() {
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    auto md = this->data.AllocField<MutexCondHiddenFieldData>();
+#if defined(_WIN32)
+    InitializeConditionVariable(&md->cond);
+#else
+    pthread_cond_init(&md->cond, NULL);
+
+#endif
+#endif
+}
+
+void Cond::Wait(Mutex *mtx) {
+    if (mtx == nullptr)
+        return;
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    auto mcd = this->data.GetField<MutexCondHiddenFieldData *>();
+    auto md = mtx->data.GetField<MutexHiddenFieldData *>();
+#if defined(_WIN32)
+    SleepConditionVariableCS(&mcd->cond, &md->mtx, INFINITE);
+#else
+    pthread_cond_wait(&mcd->cond, &md->mtx);
+#endif
+#endif
+}
+bool Cond::Wait(Mutex *mtx, uint32_t milliseconds) {
+    if (mtx == nullptr)
+        return false;
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    auto mcd = this->data.GetField<MutexCondHiddenFieldData *>();
+    auto md = mtx->data.GetField<MutexHiddenFieldData *>();
+#if defined(_WIN32)
+    return SleepConditionVariableCS(&mcd->cond, &md->mtx, milliseconds) !=
+           FALSE;
+#else
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += milliseconds / 1000;
+    ts.tv_nsec += (milliseconds % 1000) * 1000000L;
+    if (ts.tv_nsec >= 1000000000L) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000L;
+    }
+    return pthread_cond_timedwait(&mcd->cond, &md->mtx, &ts) == 0;
+#endif
+#endif
+    return false;
+}
+bool Cond::Wait(Mutex *mtx, Date::TimeSpan ts) {
+    return Wait(mtx, (uint32_t)ts.TotalSeconds() * 1000);
+}
+void Cond::Signal() {
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    auto mcd = this->data.GetField<MutexCondHiddenFieldData *>();
+
+#if defined(_WIN32)
+    WakeConditionVariable(&mcd->cond);
+#else
+    pthread_cond_signal(&mcd->cond);
+#endif
+#endif
+}
+void Cond::Broadcast() {
+#if defined(TESSESFRAMEWORK_ENABLE_THREADING)
+    auto mcd = this->data.GetField<MutexCondHiddenFieldData *>();
+
+#if defined(_WIN32)
+    WakeConditionVariable(&mcd->cond);
+#else
+    pthread_cond_broadcast(&mcd->cond);
+#endif
+#endif
+}
+
+Cond::~Cond() {}
+
 }; // namespace Tesses::Framework::Threading

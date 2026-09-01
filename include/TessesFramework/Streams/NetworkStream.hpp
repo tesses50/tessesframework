@@ -53,7 +53,7 @@ class NetworkStream : public Stream {
     int32_t sock;
     bool owns;
     bool success;
-    bool endOfStream;
+    std::atomic<bool> endOfStream;
 
   public:
     bool DataAvailable(int timeout = 0);
@@ -85,6 +85,9 @@ class NetworkStream : public Stream {
 
     ~NetworkStream();
     void SetNoDelay(bool noDelay);
+    void Shutdown(StreamShutdownMode mode);
+    void SetSendTimeout(uint64_t seconds);
+    void SetRecvTimeout(uint64_t seconds);
     void Close();
 };
 } // namespace Tesses::Framework::Streams

@@ -117,4 +117,22 @@ void Stream::CopyTo(std::shared_ptr<Stream> strm, size_t buffSize) {
     strm->Flush();
 }
 Stream::~Stream() {}
+
+void Stream::Shutdown(StreamShutdownMode mode) {}
+void Stream::SetSendTimeout(Tesses::Framework::Date::TimeSpan ts) {
+    int64_t sec = ts.TotalSeconds();
+    if (sec < 0)
+        SetSendTimeout(0);
+    else
+        SetSendTimeout(sec);
+}
+void Stream::SetRecvTimeout(Tesses::Framework::Date::TimeSpan ts) {
+    int64_t sec = ts.TotalSeconds();
+    if (sec < 0)
+        SetRecvTimeout(0);
+    else
+        SetRecvTimeout(sec);
+}
+void Stream::SetSendTimeout(uint64_t seconds) {}
+void Stream::SetRecvTimeout(uint64_t seconds) {}
 } // namespace Tesses::Framework::Streams

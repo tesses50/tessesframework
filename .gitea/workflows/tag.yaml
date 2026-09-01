@@ -11,7 +11,7 @@ env:
 jobs:
   build-ppc:
     name: "🔨 Build for PowerPC"
-    runs-on: ubuntu-latest
+    runs-on: fw13-ubuntu-latest
     container: 
       image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
@@ -24,7 +24,38 @@ jobs:
           prerelease: true
           files: |-
             artifacts/** 
+  update-tap-and-build-win32:
+    name: "🔨 Build win32 and update the tap 🍺"
+    runs-on: fw13-ubuntu-latest
+    container: git.tesses.org/tesses50/global-containers-mingw:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir artifacts
+          env -C Packaging/WinToolsIntel bash build.sh
 
+      - uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
+        with:
+          prerelease: true
+          files: |-
+            artifacts/** 
+
+      - uses: actions/checkout@v4
+        with:
+          ref: "master"
+          path: "tapdir"
+          repository: "tesses50/tesses-tap.git"
+          token: ${{ env.PACKAGE_AND_BREW }}
+      - run: |
+          cd tapdir
+          bash ../Packaging/edit-formula.sh
+          git config user.name "Tesses Gitea Bot"
+          git config user.email "noreply@tesses.net"
+          git add .
+          git commit -m "Push tessesframework=${{ env.VERSION }}"
+          git push
   build-packages:
     name: "🔨 Build for everything else"
     runs-on: fw13-ubuntu-latest
@@ -61,34 +92,4 @@ jobs:
           files: |-
             artifacts/** 
   
-  update-tap-and-build-win32:
-    name: "🔨 Build win32 and update the tap 🍺"
-    runs-on: global-container-mingw
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          mkdir artifacts
-          env -C Packaging/WinToolsIntel bash build.sh
-
-      - uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
-        with:
-          prerelease: true
-          files: |-
-            artifacts/** 
-
-      - uses: actions/checkout@v4
-        with:
-          ref: "master"
-          path: "tapdir"
-          repository: "tesses50/tesses-tap.git"
-          token: ${{ env.PACKAGE_AND_BREW }}
-      - run: |
-          cd tapdir
-          bash ../Packaging/edit-formula.sh
-          git config user.name "Tesses Gitea Bot"
-          git config user.email "noreply@tesses.net"
-          git add .
-          git commit -m "Push tessesframework=${{ env.VERSION }}"
-          git push
+  

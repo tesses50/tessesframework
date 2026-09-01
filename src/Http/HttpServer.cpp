@@ -51,6 +51,11 @@ using namespace Tesses::Framework::TextStreams;
 
 namespace Tesses::Framework::Http {
 
+static const std::initializer_list<std::string> ONLY_ONE_OF_THESE = {
+    "Host",         "Content-Length", "Transfer-Encoding",
+    "Connection",   "Date",           "Expect",
+    "Max-Forwards", "Range",          "Referer"};
+
 void ServerSentEvents::SendEventRaw(const std::string &evt) {
     this->mtx.Lock();
     for (auto &item : this->strms) {
@@ -283,7 +288,7 @@ class WSServer {
             return;
         }
 
-        if (!ctx->requestHeaders.AnyEquals("Upgrade", "websocket")) {
+        if (!ctx->requestHeaders.AnyEqualsCSV("Upgrade", "websocket")) {
 
             return;
         }
@@ -647,7 +652,7 @@ void HttpServer::StartAccepting() {
 
             if (sock == nullptr) {
                 std::cout << "STREAM ERROR" << std::endl;
-                return;
+                continue;
             }
             TF_LOG("Before entering socket thread");
 
@@ -904,10 +909,6 @@ ServerContext &ServerContext::WithContentDisposition(std::string filename,
     ContentDisposition cd;
     cd.type = isInline ? "inline" : "attachment";
     cd.filename = filename;
-
-    // std::string cd;
-    // cd = (isInline ? "inline; filename*=UTF-8''" : "attachment;
-    // filename*=UTF-8''") + HttpUtils::UrlPathEncode(filename);
     this->responseHeaders.SetValue("Content-Disposition", cd.ToString());
     return *this;
 }
@@ -985,6 +986,9 @@ ServerContext &ServerContext::WriteHeaders() {
         return *this;
     this->sent = true;
 
+    if (this->responseHeaders.kvp.count("Date") == 0)
+        this->responseHeaders.SetValue("Date", Date::DateTime::NowUTC());
+
     StreamWriter writer(this->strm);
     writer.newline = "\r\n";
     writer.WriteLine("HTTP/1.1 " + std::to_string((int)statusCode) + " " +
@@ -999,6 +1003,21 @@ ServerContext &ServerContext::WriteHeaders() {
 
     return *this;
 }
+
+static void sanitise_path(std::string &path) {
+    bool endsWithSlash = !path.empty() ? (path.back() == '/') : false;
+    Tesses::Framework::Filesystem::VFSPath path2 = path;
+    for (auto ittr = path2.path.begin(); ittr != path2.path.end(); ittr++) {
+        if (*ittr == ".." || *ittr == ".") {
+            path2.path.erase(ittr);
+            ittr--;
+        }
+    }
+    path = path2.ToString();
+    if (endsWithSlash)
+        path += '/';
+}
+
 void HttpServer::Process(std::shared_ptr<Stream> strm,
                          std::shared_ptr<IHttpServer> server, std::string ip,
                          uint16_t port, uint16_t serverPort, bool encrypted,
@@ -1042,6 +1061,7 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
                 pp.resize(2);
 
                 ctx.originalPath = pp[0];
+                sanitise_path(ctx.originalPath);
                 ctx.path = ctx.originalPath;
 
                 TF_LOG(ctx.method + " with path " + ctx.path);
@@ -1073,6 +1093,29 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
 
         std::string type;
         int64_t length;
+
+        for (auto &item : ONLY_ONE_OF_THESE) {
+            if (ctx.requestHeaders.kvp.count(item) > 1) {
+                ctx.statusCode = StatusCode::BadRequest;
+                ctx.SendText(
+                    "<!DOCTYPE html>"
+                    "<html>"
+                    "<head><meta name=\"color-scheme\" "
+                    "content=\"dark light\"><title>400 Bad "
+                    "Request</title></head>"
+                    "<body>"
+                    "<h1>400 Bad Request</h1><p>" +
+                    HttpUtils::HtmlEncode(
+                        "There are multiple instances of the header \"" + item +
+                        "\".") +
+                    "</p>"
+                    "</body>"
+                    "</html>"
+
+                );
+                return;
+            }
+        }
 
         if (!(ctx.method == "GET" || ctx.method == "HEAD") &&
             ctx.requestHeaders.TryGetFirst("Content-Type", type) &&

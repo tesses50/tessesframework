@@ -43,12 +43,15 @@ using HttpUtils = Tesses::Framework::Http::HttpUtils;
 #else
 
 #if defined(_WIN32)
-#include <iphlpapi.h>
+// clang-format off
+
 #include <winsock2.h>
+#include <iphlpapi.h>
 
 #include <ws2tcpip.h>
 
 #include <windows.h>
+// clang-format on
 #if defined __has_include
 #if __has_include(<afunix.h>)
 #include <afunix.h>
@@ -72,8 +75,8 @@ extern "C" {
     !defined(__PS2__)
 #include <sys/un.h>
 #endif
-
 #include <poll.h>
+#include <sys/time.h>
 }
 #endif
 #if defined(GEKKO)
@@ -98,6 +101,7 @@ extern "C" uint32_t if_config(char *local_ip, char *netmask, char *gateway,
 #define NETWORK_GETADDRINFO getaddrinfo
 #define NETWORK_FREEADDRINFO freeaddrinfo
 #define NETWORK_GETSOCKNAME getsockname
+#define NETWORK_SHUTDOWN shutdown
 
 #if defined(_WIN32)
 #define NETWORK_CLOSE closesocket
@@ -841,6 +845,33 @@ size_t NetworkStream::WriteTo(const uint8_t *buff, size_t sz, std::string ip,
         return 0;
     return (size_t)sz2;
 }
+void NetworkStream::Shutdown(StreamShutdownMode mode) {
+
+    switch (mode) {
+    case StreamShutdownMode::Read:
+#if defined(_WIN32)
+
+        NETWORK_SHUTDOWN(this->sock, SD_RECEIVE);
+#else
+        NETWORK_SHUTDOWN(this->sock, SHUT_RD);
+#endif
+        break;
+    case StreamShutdownMode::Write:
+#if defined(_WIN32)
+        NETWORK_SHUTDOWN(this->sock, SD_SEND);
+#else
+        NETWORK_SHUTDOWN(this->sock, SHUT_WR);
+#endif
+        break;
+    case StreamShutdownMode::ReadWrite:
+#if defined(_WIN32)
+        NETWORK_SHUTDOWN(this->sock, SD_BOTH);
+#else
+        NETWORK_SHUTDOWN(this->sock, SHUT_RDWR);
+#endif
+        break;
+    }
+}
 void NetworkStream::Close() {
     if (this->owns && this->success)
         NETWORK_CLOSE(this->sock);
@@ -858,6 +889,22 @@ void NetworkStream::SetNoDelay(bool noDelay) {
                        (const char *)&noDelay2, (socklen_t)sizeof(noDelay2));
 }
 
+void NetworkStream::SetSendTimeout(uint64_t seconds) {
+    timeval timeout;
+    timeout.tv_sec = (time_t)seconds;
+    timeout.tv_usec = 0;
+
+    NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, SO_SNDTIMEO,
+                       (const char *)&timeout, (socklen_t)sizeof(timeout));
+}
+void NetworkStream::SetRecvTimeout(uint64_t seconds) {
+    timeval timeout;
+    timeout.tv_sec = (time_t)seconds;
+    timeout.tv_usec = 0;
+
+    NETWORK_SETSOCKOPT(this->sock, SOL_SOCKET, SO_RCVTIMEO,
+                       (const char *)&timeout, (socklen_t)sizeof(timeout));
+}
 } // namespace Tesses::Framework::Streams
 #else
 namespace Tesses::Framework::Streams {
@@ -911,6 +958,7 @@ NetworkStream::GetIPs(bool ipV6) {
 }
 NetworkStream::~NetworkStream() {}
 void NetworkStream::SetNoDelay(bool noDelay) {}
+void NetworkStream::Shutdown(StreamShutdownMode mode) {}
 void NetworkStream::Close() {}
 uint16_t NetworkStream::GetPort() { return 0; }
 uint16_t TcpServer::GetPort() { return 0; }

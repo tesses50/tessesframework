@@ -316,6 +316,29 @@ typedef enum {
  */
 bool PBKDF2(std::vector<uint8_t> &output, std::string pass,
             std::vector<uint8_t> &salt, long itterations, ShaVersion version);
-
+/**
+ * @brief Get secure random bytes
+ *
+ * @param output The buffer to write random bytes to
+ * @param personal_str Some string to ensure the rng is unique (for mbedtls at
+ * least)
+ * @return true successfully generated the bytes
+ * @return false we failed to generate the bytes
+ */
 bool RandomBytes(std::vector<uint8_t> &output, std::string personal_str);
+
+struct CertificateKeyStore {
+    CertificateKeyStore() = default;
+    CertificateKeyStore(std::string certificate, std::string key,
+                        std::optional<std::string> chain = std::nullopt,
+                        std::string password = "")
+        : certificate(certificate), key(key), chain(chain), password(password) {
+    }
+
+    std::string certificate;
+    std::string key;
+    std::optional<std::string> chain;
+    std::string password;
+};
+
 } // namespace Tesses::Framework::Crypto

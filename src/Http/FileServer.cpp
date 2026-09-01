@@ -63,7 +63,7 @@ bool FileServer::SendFile(ServerContext &ctx, VFSPath path) {
         Date::DateTime lw, la;
         this->vfs->GetDate(path, lw, la);
         ctx.WithLastModified(lw)
-            .WithMimeType(HttpUtils::MimeType(path.GetFileName()))
+            .WithMimeType(HttpUtils::GetMimeTypePath(path))
             .SendStream(strm);
         retVal = true;
     }

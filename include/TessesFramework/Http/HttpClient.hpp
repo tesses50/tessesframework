@@ -20,6 +20,7 @@
 */
 
 #pragma once
+#include "../Crypto/Crypto.hpp"
 #include "../Streams/Stream.hpp"
 #include "HttpUtils.hpp"
 // clang-format off
@@ -66,6 +67,7 @@ class HttpRequest {
   public:
     HttpRequest();
     std::string trusted_root_cert_bundle;
+    std::optional<Crypto::CertificateKeyStore> mTLS_keyStore;
     bool ignoreSSLErrors;
     bool followRedirects;
 
@@ -73,15 +75,17 @@ class HttpRequest {
     std::string url;
     std::string unixSocket;
     HttpDictionary requestHeaders;
-    HttpRequestBody *body;
+    std::shared_ptr<HttpRequestBody> body;
 
     static std::shared_ptr<Tesses::Framework::Streams::Stream>
-    EstablishConnection(Uri uri, bool ignoreSSLErrors,
-                        std::string trusted_root_cert_bundle);
+    EstablishConnection(
+        Uri uri, bool ignoreSSLErrors, std::string trusted_root_cert_bundle,
+        std::optional<Crypto::CertificateKeyStore> mTLS_keyStore);
     static std::shared_ptr<Tesses::Framework::Streams::Stream>
-    EstablishUnixPathConnection(std::string unixPath, Uri uri,
-                                bool ignoreSSLErrors,
-                                std::string trusted_root_cert_bundle);
+    EstablishUnixPathConnection(
+        std::string unixPath, Uri uri, bool ignoreSSLErrors,
+        std::string trusted_root_cert_bundle,
+        std::optional<Crypto::CertificateKeyStore> mTLS_keyStore);
 
     void SendRequest(std::shared_ptr<Tesses::Framework::Streams::Stream> strm);
 };

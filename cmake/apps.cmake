@@ -66,7 +66,11 @@ target_link_libraries(tuuid PUBLIC tessesframework)
 install(TARGETS tuuid DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 add_executable(ttimezone apps/ttimezone.cpp)
-
 target_link_libraries(ttimezone PUBLIC tessesframework)
 install(TARGETS ttimezone DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+add_executable(tsimplereverseproxy apps/tsimplereverseproxy.cpp)
+target_link_libraries(tsimplereverseproxy PUBLIC tessesframework)
+install(TARGETS tsimplereverseproxy DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
 endif()

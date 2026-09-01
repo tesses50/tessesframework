@@ -5,12 +5,14 @@ src/Date/Date.cpp
 src/Http/FileServer.cpp
 src/Http/MountableServer.cpp
 src/Http/RouteServer.cpp
+src/Http/DomainServer.cpp
 src/Http/CallbackServer.cpp
 src/Http/HttpServer.cpp
 src/Http/HttpUtils.cpp
 src/Http/HttpClient.cpp
 src/Http/HttpStream.cpp
 src/Http/ContentDisposition.cpp
+src/Http/HttpReverseProxy.cpp
 src/Http/WebSocket.cpp
 src/Http/ChangeableServer.cpp
 src/Http/BasicAuthServer.cpp
