@@ -705,7 +705,7 @@ void ShellFileOrUrl(std::string fileOrUrl) {
     auto result = ShellExecuteW(NULL, L"open", (LPCWSTR)wname.c_str(), NULL,
                                 NULL, SW_SHOWNORMAL);
     if ((INT_PTR)result <= 32) {
-        switch ((int)result) {
+        switch ((INT_PTR)result) {
         case 0:
             throw std::runtime_error(
                 "The operating system is out of memory or resources.");
@@ -745,7 +745,7 @@ void ShellFileOrUrl(std::string fileOrUrl) {
                                      "(SE_ERR_DLLNOTFOUND).");
         default:
             throw std::runtime_error("Unknown error: " +
-                                     std::to_string((int)result));
+                                     std::to_string((intptr_t)result));
         }
     }
 
