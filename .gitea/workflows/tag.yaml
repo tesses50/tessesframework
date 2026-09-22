@@ -16,6 +16,7 @@ jobs:
       image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
       - uses: actions/checkout@v4
+        url: https://git.tesses.org/tesses50/tessesframework.git
       - run: bash build-for-ppc.sh
       - uses: akkuman/gitea-release-action@v1
         env:
@@ -30,6 +31,7 @@ jobs:
     container: git.tesses.org/tesses50/global-containers-mingw:latest
     steps:
       - uses: actions/checkout@v4
+        url: https://git.tesses.org/tesses50/tessesframework.git
       - run: |
           mkdir artifacts
           env -C Packaging/WinToolsIntel bash build.sh
@@ -87,6 +89,7 @@ jobs:
       image: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
+        url: https://git.tesses.org/tesses50/tessesframework.git
       - run: bash build-for-nfpm.sh ${{ matrix.nfpmName }} ${{ matrix.debianName }}
       - uses: akkuman/gitea-release-action@v1
         env:
