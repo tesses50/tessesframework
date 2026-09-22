@@ -22,6 +22,7 @@ Tesses Framework
 - EventLoop
 - Basic crytography using mbedtls
 - a LCG Random number generator (do not use for crypto, use it for non security things like number guessing games and stuff, where rand would be ok)
+- Simple HTML parser
 
 ## Supported Platforms
 - Linux

@@ -83,6 +83,12 @@ class BitConverter {
 
     static void FromUuid(uint8_t &b, const Uuid &uuid);
 
+    static bool TryParseSigned(const std::string &str, int64_t &val,
+                               int base = 10);
+    static bool TryParseUnsigned(const std::string &str, uint64_t &val,
+                                 int base = 10);
+    static bool TryParseDouble(const std::string &str, double &val);
+
     static inline bool IsLittleEndian() {
         uint8_t a[2];
         a[0] = 0x01;

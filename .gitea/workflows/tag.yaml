@@ -11,7 +11,7 @@ env:
 jobs:
   build-ppc:
     name: "🔨 Build for PowerPC"
-    runs-on: fw13-ubuntu-latest
+    runs-on: asrock
     container: 
       image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
@@ -26,7 +26,7 @@ jobs:
             artifacts/** 
   update-tap-and-build-win32:
     name: "🔨 Build win32 and update the tap 🍺"
-    runs-on: fw13-ubuntu-latest
+    runs-on: msi-walmart
     container: git.tesses.org/tesses50/global-containers-mingw:latest
     steps:
       - uses: actions/checkout@v4
@@ -58,27 +58,31 @@ jobs:
           git push
   build-packages:
     name: "🔨 Build for everything else"
-    runs-on: fw13-ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
         include:
           - container: "git.tesses.org/tesses50/linux-x64:latest"
+            puter: "msi-walmart"
             nfpmName: "amd64"
             debianName: "x86_64-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-x86:latest"
+            puter: "asrock"
             nfpmName: "386"
             debianName: "i386-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-arm:latest"
+            puter: "fw13-ubuntu-latest"
             nfpmName: "arm7"
             debianName: "arm-linux-gnueabihf"
           - container: "git.tesses.org/tesses50/linux-arm64:latest"
+            puter: "msi-walmart"
             nfpmName: "arm64"
             debianName: "aarch64-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-riscv64:latest"
             nfpmName: "riscv64"
             debianName: "riscv64-linux-gnu"
-            
+            puter: "asrock"
+    runs-on: ${{ matrix.puter }} 
     container: 
       image: ${{ matrix.container }}
     steps:

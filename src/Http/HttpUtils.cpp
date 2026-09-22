@@ -21,14 +21,19 @@
 
 #include "TessesFramework/Http/HttpUtils.hpp"
 #include "TessesFramework/Filesystem/VFS.hpp"
+#include "TessesFramework/Serialization/BitConverter.hpp"
+#include "TessesFramework/Text/StringConverter.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 using VFSPath = Tesses::Framework::Filesystem::VFSPath;
 namespace Tesses::Framework::Http {
 
-bool Uri::Relative(std::string url, Uri &uri) {
-    auto index = url.find_first_of("//");
+bool Uri::Relative(std::string_view url, Uri &uri) {
+    auto path = this->path;
+    if (path.empty())
+        path = "/";
+    auto index = url.find("//");
     if (index != std::string::npos) {
         if (Uri::TryParse(url, uri)) {
             if (index == 0)
@@ -63,7 +68,10 @@ bool Uri::Relative(std::string url, Uri &uri) {
 
             auto fourthPart = HttpUtils::SplitString(thirdPart[1], "?", 2);
 
-            VFSPath p = VFSPath(this->path, fourthPart[0]);
+            VFSPath p =
+                VFSPath(path, (path.back() == '/' || fourthPart[0].empty())
+                                  ? fourthPart[0]
+                                  : "../" + fourthPart[0]);
             uri.path =
                 p.CollapseRelativeParents().ToString(); // this should be safe
             if (fourthPart.size() == 2) {
@@ -98,21 +106,33 @@ uint16_t Uri::GetPort() {
         return 69;
     return 0;
 }
-bool Uri::TryParse(std::string url, Uri &uri) {
+bool Uri::TryParse(std::string_view url, Uri &uri) {
     uri.scheme = "";
     uri.port = 0;
     auto firstPart = HttpUtils::SplitString(url, "//", 2);
     if (firstPart.size() == 2)
 
         uri.scheme = firstPart[0];
-    else if (firstPart.empty())
+    else
         return false;
 
-    auto secondPart = HttpUtils::SplitString(
-        firstPart.size() == 2 ? firstPart[1] : firstPart[0], "/", 2);
+    auto secondPart = HttpUtils::SplitString(firstPart[1], "/", 2);
 
     if (secondPart.size() == 1) {
         uri.path = "/";
+        auto hp = secondPart[0];
+        auto fragPart = HttpUtils::SplitString(hp, "#", 2);
+        if (fragPart.size() == 2) {
+            uri.hash = fragPart[1];
+            hp = fragPart[0];
+        }
+        auto queryPart = HttpUtils::SplitString(hp, "?", 2);
+        if (queryPart.size() == 2) {
+            HttpUtils::QueryParamsDecode(uri.query, queryPart[1]);
+            hp = queryPart[0];
+        }
+        secondPart[0] = hp;
+
     } else if (secondPart.size() == 2) {
         auto thirdPart = HttpUtils::SplitString(secondPart[1], "#", 2);
         if (thirdPart.empty())
@@ -135,14 +155,25 @@ bool Uri::TryParse(std::string url, Uri &uri) {
     if (hostPortPart.empty())
         return false;
     if (hostPortPart.size() == 2) {
-        uri.port = (uint16_t)std::stoul(hostPortPart[1]);
+        uint64_t portNum;
+        if (!Serialization::BitConverter::TryParseUnsigned(hostPortPart[1],
+                                                           portNum))
+            return false;
+        if (portNum > 65535)
+            return false;
+        uri.port = static_cast<uint16_t>(portNum);
     }
     uri.host = hostPortPart[0];
 
     return true;
 }
 Uri::Uri() : query(true) {}
-std::string Uri::GetPathAndQuery() { return this->path + this->GetQuery(); }
+std::string Uri::GetPathAndQuery() {
+    if (this->path.empty() || this->path.front() != '/')
+        return '/' + this->path + this->GetQuery();
+
+    return this->path + this->GetQuery();
+}
 std::string Uri::GetQuery() {
     if (this->query.kvp.empty())
         return "";
@@ -532,9 +563,16 @@ std::string HttpUtils::HtmlP(std::string_view text) {
 
     auto flush = [&]() -> void {
         if (!builder.empty()) {
+            // Collect trailing punctuation
+            std::string trailing;
+            static const char *punct = ".,;:!?'\"";
+            while (!builder.empty() && std::strchr(punct, builder.back())) {
+                trailing.insert(trailing.begin(), builder.back());
+                builder.pop_back();
+            }
             if (builder.find("http://") == 0 || builder.find("https://") == 0 ||
                 builder.find("ftp://") == 0 || builder.find("ftps://") == 0 ||
-                builder.find("magnet:") == 0 || builder.find("btmh:") == 0) {
+                builder.find("magnet:") == 0) {
                 newText += "<a href=\"" + HttpUtils::HtmlEncode(builder) +
                            "\">" + HttpUtils::HtmlEncode(builder) + "</a>";
             } else if (builder.find("mailto:") == 0) {
@@ -548,6 +586,7 @@ std::string HttpUtils::HtmlP(std::string_view text) {
             } else {
                 newText += HttpUtils::HtmlEncode(builder);
             }
+            newText += HttpUtils::HtmlEncode(trailing);
             builder = "";
         }
     };
@@ -564,7 +603,7 @@ std::string HttpUtils::HtmlP(std::string_view text) {
             break;
         case '\t':
             flush();
-            newText += "&tab;";
+            newText += "&nbsp;&nbsp;&nbsp;&nbsp;";
             break;
         case '\r':
             flush();
@@ -578,6 +617,106 @@ std::string HttpUtils::HtmlP(std::string_view text) {
 
     return newText;
 }
+static std::unordered_map<std::string, std::string> htmlencodings = {
+    {"&quot;", "\""},
+    {"&apos;", "'"},
+    {"&amp;", "&"},
+    {"&lt;", "<"},
+    {"&gt;", ">"},
+    {"&nbsp;", "\xC2\xA0"},
+    {"&copy;", "\xC2\xA9"},
+    {"&reg;", "\xC2\xAE"},
+    {"&trade;", "\xE2\x84\xA2"},
+    {"&mdash;", "\xE2\x80\x94"},
+    {"&ndash;", "\xE2\x80\x93"},
+    {"&hellip;", "\xE2\x80\xA6"},
+    {"&rsquo;", "\xE2\x80\x99"},
+    {"&lsquo;", "\xE2\x80\x98"},
+    {"&rdquo;", "\xE2\x80\x9D"},
+    {"&ldquo;", "\xE2\x80\x9C"},
+    {"&euro;", "\xE2\x82\xAC"},
+    {"&pound;", "\xC2\xA3"},
+    {"&yen;", "\xC2\xA5"},
+    {"&deg;", "\xC2\xB0"},
+    {"&plusmn;", "\xC2\xB1"},
+    {"&times;", "\xC3\x97"},
+    {"&divide;", "\xC3\xB7"},
+    {"&laquo;", "\xC2\xAB"},
+    {"&raquo;", "\xC2\xBB"},
+    {"&bull;", "\xE2\x80\xA2"},
+    {"&middot;", "\xC2\xB7"},
+    {"&frac12;", "\xC2\xBD"},
+    {"&frac14;", "\xC2\xBC"},
+    {"&frac34;", "\xC2\xBE"},
+};
+std::string HttpUtils::HtmlDecode(std::string_view view) {
+    std::string myHtml = {};
+    std::string tmp = {};
+    bool inEscaped = false;
+    for (size_t i = 0; i < view.size(); i++) {
+        if (inEscaped) {
+            if (view[i] == ';') {
+                inEscaped = false;
+
+                if (tmp.size() > 2 && tmp[1] == '#') //&#N
+                {
+                    if (tmp[2] == 'x' || tmp[2] == 'X') {
+                        auto res = tmp.substr(3);
+                        uint64_t code;
+                        if (Serialization::BitConverter::TryParseUnsigned(
+                                res, code, 16)) {
+                            if (code <= 0x10FFFF &&
+                                (code < 0xD800 || code > 0xDFFF)) {
+                                Text::StringConverter::UTF8::FromUTF32(
+                                    myHtml, {static_cast<char32_t>(code)});
+                            } else {
+                                myHtml += "\xEF\xBF\xBD";
+                            }
+                        } else {
+                            myHtml += "\xEF\xBF\xBD";
+                        }
+                    } else {
+                        auto res = tmp.substr(2);
+                        uint64_t code;
+                        if (Serialization::BitConverter::TryParseUnsigned(
+                                res, code, 10)) {
+                            if (code <= 0x10FFFF &&
+                                (code < 0xD800 || code > 0xDFFF)) {
+                                Text::StringConverter::UTF8::FromUTF32(
+                                    myHtml, {static_cast<char32_t>(code)});
+                            } else {
+                                myHtml += "\xEF\xBF\xBD";
+                            }
+                        } else {
+                            myHtml += "\xEF\xBF\xBD";
+                        }
+                    }
+                } else {
+                    tmp += ';';
+                    auto result = htmlencodings.find(tmp);
+                    if (result != htmlencodings.end()) {
+                        myHtml += result->second;
+                    } else {
+                        myHtml += "\xEF\xBF\xBD";
+                    }
+                }
+            } else {
+                tmp += view[i];
+            }
+        } else {
+            if (view[i] == '&') {
+                tmp = "&";
+                inEscaped = true;
+            } else {
+                myHtml += view[i];
+            }
+        }
+    }
+    if (inEscaped)
+        myHtml += tmp;
+    return myHtml;
+}
+
 std::string HttpUtils::HtmlEncode(std::string_view html) {
     std::string myHtml = {};
     for (auto item : html) {
@@ -838,16 +977,8 @@ bool HttpDictionary::TryGetFirstInt(std::string key, int64_t &value) {
     std::string val;
     if (!TryGetFirst(key, val))
         return false;
-    try {
-        size_t off = 0;
-        auto v = std::stoll(val, &off);
-        if (off != val.size())
-            return false;
-        value = v;
-    } catch (std::exception &ex) {
-        return false;
-    }
-    return true;
+
+    return Serialization::BitConverter::TryParseSigned(val, value);
 }
 bool HttpDictionary::TryGetFirstDate(std::string key, Date::DateTime &dt) {
     std::string val;

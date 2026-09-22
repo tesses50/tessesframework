@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     Args args(argc, argv);
     if (args.positional.size() < 2)
         usage(args);
-
+    int64_t num;
     for (auto &opt : args.options) {
         if (opt.first == "tracker")
             trackers.push_back(opt.second);
@@ -49,8 +49,9 @@ int main(int argc, char **argv) {
             comment = opt.second;
         else if (opt.first == "created_by")
             created_by = opt.second;
-        else if (opt.first == "piece_length")
-            pieceLength = std::stoll(opt.second);
+        else if (opt.first == "piece_length" &&
+                 Serialization::BitConverter::TryParseSigned(opt.second, num))
+            pieceLength = num;
     }
 
     for (auto &flag : args.flags) {

@@ -98,7 +98,7 @@ class ServerContext {
     void SendErrorPage(bool showPath);
     void SendNotFound();
     void SendBadRequest();
-    void SendException(std::exception &ex);
+    void SendException(const std::exception &ex);
     void SendServerSentEvents(std::shared_ptr<ServerSentEvents> sse);
     std::shared_ptr<Tesses::Framework::Streams::Stream> OpenResponseStream();
     std::shared_ptr<Tesses::Framework::Streams::Stream> OpenRequestStream();

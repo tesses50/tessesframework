@@ -39,6 +39,8 @@
 #include "TessesFramework/Filesystem/VFS.hpp"
 #include "TessesFramework/Filesystem/VFSFix.hpp"
 // clang-format on
+
+#include "TessesFramework/Serialization/BitConverter.hpp"
 using FileStream = Tesses::Framework::Streams::FileStream;
 using Stream = Tesses::Framework::Streams::Stream;
 using SeekOrigin = Tesses::Framework::Streams::SeekOrigin;
@@ -607,12 +609,34 @@ uint16_t HttpServer::GetPort() {
         return server->GetPort();
     return 0;
 }
+
 std::shared_ptr<Stream> ServerContext::OpenResponseStream() {
     if (sent)
         return nullptr;
     int64_t length = -1;
-    if (!this->responseHeaders.TryGetFirstInt("Content-Length", length))
-        length = -1;
+    try {
+        if (!this->responseHeaders.TryGetFirstInt("Content-Length", length))
+            length = -1;
+    } catch (std::invalid_argument &invalid) {
+        std::string error =
+            "<!DOCTYPE html><html lang=\"en\"><head><meta "
+            "charset=\"UTF-8\"> <meta name=\"viewport\" "
+            "content=\"width=device-width, "
+            "initial-scale=1.0\"><title>Internal Server Error at " +
+            HttpUtils::HtmlEncode(this->originalPath) +
+            "</title><meta name=\"color-scheme\" content=\"dark "
+            "light\"></head><body><h1>Internal Server Error at " +
+            HttpUtils::HtmlEncode(this->originalPath) +
+            "</h1><p>what(): " + HttpUtils::HtmlEncode(invalid.what()) +
+            "</p></body></html>";
+        this->responseHeaders.SetValue("Content-Length",
+                                       static_cast<int64_t>(error.size()));
+        this->statusCode = StatusCode::InternalServerError;
+        this->WriteHeaders();
+        this->strm->WriteBlock(reinterpret_cast<const uint8_t *>(error.data()),
+                               error.size());
+        return nullptr;
+    }
 
     if (this->version == "HTTP/1.1" && length == -1)
         this->responseHeaders.SetValue("Transfer-Encoding", "chunked");
@@ -647,6 +671,10 @@ void HttpServer::StartAccepting() {
             std::string ip;
             uint16_t port;
             auto sock = svr->GetStream(ip, port);
+
+            if (!TF_IsRunning()) // we need to die, that continue is not what we
+                                 // want if we must die from being done
+                break;
 
             TF_LOG("New Host IP: " + ip + ":" + std::to_string(port));
 
@@ -708,9 +736,14 @@ ServerContext::ServerContext(std::shared_ptr<Stream> strm, bool debug)
 }
 std::shared_ptr<Stream> ServerContext::GetStream() { return this->strm; }
 void ServerContext::SendBytes(std::vector<uint8_t> buff) {
-    std::shared_ptr<MemoryStream> strm = std::make_shared<MemoryStream>(false);
-    strm->GetBuffer() = buff;
-    SendStream(strm);
+
+    if (sent)
+        return;
+    this->responseHeaders.SetValue("Content-Length",
+                                   static_cast<int64_t>(buff.size()));
+    auto resp = OpenResponseStream();
+    if (resp)
+        resp->WriteBlock(buff.data(), buff.size());
 }
 ServerContext &ServerContext::WithLastModified(Date::DateTime dt) {
     this->responseHeaders.SetValue("Last-Modified", dt);
@@ -718,11 +751,13 @@ ServerContext &ServerContext::WithLastModified(Date::DateTime dt) {
 }
 
 void ServerContext::SendText(std::string text) {
-    std::shared_ptr<MemoryStream> strm = std::make_shared<MemoryStream>(false);
-
-    auto &buff = strm->GetBuffer();
-    buff.insert(buff.end(), text.begin(), text.end());
-    SendStream(strm);
+    if (sent)
+        return;
+    this->responseHeaders.SetValue("Content-Length",
+                                   static_cast<int64_t>(text.size()));
+    auto resp = OpenResponseStream();
+    if (resp)
+        resp->WriteBlock(reinterpret_cast<uint8_t *>(text.data()), text.size());
 }
 void ServerContext::SendErrorPage(bool showPath) {
     if (sent)
@@ -792,22 +827,34 @@ void ServerContext::SendStream(std::shared_ptr<Stream> strm) {
                 int64_t begin = 0;
                 int64_t end = -1;
 
-                if (dash.size() == 1 &&
-                    res[0].find_first_of('-') != std::string::npos) {
-                    // NUMBER-
-                    begin = std::stoll(dash[0]);
-                } else if (dash.size() == 2) {
+                if (dash.size() == 2) {
                     // NUMBER-NUMBER
                     // or
                     //-NUMBER
-
-                    if (dash[0].size() > 0) {
-                        // NUMBER-NUMBER
-                        begin = std::stoll(dash[0]);
-                        end = std::stoll(dash[1]);
-                    } else {
+                    if (dash[0].empty()) {
                         //-NUMBER
-                        end = std::stoll(dash[1]);
+
+                        if (!Serialization::BitConverter::TryParseSigned(
+                                dash[1], end))
+                            throw std::runtime_error(
+                                "Failed to parse the end of the Range header");
+                    } else if (dash[1].empty()) {
+                        if (!Serialization::BitConverter::TryParseSigned(
+                                dash[0], begin))
+                            throw std::runtime_error(
+                                "Failed to parse the end of the Range header");
+                    } else {
+                        // NUMBER-NUMBER
+                        if (!Serialization::BitConverter::TryParseSigned(
+                                dash[0], begin))
+                            throw std::runtime_error(
+                                "Failed to parse the beginning of the Range "
+                                "header");
+
+                        if (!Serialization::BitConverter::TryParseSigned(
+                                dash[1], end))
+                            throw std::runtime_error(
+                                "Failed to parse the end of the Range header");
                     }
                 } else {
                     this->statusCode = BadRequest;
@@ -886,6 +933,8 @@ void ServerContext::SendStream(std::shared_ptr<Stream> strm) {
     } else {
 
         auto chunkedStream = this->OpenResponseStream();
+        if (!chunkedStream)
+            throw std::runtime_error("Can't open response stream");
 
         if (method != "HEAD")
             strm->CopyTo(chunkedStream);
@@ -945,24 +994,28 @@ ServerContext &ServerContext::WithStatusCode(StatusCode code) {
     this->statusCode = code;
     return *this;
 }
-void ServerContext::SendException(std::exception &ex) {
-    if (this->debug) {
+void ServerContext::SendException(const std::exception &ex) {
+    try {
+        if (this->debug) {
 
-        this->WithMimeType("text/html")
-            .WithStatusCode(StatusCode::InternalServerError)
-            .SendText("<!DOCTYPE html><html lang=\"en\"><head><meta "
-                      "charset=\"UTF-8\"> <meta name=\"viewport\" "
-                      "content=\"width=device-width, "
-                      "initial-scale=1.0\"><title>Internal Server Error at " +
-                      HttpUtils::HtmlEncode(this->originalPath) +
-                      "</title><meta name=\"color-scheme\" content=\"dark "
-                      "light\"></head><body><h1>Internal Server Error at " +
-                      HttpUtils::HtmlEncode(this->originalPath) +
-                      "</h1><p>what(): " + HttpUtils::HtmlEncode(ex.what()) +
-                      "</p></body></html>");
-    } else {
-        this->WithStatusCode(StatusCode::InternalServerError)
-            .SendErrorPage(true);
+            this->WithMimeType("text/html")
+                .WithStatusCode(StatusCode::InternalServerError)
+                .SendText(
+                    "<!DOCTYPE html><html lang=\"en\"><head><meta "
+                    "charset=\"UTF-8\"> <meta name=\"viewport\" "
+                    "content=\"width=device-width, "
+                    "initial-scale=1.0\"><title>Internal Server Error at " +
+                    HttpUtils::HtmlEncode(this->originalPath) +
+                    "</title><meta name=\"color-scheme\" content=\"dark "
+                    "light\"></head><body><h1>Internal Server Error at " +
+                    HttpUtils::HtmlEncode(this->originalPath) +
+                    "</h1><p>what(): " + HttpUtils::HtmlEncode(ex.what()) +
+                    "</p></body></html>");
+        } else {
+            this->WithStatusCode(StatusCode::InternalServerError)
+                .SendErrorPage(true);
+        }
+    } catch (...) {
     }
 }
 
@@ -1106,6 +1159,13 @@ void HttpServer::Process(std::shared_ptr<Stream> strm,
             ctx.requestHeaders.TryGetFirst("Content-Type", type) &&
             type == "application/x-www-form-urlencoded" &&
             ctx.requestHeaders.TryGetFirstInt("Content-Length", length)) {
+
+            if (length <= 0) {
+                ctx.statusCode = StatusCode::BadRequest;
+                ctx.SendErrorPage(true);
+                return;
+            }
+
             size_t len = (size_t)length;
             std::vector<uint8_t> buffer(len);
             len = bStrm->ReadBlock(buffer.data(), len);

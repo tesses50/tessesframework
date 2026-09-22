@@ -50,6 +50,7 @@
 #include "Random.hpp"
 #include "Serialization/Bencode.hpp"
 #include "Serialization/BitConverter.hpp"
+#include "Serialization/Html.hpp"
 #include "Serialization/Json.hpp"
 #include "Serialization/SQLite.hpp"
 #include "Streams/BufferedStream.hpp"

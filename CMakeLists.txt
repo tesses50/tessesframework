@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 include(GNUInstallDirs)
 include(CheckLibraryExists)
 include(FetchContent)
-include(cmake/sources.cmake)
 include(cmake/options.cmake)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 

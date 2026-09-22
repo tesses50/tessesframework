@@ -22,6 +22,7 @@ src/Serialization/Json.cpp
 src/Serialization/SQLite.cpp
 src/Serialization/BitConverter.cpp
 src/Serialization/Bencode.cpp
+src/Serialization/Html.cpp
 src/Platform/Environment.cpp
 src/Platform/Process.cpp
 src/Streams/FileStream.cpp

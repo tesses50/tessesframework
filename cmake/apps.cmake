@@ -73,4 +73,13 @@ add_executable(tsimplereverseproxy apps/tsimplereverseproxy.cpp)
 target_link_libraries(tsimplereverseproxy PUBLIC tessesframework)
 install(TARGETS tsimplereverseproxy DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
+
+add_executable(thtml2json apps/thtml2json.cpp)
+target_link_libraries(thtml2json PUBLIC tessesframework)
+install(TARGETS thtml2json DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+
+add_executable(topengraph apps/topengraph.cpp)
+target_link_libraries(topengraph PUBLIC tessesframework)
+install(TARGETS topengraph DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()

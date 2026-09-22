@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.8
+Fixed a stoll bug that was there since day one, html parser, fix pkgconfig
+
 ## 0.0.7
 Fix license compliance and fix things up, add reverse proxy, fix some security flaws with HttpUtils
 

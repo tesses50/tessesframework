@@ -157,9 +157,9 @@ class Uri {
     std::string GetPathAndQuery();
     uint16_t GetPort();
     std::string HostPort();
-    bool Relative(std::string url, Uri &uri);
+    bool Relative(std::string_view url, Uri &uri);
     std::string ToString();
-    static bool TryParse(std::string url, Uri &uri);
+    static bool TryParse(std::string_view url, Uri &uri);
     std::string scheme;
     std::string host;
     uint16_t port;
@@ -199,6 +199,8 @@ class HttpUtils {
     static std::string UrlPathEncode(std::string_view v,
                                      bool ignoreSpace = false);
     static std::string HtmlEncode(std::string_view v);
+    // not all escapes are supported
+    static std::string HtmlDecode(std::string_view v);
     static std::string HtmlP(std::string_view text);
     static void SplitString(std::vector<std::string> &out,
                             std::string_view text, std::string_view delimiter,

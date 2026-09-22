@@ -18,21 +18,19 @@ if(NOT mbedtls_POPULATED)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static" FORCE)
     if(NOT TESSESFRAMEWORK_STATIC)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Build PIC" FORCE)
-    set(CMAKE_SKIP_INSTALL_RULES ON)
-    set(DISABLE_PACKAGE_CONFIG_AND_INSTALL ON CACHE BOOL "" FORCE)
     endif()
 
 
     FetchContent_Populate(mbedtls)
-    if(NOT TESSESFRAMEWORK_STATIC)
-    install(CODE "set(CMAKE_INSTALL_LOCAL_ONLY TRUE)" ALL_COMPONENTS)
-    endif()
-
-    add_subdirectory(${mbedtls_SOURCE_DIR} ${mbedtls_BINARY_DIR})
+   
+    
     
     if(NOT TESSESFRAMEWORK_STATIC)
-    set(CMAKE_SKIP_INSTALL_RULES OFF)
+    add_subdirectory(${mbedtls_SOURCE_DIR} ${mbedtls_BINARY_DIR} EXCLUDE_FROM_ALL)
+    else()
+    add_subdirectory(${mbedtls_SOURCE_DIR} ${mbedtls_BINARY_DIR})
     endif()
+    
 endif()
 else()
 if(TESSESFRAMEWORK_MBEDTLS_PORTLIB STREQUAL "")

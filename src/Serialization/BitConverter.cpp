@@ -284,4 +284,61 @@ void BitConverter::FromSint16LE(uint8_t &b, int16_t v) {
     memcpy(&dest, &v, sizeof(uint16_t));
     FromUint16LE(b, dest);
 }
+
+bool BitConverter::TryParseSigned(const std::string &str, int64_t &val,
+                                  int base) {
+    try {
+        if (str.find_first_not_of(" \t") != 0)
+            return false;
+        size_t pos = 0;
+        int64_t v = std::stoll(str, &pos, base);
+        if (pos < str.size())
+            return false;
+        val = v;
+        return true;
+    } catch (std::out_of_range &arg) {
+        return false;
+    } catch (std::invalid_argument &arg) {
+        return false;
+    }
+}
+bool BitConverter::TryParseUnsigned(const std::string &str, uint64_t &val,
+                                    int base) {
+    try {
+
+        if (str.find_first_not_of(" \t") != 0)
+            return false;
+        if (str[0] == '-' || str[0] == '+')
+            return false;
+        size_t pos = 0;
+        uint64_t v = std::stoull(str, &pos, base);
+        if (pos < str.size())
+            return false;
+        val = v;
+        return true;
+    } catch (std::out_of_range &arg) {
+        return false;
+    } catch (std::invalid_argument &arg) {
+        return false;
+    }
+}
+bool BitConverter::TryParseDouble(const std::string &str, double &val) {
+    try {
+
+        if (str.find_first_not_of(" \t") != 0)
+            return false;
+
+        size_t pos = 0;
+        double v = std::stod(str, &pos);
+        if (pos < str.size())
+            return false;
+        val = v;
+        return true;
+    } catch (std::out_of_range &arg) {
+        return false;
+    } catch (std::invalid_argument &arg) {
+        return false;
+    }
+}
+
 } // namespace Tesses::Framework::Serialization

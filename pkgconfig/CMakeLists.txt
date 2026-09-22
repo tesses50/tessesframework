@@ -11,6 +11,8 @@ set(PKGCONFIG_DEPS "")
 endif()
 
 configure_file(tessesframework.pc.in tessesframework.pc @ONLY)
+message(NOTICE "SrcFile ${CMAKE_CURRENT_BINARY_DIR}/tessesframework.pc")
+message(NOTICE "Outdir ${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/tessesframework.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
