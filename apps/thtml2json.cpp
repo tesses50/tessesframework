@@ -11,8 +11,11 @@ Json::JToken Html2JToken(std::shared_ptr<Html::HtmlNode> node) {
         obj.SetValue("Tag", node->text_or_tag);
         Json::JObject attrs;
         for (auto &item : node->attributes) {
-            attrs.SetValue(item.first,
-                           item.second.value_or<Json::JToken>(nullptr));
+            if (item.second) {
+                attrs.SetValue(item.first, *item.second);
+            } else {
+                attrs.SetValue(item.first, nullptr);
+            }
         }
         obj.SetValue("Attributes", attrs);
 
