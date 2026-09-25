@@ -360,16 +360,15 @@ struct HtmlParser {
                                         if (v.type ==
                                             HtmlLexTokenType::STRING) {
                                             Read();
-                                            newNode->attributes.emplace_back(
-                                                k.text,
+                                            newNode->attributes[k.text] =
                                                 Http::HttpUtils::HtmlDecode(
-                                                    v.text));
+                                                    v.text);
+
                                             continue;
                                         }
                                     }
                                 }
-                                newNode->attributes.emplace_back(k.text,
-                                                                 std::nullopt);
+                                newNode->attributes[k.text] = std::nullopt;
 
                                 continue;
                             }

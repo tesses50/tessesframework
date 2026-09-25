@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.9
+Make html parser use case insensitive unordered_map for attributes
+
 ## 0.0.8
 Fixed a stoll bug that was there since day one, html parser, fix pkgconfig
 

@@ -58,13 +58,13 @@ int main(int argc, char **argv) {
     html->FindNodes("meta", metaTags);
 
     for (auto &meta : metaTags) {
-        std::optional<std::string> prop, content;
-        for (auto &[k, v] : meta->attributes) {
-            if (k == "property" && v)
-                prop = *v;
-            if (k == "content" && v)
-                content = *v;
-        }
+        auto prop_off = meta->attributes.find("property");
+        auto content_off = meta->attributes.find("content");
+        if (!(prop_off != meta->attributes.end() &&
+              content_off != meta->attributes.end()))
+            continue;
+        auto &prop = prop_off->second;
+        auto &content = content_off->second;
 
         if (prop && content && prop->find("og:") == 0) {
             Tesses::Framework::Console::WriteView(prop.value());

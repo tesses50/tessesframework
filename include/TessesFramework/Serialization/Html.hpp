@@ -21,13 +21,31 @@
 
 #pragma once
 #include "../TextStreams/TextReader.hpp"
+
+#include <algorithm>
 namespace Tesses::Framework::Serialization::Html {
+
+struct CaseInsensitiveHash {
+    size_t operator()(const std::string &s) const {
+        std::string lower = s;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        return std::hash<std::string>{}(lower);
+    }
+};
+
+struct CaseInsensitiveEqual {
+    bool operator()(const std::string &a, const std::string &b) const {
+        return strcasecmp(a.c_str(), b.c_str()) == 0;
+    }
+};
 
 struct HtmlNode;
 struct HtmlNode : public std::enable_shared_from_this<HtmlNode> {
 
     std::string text_or_tag;
-    std::vector<std::pair<std::string, std::optional<std::string>>> attributes;
+    std::unordered_map<std::string, std::optional<std::string>,
+                       CaseInsensitiveHash, CaseInsensitiveEqual>
+        attributes;
     std::vector<std::shared_ptr<HtmlNode>> children;
     bool isText = false;
 

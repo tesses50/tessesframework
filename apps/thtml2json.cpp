@@ -9,14 +9,10 @@ Json::JToken Html2JToken(std::shared_ptr<Html::HtmlNode> node) {
     } else {
         Json::JObject obj;
         obj.SetValue("Tag", node->text_or_tag);
-        Json::JArray attrs;
+        Json::JObject attrs;
         for (auto &item : node->attributes) {
-            if (item.second)
-                attrs.Add(Json::JObject(
-                    {{"Key", item.first}, {"Value", item.second.value()}}));
-            else
-                attrs.Add(
-                    Json::JObject({{"Key", item.first}, {"Value", nullptr}}));
+            attrs.SetValue(item.first,
+                           item.second.value_or<Json::JToken>(nullptr));
         }
         obj.SetValue("Attributes", attrs);
 
