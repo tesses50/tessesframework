@@ -78,7 +78,8 @@ struct HtmlNode : public std::enable_shared_from_this<HtmlNode> {
         auto node = std::make_shared<HtmlNode>();
         node->isText = false;
         node->text_or_tag = std::string{name};
-        node->attributes.insert(node->attributes.end(), attrBegin, attrEnd);
+        for (auto it = attrBegin; it != attrEnd; ++it)
+            node->attributes[it->first] = it->second;
         node->children.insert(node->children.end(), nodesBegin, nodesEnd);
         return node;
     }
