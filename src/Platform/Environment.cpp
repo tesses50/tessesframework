@@ -332,12 +332,16 @@ std::string GetPlatform() {
 #if TARGET_OS_WATCH
     return "Apple Watch";
 #endif
-
-#if __EMSCRIPTEN__
-    return "WebAssembly";
-#endif
-
     return "Unknown Apple Device";
+#endif
+#if defined(__EMSCRIPTEN__)
+	return "WebAssembly";
+#endif
+#if defined(__HAIKU__)
+	return "Haiku";
+#endif
+#if defined(__TessesOS__)
+	return "TessesOS";
 #endif
 
     return "Unknown";

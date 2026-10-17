@@ -30,6 +30,7 @@ Tesses Framework
 - MacOS
 - FreeBSD (including GhostBSD)
 - NetBSD
+- Haiku (only static builds work as of right now)
 - Wii (using libogc2, may be broken)
 - Switch (using libnx, may be broken)
 - Android (kinda, uses legacy and hardcoded /sdcard api unless you use TF_AllowPortable(std::string))
