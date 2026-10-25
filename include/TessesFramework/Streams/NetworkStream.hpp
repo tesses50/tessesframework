@@ -80,15 +80,7 @@ class NetworkStream : public Stream {
     size_t ReadFrom(uint8_t *buff, size_t sz, std::string &ip, uint16_t &port);
     size_t WriteTo(const uint8_t *buff, size_t sz, std::string ip,
                    uint16_t port);
-    size_t ReadFrom(TF_Span<uint8_t> buff, std::string &ip, uint16_t &port)
-    {
-        return ReadFrom(buff.data(),buff.size(),ip, port);
-    }
-    size_t WriteTo(const TF_Span<uint8_t> buff, std::string ip,
-                   uint16_t port)
-    {
-        return WriteTo(buff.data(),buff.size(),ip, port);
-    }
+    
     static std::vector<std::pair<std::string, std::string>>
     GetIPs(bool ipV6 = false);
 

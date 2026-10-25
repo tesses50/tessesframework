@@ -35,22 +35,6 @@ class Stream {
     virtual size_t Write(const uint8_t *buff, size_t sz);
     size_t ReadBlock(uint8_t *buff, size_t sz);
     void WriteBlock(const uint8_t *buff, size_t sz);
-    size_t Read(TF_Span<uint8_t> buff) {
-        return Read(buff.data(), buff.size());
-    }
-    size_t Write(const TF_Span<uint8_t> buff)
-    {
-        return Write(buff.data(), buff.size());
-    }
-    size_t ReadBlock(TF_Span<uint8_t> buff)
-    {
-        return ReadBlock(buff.data(), buff.size());
-    }
-    void WriteBlock(const TF_Span<uint8_t> buff)
-    {
-      WriteBlock(buff.data(),buff.size());
-    }
-    
     
     virtual bool CanRead();
     virtual bool CanWrite();

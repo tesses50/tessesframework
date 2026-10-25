@@ -377,7 +377,7 @@ bool RandomBytes(std::vector<uint8_t> &output, std::string personal_str) {
 #endif
     return false;
 }
-bool ConstantEquals(const TF_Span<uint8_t> left, const TF_Span<uint8_t> right)
+bool ConstantEquals(const std::vector<uint8_t>& left, const std::vector<uint8_t>& right)
 {
     if (left.size() != right.size()) return false;
     if (left.empty()) return true;

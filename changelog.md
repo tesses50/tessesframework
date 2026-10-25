@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.0.10
-Fix NX, add constant time compare, add TF_Span
+Fix NX, add constant time compare
 
 ## 0.0.9
 Make html parser use case insensitive unordered_map for attributes

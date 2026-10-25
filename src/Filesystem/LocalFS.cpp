@@ -282,13 +282,23 @@ FIFOCreationResult LocalFilesystem::CreateFIFO(VFSPath path, uint32_t mod) {
 void LocalFilesystem::Lock(VFSPath path) {
     auto p2 = VFSPathToSystem(path);
     const char *fopenPath = p2.c_str();
-    while (true) {
+    for (int i = 0; i < 10; i++) {
         FILE *fp = fopen(fopenPath, "wx");
         if (fp) {
             fclose(fp);
-            break;
+            return;
         }
+
+        if (errno != EEXIST) {
+            std::string error_msg("Failed to acquire lock on ");
+            error_msg += p2;
+            error_msg += ": ";
+            error_msg += strerror(errno);
+            throw std::runtime_error(error_msg);
+        }
+        TF_Sleep(100);
     }
+    throw std::runtime_error("Lock acquisition timed out for " + p2);
 }
 void LocalFilesystem::Unlock(VFSPath path) {
     std::error_code error;

@@ -40,66 +40,7 @@
 
 namespace Tesses::Framework {
 
-template <typename T>
-class TF_Span {
-  public:
-    using value_type = T;
-    using pointer = T*;
-    using const_pointer = const T*;
-    using reference = T&;
-    using const_reference = const T&;
-    using size_type = std::size_t;
-    constexpr TF_Span(pointer data, size_type size) : data_(data), size_(size) {}
-    template <std::size_t N>
-    constexpr TF_Span(T (&arr)[N]) : data_(arr), size_(N) {}
-    template <typename Container>
-    constexpr TF_Span(const Container& container) : data_(container.data()), size_(container.size()) {
-      static_assert(std::is_same<typename Container::value_type, T>::value,"Container value_type must match Span's type");
-    }
-    reference operator[](size_type index) {
-            return data_[index];
-        }
 
-        const_reference operator[](size_type index) const {
-            return data_[index];
-        }
-
-        const_reference at(size_type index) const {
-            if (index >= size_) {
-                throw std::out_of_range("Index out of range");
-            }
-            return data_[index];
-        }
-
-        // Data and size
-        pointer data() noexcept { return data_; }
-        const_pointer data() const noexcept { return data_; }
-
-        size_type size() const noexcept { return size_; }
-        bool empty() const noexcept { return size_ == 0; }
-
-        // Iterators
-        pointer begin() noexcept { return data_; }
-        pointer end() noexcept { return data_ + size_; }
-
-        const_pointer begin() const noexcept { return data_; }
-        const_pointer end() const noexcept { return data_ + size_; }
-        TF_Span subspan(size_type offset, size_type count = static_cast<size_type>(-1)) const {
-            if (offset > size_) {
-                throw std::out_of_range("Offset out of range");
-            }
-            count = (count == static_cast<size_type>(-1)) ? (size_ - offset) : count;
-            if (count > size_ - offset) {
-                throw std::out_of_range("Count exceeds remaining elements");
-            }
-            return TF_Span(data_ + offset, count);
-        }
-      
-
-    private:
-      pointer data_;
-      size_type size_;
-};
 class TF_Timer_Handle;
 // Used for internal purposes, don't use unless you want to run timer events on
 // another thread
