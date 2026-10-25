@@ -377,4 +377,20 @@ bool RandomBytes(std::vector<uint8_t> &output, std::string personal_str) {
 #endif
     return false;
 }
+bool ConstantEquals(const TF_Span<uint8_t> left, const TF_Span<uint8_t> right)
+{
+    if (left.size() != right.size()) return false;
+    if (left.empty()) return true;
+
+    const auto* pa = left.data();
+    const auto* pb = right.data();
+    const auto n   = left.size();
+
+    uint8_t diff = 0;
+    for (size_t i = 0; i < n; i++)
+        diff |= pa[i] ^ pb[i];
+
+    return diff == 0;
+}
+
 } // namespace Tesses::Framework::Crypto

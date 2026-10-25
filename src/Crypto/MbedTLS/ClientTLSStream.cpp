@@ -35,6 +35,7 @@ using StreamReader = Tesses::Framework::TextStreams::StreamReader;
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509.h>
+#include <mbedtls/version.h>
 #endif
 #include <cstring>
 using namespace Tesses::Framework::Streams;
@@ -56,7 +57,6 @@ class ClientTLSPrivateData {
     mbedtls_pk_context client_key;
 
     ~ClientTLSPrivateData() {
-        strm->SetSendTimeout((uint64_t)7);
         mbedtls_ssl_close_notify(&ssl);
         if (mTLS) {
             mbedtls_x509_crt_free(&client_cert);
@@ -127,15 +127,23 @@ ClientTLSStream::ClientTLSStream(
     if ((ret = mbedtls_ctr_drbg_seed(
              &data->ctr_drbg, mbedtls_entropy_func, &data->entropy,
              (const unsigned char *)pers, strlen(pers))) != 0) {
-        printf("FAILED mbedtls_ctr_drbg_seed\n");
-        return;
+        
+        char buffer[100];
+        mbedtls_strerror(ret, buffer, sizeof(buffer));
+        std::string msg = "mbedtls_ctr_drbg_seed failed: " + std::string(buffer);
+         delete data;
+        throw std::runtime_error(msg);
     }
 
     ret = mbedtls_x509_crt_parse(
         &data->cachain, (const unsigned char *)cert.c_str(), cert.size() + 1);
     if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse cert %i\n", ret);
-        return;
+         char buffer[100];
+        mbedtls_strerror(ret, buffer, sizeof(buffer));
+        std::string msg = "mbedtls_x509_crt_parse failed: " + std::string(buffer);
+         delete data;
+        throw std::runtime_error(msg);
+            
     }
 
     if ((ret = mbedtls_ssl_config_defaults(&data->conf, MBEDTLS_SSL_IS_CLIENT,
@@ -143,8 +151,9 @@ ClientTLSStream::ClientTLSStream(
                                            MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
         char buffer[100];
         mbedtls_strerror(ret, buffer, sizeof(buffer));
-        printf("FAILED mbedtls_ssl_conf_defaults %s\n", buffer);
-        return;
+        std::string msg = "mbedtls_ssl_conf_defaults failed: " + std::string(buffer);
+         delete data;
+        throw std::runtime_error(msg);
     }
 
     mbedtls_ssl_conf_rng(&data->conf, mbedtls_ctr_drbg_random, &data->ctr_drbg);
@@ -161,18 +170,25 @@ ClientTLSStream::ClientTLSStream(
     mbedtls_ssl_set_bio(&data->ssl, static_cast<void *>(data), strm_send,
                         strm_recv, NULL);
     if ((ret = mbedtls_ssl_setup(&data->ssl, &data->conf) != 0)) {
-        printf("FAILED mbedtls_ssl_setup %i\n", ret);
-        return;
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        std::string msg = "SSL setup failed: " + std::string(errbuf);
+         delete data;
+        throw std::runtime_error(msg);
     }
     if ((ret = mbedtls_ssl_set_hostname(&data->ssl, domain.c_str()) != 0)) {
-        printf("FAILED mbedtls_ssl_set_hostname %i\n", ret);
-        return;
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+         delete data;
+        throw std::runtime_error("mbedtls_ssl_set_hostname failed: " + std::string(errbuf));
     }
     if ((ret = mbedtls_ssl_handshake(&data->ssl)) != 0) {
-        char buffer[100];
-        mbedtls_strerror(ret, buffer, sizeof(buffer));
-        printf("FAILED mbedtls_ssl_handshake %s\n", buffer);
-        return;
+       
+         char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+         delete data;
+        throw std::runtime_error("mbedtls_ssl_handshake failed: " + std::string(errbuf));
+    
     }
     uint32_t flags;
     if ((flags = mbedtls_ssl_get_verify_result(&data->ssl)) != 0) {
@@ -224,16 +240,20 @@ ClientTLSStream::ClientTLSStream(
     if ((ret = mbedtls_ctr_drbg_seed(
              &data->ctr_drbg, mbedtls_entropy_func, &data->entropy,
              (const unsigned char *)pers, strlen(pers))) != 0) {
-        printf("FAILED mbedtls_ctr_drbg_seed\n");
-        return;
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+         delete data;
+        throw std::runtime_error("mbedtls_ctr_drbg_seed failed: " + std::string(errbuf));
     }
 
     ret = mbedtls_x509_crt_parse(
         &data->cachain, (const unsigned char *)cert.c_str(), cert.size() + 1);
 
     if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse chain %i\n", ret);
-        return;
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+         delete data;
+        throw std::runtime_error("mbedtls_x509_crt_parse chain failed: " + std::string(errbuf));
     }
 
     ret = mbedtls_x509_crt_parse(
@@ -241,30 +261,44 @@ ClientTLSStream::ClientTLSStream(
         keyStore.certificate.size() + 1);
 
     if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse client_certificate %i\n", ret);
-        return;
+
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+         delete data;
+        throw std::runtime_error("mbedtls_x509_crt_parse client_certificate failed: " + std::string(errbuf));
+    
     }
 
     ret = mbedtls_pk_parse_key(
-        &data->client_key, (const unsigned char *)keyStore.certificate.c_str(),
-        keyStore.certificate.size() + 1,
+        &data->client_key, (const unsigned char *)keyStore.key.c_str(),
+        keyStore.key.size() + 1,
         keyStore.password.empty()
             ? NULL
             : (const unsigned char *)keyStore.password.c_str(),
-        keyStore.password.size(), mbedtls_entropy_func, &data->entropy);
+        keyStore.password.size() + 1
+        #if MBEDTLS_VERSION_MAJOR == 3
+        , mbedtls_entropy_func, &data->entropy
+        #endif
+    );
 
     if (ret != 0) {
-        printf("FAILED mbedtls_x509_crt_parse client_certificate %i\n", ret);
-        return;
+                char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        delete data;
+        throw std::runtime_error("mbedtls_pk_parse_key failed: " + std::string(errbuf));
+    
+
     }
 
     if ((ret = mbedtls_ssl_config_defaults(&data->conf, MBEDTLS_SSL_IS_CLIENT,
                                            MBEDTLS_SSL_TRANSPORT_STREAM,
                                            MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
-        char buffer[100];
-        mbedtls_strerror(ret, buffer, sizeof(buffer));
-        printf("FAILED mbedtls_ssl_conf_defaults %s\n", buffer);
-        return;
+        
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        delete data;
+        throw std::runtime_error("mbedtls_ssl_conf_defaults failed: " + std::string(errbuf));
+    
     }
 
     mbedtls_ssl_conf_rng(&data->conf, mbedtls_ctr_drbg_random, &data->ctr_drbg);
@@ -284,18 +318,26 @@ ClientTLSStream::ClientTLSStream(
     mbedtls_ssl_set_bio(&data->ssl, static_cast<void *>(data), strm_send,
                         strm_recv, NULL);
     if ((ret = mbedtls_ssl_setup(&data->ssl, &data->conf) != 0)) {
-        printf("FAILED mbedtls_ssl_setup %i\n", ret);
-        return;
+    
+         char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        delete data;
+        throw std::runtime_error("mbedtls_ssl_setup failed: " + std::string(errbuf));
+    
     }
     if ((ret = mbedtls_ssl_set_hostname(&data->ssl, domain.c_str()) != 0)) {
-        printf("FAILED mbedtls_ssl_set_hostname %i\n", ret);
-        return;
+        char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        delete data;
+        throw std::runtime_error("mbedtls_ssl_set_hostname failed: " + std::string(errbuf));
     }
     if ((ret = mbedtls_ssl_handshake(&data->ssl)) != 0) {
-        char buffer[100];
-        mbedtls_strerror(ret, buffer, sizeof(buffer));
-        printf("FAILED mbedtls_ssl_handshake %s\n", buffer);
-        return;
+        
+         char errbuf[100];
+        mbedtls_strerror(ret, errbuf, sizeof(errbuf));
+        delete data;
+        throw std::runtime_error("mbedtls_ssl_handshake failed: " + std::string(errbuf));
+    
     }
     uint32_t flags;
     if ((flags = mbedtls_ssl_get_verify_result(&data->ssl)) != 0) {
@@ -327,9 +369,15 @@ size_t ClientTLSStream::Read(uint8_t *buffer, size_t len) {
         return 0;
     int r = mbedtls_ssl_read(&priv->ssl, buffer, len);
 
-    if (r == -30848) {
+    if (r == 0) {
         priv->eos = true;
         return 0;
+    }
+    if (r < 0) {
+        char errbuf[100];
+        mbedtls_strerror(r, errbuf, sizeof(errbuf));
+        std::string msg = "Read failed: " + std::string(errbuf);
+        throw std::runtime_error(msg);
     }
     return (size_t)r;
 #else
@@ -342,6 +390,16 @@ size_t ClientTLSStream::Write(const uint8_t *buffer, size_t len) {
     if (!priv->success)
         return 0;
     int r = mbedtls_ssl_write(&priv->ssl, buffer, len);
+    if (r == 0) {
+        priv->eos = true;
+        return 0;
+    }
+    if (r < 0) {
+        char errbuf[100];
+        mbedtls_strerror(r, errbuf, sizeof(errbuf));
+        std::string msg = "Write failed: " + std::string(errbuf);
+        throw std::runtime_error(msg);
+    }
     return (size_t)r;
 #else
     return (size_t)0;

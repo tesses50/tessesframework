@@ -11,7 +11,7 @@ endif()
 
 FetchContent_Declare(
     mbedtls
-    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.4.tar.bz2
+    URL https://downloads.tesses.net/cache/libraries/source/mbedtls-3.6.7.tar.bz2
 
 )
 if(NOT mbedtls_POPULATED)

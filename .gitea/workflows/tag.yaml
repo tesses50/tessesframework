@@ -11,12 +11,11 @@ env:
 jobs:
   build-ppc:
     name: "🔨 Build for PowerPC"
-    runs-on: asrock
+    runs-on: msi-walmart
     container: 
       image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
       - uses: actions/checkout@v4
-        url: https://git.tesses.org/tesses50/tessesframework.git
       - run: bash build-for-ppc.sh
       - uses: akkuman/gitea-release-action@v1
         env:
@@ -27,7 +26,7 @@ jobs:
             artifacts/** 
   update-tap-and-build-win32:
     name: "🔨 Build win32 and update the tap 🍺"
-    runs-on: msi-walmart
+    runs-on: asrock
     container: git.tesses.org/tesses50/global-containers-mingw:latest
     steps:
       - uses: actions/checkout@v4
@@ -73,11 +72,11 @@ jobs:
             nfpmName: "386"
             debianName: "i386-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-arm:latest"
-            puter: "fw13-ubuntu-latest"
+            puter: "msi-walmart"
             nfpmName: "arm7"
             debianName: "arm-linux-gnueabihf"
           - container: "git.tesses.org/tesses50/linux-arm64:latest"
-            puter: "msi-walmart"
+            puter: "asrock"
             nfpmName: "arm64"
             debianName: "aarch64-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-riscv64:latest"

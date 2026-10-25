@@ -316,6 +316,9 @@ typedef enum {
  */
 bool PBKDF2(std::vector<uint8_t> &output, std::string pass,
             std::vector<uint8_t> &salt, long itterations, ShaVersion version);
+
+bool ConstantEquals(const TF_Span<uint8_t> left, const TF_Span<uint8_t> right);
+
 /**
  * @brief Get secure random bytes
  *
