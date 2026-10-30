@@ -40,89 +40,6 @@ namespace Tesses::Framework::Threading {
 
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
 
-#if defined(__SWITCH__)
-Mutex needed_to_be_joined_mtx;
-class NeedToBeJoinnedThread {
-
-    static void *cb(void *data) {
-
-        auto ntbjt = static_cast<NeedToBeJoinnedThread *>(data);
-
-        ntbjt->hasInvoked = true;
-        TF_LOG("About to call thread func");
-        if (ntbjt->_cb)
-            ntbjt->_cb();
-        TF_LOG("Finished calling thread func");
-        ntbjt->hasExited = true;
-
-        return NULL;
-    }
-    std::function<void()> _cb;
-    std::atomic<bool> hasInvoked = false;
-
-    pthread_t thrd;
-
-  public:
-    NeedToBeJoinnedThread(std::function<void()> cb) {
-        this->_cb = cb;
-        joinned = false;
-        joinning = false;
-        hasExited = false;
-
-        pthread_create(&thrd, NULL, this->cb, static_cast<void *>(this));
-    }
-    std::atomic<bool> joinned;
-    std::atomic<bool> joinning;
-    std::atomic<bool> hasExited;
-    void Join();
-    void WaitTillInvoked() {
-        while (!hasInvoked)
-            ;
-        TF_LOG("Invoked!");
-    }
-};
-
-void NeedToBeJoinnedThread::Join() {
-    if (joinning) {
-        return;
-    }
-    joinning = true;
-    pthread_join(this->thrd, NULL);
-
-    joinned = true;
-    // start the joinning process
-}
-
-std::vector<std::shared_ptr<NeedToBeJoinnedThread>> needToBeJoinnedThread;
-void JoinAllThreads() {
-    needed_to_be_joined_mtx.Lock();
-    for (auto item : needToBeJoinnedThread) {
-        item->Join();
-    }
-    needToBeJoinnedThread.clear();
-    needed_to_be_joined_mtx.Unlock();
-}
-void LookForFinishedThreads() {
-
-    needed_to_be_joined_mtx.Lock();
-    for (auto index = needToBeJoinnedThread.begin();
-         index < needToBeJoinnedThread.end(); index++) {
-        auto &idx = *index;
-        if (idx->hasExited) {
-            if (idx->joinning)
-                while (!idx->joinned)
-                    ;
-            TF_LOG("ABOUT TO JOIN");
-            idx->Join();
-            TF_LOG("JOINNED");
-            needToBeJoinnedThread.erase(index);
-            index--;
-        }
-    }
-    needed_to_be_joined_mtx.Unlock();
-}
-
-#endif
 class ThreadHiddenFieldData : public HiddenFieldData {
   public:
 #if defined(_WIN32)
@@ -130,8 +47,7 @@ class ThreadHiddenFieldData : public HiddenFieldData {
     HANDLE thrd;
     DWORD thrdId;
 
-#elif defined(__SWITCH__)
-    std::shared_ptr<NeedToBeJoinnedThread> thread;
+
 #else
     pthread_t thrd;
 #endif
@@ -143,8 +59,6 @@ class ThreadHiddenFieldData : public HiddenFieldData {
 
 #if defined(_WIN32)
 static DWORD __stdcall cb(LPVOID data)
-#elif defined(__SWITCH__)
-static void cb(void *data)
 #else
 static void *cb(void *data)
 #endif
@@ -154,10 +68,8 @@ static void *cb(void *data)
     auto fn = thrd->fn;
     thrd->hasInvoked = true;
     fn();
-#if !defined(_WIN32) && !defined(__SWITCH__)
+#if !defined(_WIN32)
     return NULL;
-#elif (__SWITCH__)
-
 #else
     return 0;
 #endif
@@ -174,9 +86,6 @@ Thread::Thread(std::function<void()> fn) {
         CreateThread(NULL, 0, cb, static_cast<LPVOID>(data), 0, &data->thrdId);
     while (!data->hasInvoked)
         ;
-#elif defined(__SWITCH__)
-    data->thread = std::make_shared<NeedToBeJoinnedThread>(fn);
-    data->thread->WaitTillInvoked();
     // threadCreate(,cb,static_cast<void*>(data),NULL,8000000,0x00,-2);
 #else
     pthread_create(&data->thrd, NULL, cb, static_cast<void *>(data));
@@ -193,13 +102,6 @@ void Thread::Detach() {
 
 #if defined(_WIN32)
     CloseHandle(data->thrd);
-#elif defined(__SWITCH__)
-    TF_LOG("Detaching");
-    needed_to_be_joined_mtx.Lock();
-    needToBeJoinnedThread.push_back(data->thread);
-    needed_to_be_joined_mtx.Unlock();
-
-    TF_LOG("Detached!");
 #else
     pthread_detach(data->thrd);
 #endif
@@ -212,8 +114,6 @@ void Thread::Join() {
     auto data = this->data.GetField<ThreadHiddenFieldData *>();
 #if defined(_WIN32)
     WaitForSingleObject(data->thrd, INFINITE);
-#elif defined(__SWITCH__)
-    data->thread->Join();
 #else
     pthread_join(data->thrd, NULL);
 #endif

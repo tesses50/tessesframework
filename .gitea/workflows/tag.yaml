@@ -11,15 +11,13 @@ env:
 jobs:
   build-ppc:
     name: "🔨 Build for PowerPC"
-    runs-on: msi-walmart
+    runs-on: asrock
     container: 
       image: git.tesses.org/tesses50/linux-ppc:latest
     steps:
       - uses: actions/checkout@v4
       - run: bash build-for-ppc.sh
       - uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
         with:
           prerelease: true
           files: |-
@@ -36,8 +34,6 @@ jobs:
           env -C Packaging/WinToolsIntel bash build.sh
 
       - uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
         with:
           prerelease: true
           files: |-
@@ -60,15 +56,15 @@ jobs:
   build-packages:
     name: "🔨 Build for everything else"
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - container: "git.tesses.org/tesses50/linux-x64:latest"
-            puter: "msi-walmart"
+            puter: "asrock"
             nfpmName: "amd64"
             debianName: "x86_64-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-x86:latest"
-            puter: "asrock"
+            puter: "msi-walmart"
             nfpmName: "386"
             debianName: "i386-linux-gnu"
           - container: "git.tesses.org/tesses50/linux-arm:latest"
@@ -82,17 +78,14 @@ jobs:
           - container: "git.tesses.org/tesses50/linux-riscv64:latest"
             nfpmName: "riscv64"
             debianName: "riscv64-linux-gnu"
-            puter: "asrock"
+            puter: "msi-walmart"
     runs-on: ${{ matrix.puter }} 
     container: 
       image: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
-        url: https://git.tesses.org/tesses50/tessesframework.git
       - run: bash build-for-nfpm.sh ${{ matrix.nfpmName }} ${{ matrix.debianName }}
       - uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
         with:
           prerelease: true
           files: |-

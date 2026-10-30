@@ -98,13 +98,7 @@ static GXRModeObj *rmode = NULL;
 #endif
 
 namespace Tesses::Framework {
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING) &&                               \
-    (defined(GEKKO) || defined(__SWITCH__))
-namespace Threading {
-extern void JoinAllThreads();
-extern void LookForFinishedThreads();
-} // namespace Threading
-#endif
+
 volatile static bool isRunningSig = true;
 volatile static std::atomic<bool> isRunning;
 volatile static std::atomic<bool> gaming_console_events = true;
@@ -268,10 +262,6 @@ int64_t TF_Timer_Handle::GetIntervalMilliseconds() {
 }
 
 void TF_RunEventLoopItteration() {
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(__SWITCH__))
-    Tesses::Framework::Threading::LookForFinishedThreads();
-
-#endif
 #if defined(TESSESFRAMEWORK_ENABLE_THREADING)
     invokings_mtx.Lock();
     auto invokes = invokings;
@@ -315,13 +305,11 @@ void TF_RunEventLoopItteration() {
 #endif
 
     timer_handler->Update();
+    TF_Sleep(1);
 }
 void TF_SetIsRunning(bool _isRunning) { isRunning = _isRunning; }
 void TF_Quit() {
     isRunning = false;
-#if defined(TESSESFRAMEWORK_ENABLE_THREADING) && (defined(__SWITCH__))
-    Tesses::Framework::Threading::JoinAllThreads();
-#endif
 }
 void TF_InitEventLoop() {
     signal(SIGINT, _sigInt);

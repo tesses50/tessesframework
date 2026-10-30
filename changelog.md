@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.11
+Fix the event loop so it isn't 100% CPU utilization
+
 ## 0.0.10
 Fix NX, add constant time compare
 
